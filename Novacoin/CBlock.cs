@@ -2,6 +2,9 @@
 
 namespace Novacoin
 {
+	/// <summary>
+	/// Represents the block. Block consists of header, transaction array and header signature.
+	/// </summary>
 	public class CBlock
 	{
 		/// <summary>

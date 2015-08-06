@@ -2,6 +2,9 @@
 
 namespace Novacoin
 {
+	/// <summary>
+	/// Represents the transaction. Any transaction must provide one input and one output at least.
+	/// </summary>
 	public class CTransaction
 	{
 		/// <summary>

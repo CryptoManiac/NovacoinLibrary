@@ -2,6 +2,9 @@
 
 namespace Novacoin
 {
+	/// <summary>
+	/// Transaction output.
+	/// </summary>
 	public class CTxOut
 	{
 		/// <summary>
