@@ -20,7 +20,7 @@ namespace Novacoin
 		/// <summary>
 		/// Block header signature.
 		/// </summary>
-		public byte[] signature;
+		public byte[] signature = {};
 
 		public CBlock ()
 		{

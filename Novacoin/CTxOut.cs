@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 
 namespace Novacoin
 {
@@ -10,7 +11,7 @@ namespace Novacoin
 		/// <summary>
 		/// Input value.
 		/// </summary>
-		public ulong nValue;
+		public ulong nValue = 0;
 
 		/// <summary>
 		/// Second half of script which contains spending instructions.
@@ -19,6 +20,14 @@ namespace Novacoin
 
 		public CTxOut ()
 		{
+		}
+
+		public override string ToString ()
+		{
+			StringBuilder sb = new StringBuilder ();
+			sb.AppendFormat ("CTxOut(nValue={0},scriptPubKey={1}", nValue, scriptPubKey.ToString());
+
+			return sb.ToString ();
 		}
 	}
 }

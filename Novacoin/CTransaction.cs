@@ -10,12 +10,12 @@ namespace Novacoin
 		/// <summary>
 		/// Version of transaction schema.
 		/// </summary>
-		public uint nVersion;
+		public uint nVersion = 1;
 
 		/// <summary>
 		/// Transaction timestamp.
 		/// </summary>
-		public uint nTime;
+		public uint nTime = 0;
 
 		/// <summary>
 		/// Array of transaction inputs
@@ -30,7 +30,7 @@ namespace Novacoin
 		/// <summary>
 		/// Block height or timestamp when transaction is final
 		/// </summary>
-		public uint nLockTime;
+		public uint nLockTime = 0;
 
 		public CTransaction ()
 		{
