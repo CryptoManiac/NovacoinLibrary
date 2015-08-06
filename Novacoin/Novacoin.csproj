@@ -40,6 +40,7 @@
     <Compile Include="CBlockHeader.cs" />
     <Compile Include="CBlock.cs" />
     <Compile Include="CScript.cs" />
+    <Compile Include="ScriptOpcode.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>
