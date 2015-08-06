@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Text;
 
+using System.Collections;
+using System.Collections.Generic;
+
 namespace Novacoin
 {
 	/** Script opcodes */
-	enum opcodetype
+	public enum opcodetype
 	{
 		// push value
 		OP_0 = 0x00,
@@ -137,7 +140,6 @@ namespace Novacoin
 		OP_NOP8 = 0xb7,
 		OP_NOP9 = 0xb8,
 		OP_NOP10 = 0xb9,
-
 
 		// template matching params
 		OP_SMALLDATA = 0xf9,
@@ -411,6 +413,88 @@ namespace Novacoin
 			default:
 				return "OP_UNKNOWN";
 			}
+		}
+
+		public bool GetOp(ref IEnumerator<byte> codeBytes, ref opcodetype opcodeRet, ref byte[] bytesRet)
+		{
+			opcodeRet = opcodetype.OP_INVALIDOPCODE;
+
+			// Initialize local byte list
+			List<byte> bytesRetIn = new List<byte> ();
+
+			// Read instruction
+			if (!codeBytes.MoveNext())
+				return false;
+			opcodetype opcode = (opcodetype)codeBytes.Current;
+
+			// Immediate operand
+			if (opcode <= opcodetype.OP_PUSHDATA4)
+			{
+				int nSize = 0;
+				if (opcode < opcodetype.OP_PUSHDATA1) { // False values
+					nSize = (int)opcode;
+				} else if (opcode == opcodetype.OP_PUSHDATA1) { // One byte size prefix
+					if (!codeBytes.MoveNext ())
+						return false;
+					nSize = codeBytes.Current;
+				} else if (opcode == opcodetype.OP_PUSHDATA2) { // Two bytes size prefix
+					byte[] SizeBytes = {0,0};
+
+					for (int i = 0; i < 2; i++) { // TODO: implement some intelligent solution instead
+						if (!codeBytes.MoveNext ())
+							return false;
+
+						SizeBytes [i] = codeBytes.Current; 
+					}
+
+					Array.Reverse (SizeBytes);
+					BitConverter.ToUInt32(SizeBytes, 0);
+				} else if (opcode == opcodetype.OP_PUSHDATA4) { // Four bytes size prefix
+					byte[] SizeBytes = {0,0,0,0};
+
+					for (int i = 0; i < 4; i++) {
+						if (!codeBytes.MoveNext ())
+							return false;
+
+						SizeBytes [i] = codeBytes.Current; 
+					}
+
+					Array.Reverse (SizeBytes);
+					nSize = BitConverter.ToInt32 (SizeBytes, 0);
+				}
+
+				for (int i = 0; i < nSize; i++) {
+					if (!codeBytes.MoveNext ())
+						return false;
+
+					bytesRetIn.Add (codeBytes.Current);
+				}
+
+				// Return OP_PUSHDATA arguments
+				bytesRet = bytesRetIn.ToArray ();
+			}
+
+			opcodeRet = opcode;
+		
+			return true;
+		}
+
+		// Encode/decode small integers:
+		static int DecodeOP_N(opcodetype opcode)
+		{
+			if (opcode == opcodetype.OP_0)
+				return 0;
+			if(! (opcode >= opcodetype.OP_1 && opcode <= opcodetype.OP_16))
+				throw new Exception ("! (opcode >= opcodetype.OP_1 && opcode <= opcodetype.OP_16)");
+			return (int)opcode - (int)(opcodetype.OP_1 - 1);
+		}
+		static opcodetype EncodeOP_N(int n)
+		{
+			if (!(n >= 0 && n <= 16))
+				throw new Exception ("! (n >= 0 && n <= 16)");
+			if (n == 0)
+				return opcodetype.OP_0;
+			return (opcodetype)(opcodetype.OP_1+n-1);
 		}
 
 		public override string ToString()
