@@ -419,75 +419,79 @@ namespace Novacoin
         }
 
         /// <summary>
-        /// Get next opcode from passed enumerator and extract push arguments if there are some.
+        /// Get next opcode from passed list of bytes and extract push arguments if there are some.
         /// </summary>
-        /// <param name="codeBytes">Enumerator reference.</param>
+        /// <param name="codeBytes">WrappedList reference.</param>
         /// <param name="opcodeRet">Opcode reference.</param>
-        /// <param name="bytesRet">Bytes array reference which is used to get the push arguments.</param>
+        /// <param name="bytesRet">IEnumerable reference which is used to get the push arguments.</param>
         /// <returns>Result of operation</returns>
-        public static bool GetOp(ref IEnumerator<byte> codeBytes, ref opcodetype opcodeRet, ref List<byte> bytesRet)
+        public static bool GetOp(ref WrappedList<byte> codeBytes, ref opcodetype opcodeRet, ref IEnumerable<byte> bytesRet)
         {
             bytesRet = new List<byte>();
             opcodeRet = opcodetype.OP_INVALIDOPCODE;
 
-            // Read instruction
-            if (!codeBytes.MoveNext())
+            opcodetype opcode;
+
+            try
+            {
+                // Read instruction
+                opcode = (opcodetype)codeBytes.GetItem();
+            }
+            catch (WrappedListException)
+            {
+                // No instruction found there
                 return false;
-            opcodetype opcode = (opcodetype)codeBytes.Current;
+            }
 
             // Immediate operand
             if (opcode <= opcodetype.OP_PUSHDATA4)
             {
-                int nSize = 0;
-                List<byte> szList = new List<byte>();
+                byte[] szBytes = null;
 
-                if (opcode < opcodetype.OP_PUSHDATA1)
-                { // False values
-                    szList.Add((byte)opcode);
-                }
-                else if (opcode == opcodetype.OP_PUSHDATA1)
+                try
                 {
-                    // The next byte contains the number of bytes to be pushed onto the stack, 
-                    //    i.e. you have something like OP_PUSHDATA1 0x01 [0x5a]
-                    if (!codeBytes.MoveNext())
-                        return false;
-                    szList.Add(codeBytes.Current);
-                }
-                else if (opcode == opcodetype.OP_PUSHDATA2)
-                {
-                    // The next two bytes contain the number of bytes to be pushed onto the stack.
-                    //    i.e. now your operation will seem like this: OP_PUSHDATA2 0x00 0x01 [0x5a]
-                    for (int i = 0; i < 2; i++)
+                    if (opcode < opcodetype.OP_PUSHDATA1)
                     {
-                        if (!codeBytes.MoveNext())
-                            return false;
-                        szList.Add(codeBytes.Current);
+                        // Zero values
+                        szBytes = new byte[1] { (byte)opcode };
+                    }
+                    else if (opcode == opcodetype.OP_PUSHDATA1)
+                    {
+                        // The next byte contains the number of bytes to be pushed onto the stack, 
+                        //    i.e. you have something like OP_PUSHDATA1 0x01 [0x5a]
+                        szBytes = new byte[1] { codeBytes.GetItem() };
+                    }
+                    else if (opcode == opcodetype.OP_PUSHDATA2)
+                    {
+                        // The next two bytes contain the number of bytes to be pushed onto the stack.
+                        //    i.e. now your operation will seem like this: OP_PUSHDATA2 0x00 0x01 [0x5a]
+                        szBytes = codeBytes.GetItems(2);
+                    }
+                    else if (opcode == opcodetype.OP_PUSHDATA4)
+                    {
+                        // The next four bytes contain the number of bytes to be pushed onto the stack.
+                        //   OP_PUSHDATA4 0x00 0x00 0x00 0x01 [0x5a]
+                        szBytes = codeBytes.GetItems(4);
                     }
                 }
-                else if (opcode == opcodetype.OP_PUSHDATA4)
+                catch (WrappedListException)
                 {
-                    // The next four bytes contain the number of bytes to be pushed onto the stack.
-                    //   OP_PUSHDATA4 0x00 0x00 0x00 0x01 [0x5a]
-                    for (int i = 0; i < 4; i++)
-                    {
-                        if (!codeBytes.MoveNext())
-                            return false;
-                        szList.Add(codeBytes.Current);
-                    }
+                    // Unable to read operand length
+                    return false;
                 }
+                
+                Array.Reverse(szBytes);
+                int nSize = BitConverter.ToInt32(szBytes, 0);
 
-                // Got all size bytes, now convert it to integer value
-                byte[] SizeBytes = szList.ToArray();
-                Array.Reverse(SizeBytes);
-                nSize = BitConverter.ToInt32(SizeBytes, 0);
-
-                // Read found number of bytes into list of OP_PUSHDATAn arguments.
-                for (int i = 0; i < nSize; i++)
+                try
                 {
-                    if (!codeBytes.MoveNext())
-                        return false;
-
-                    bytesRet.Add(codeBytes.Current);
+                    // Read found number of bytes into list of OP_PUSHDATAn arguments.
+                    bytesRet = codeBytes.GetEnumerableItems(nSize);
+                }
+                catch (WrappedListException)
+                {
+                    // Unable to read data
+                    return false;
                 }
             }
 
