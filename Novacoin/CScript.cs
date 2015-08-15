@@ -135,22 +135,15 @@ namespace Novacoin
 		public override string ToString()
 		{
 			StringBuilder sb = new StringBuilder();
-
             WrappedList<byte> wCodeBytes = new WrappedList<byte>(codeBytes);
 
-            while (wCodeBytes.ItemsLeft > 0)
+            opcodetype opcode; // Current opcode
+            IEnumerable<byte> pushArgs; // OP_PUSHDATAn argument
+            while (ScriptOpcode.GetOp(ref wCodeBytes, out opcode, out pushArgs))
             {
                 if (sb.Length != 0)
                 {
                     sb.Append(" ");
-                }
-
-                opcodetype opcode;
-                IEnumerable<byte> pushArgs;
-                if (!ScriptOpcode.GetOp(ref wCodeBytes, out opcode, out pushArgs))
-                {
-                    sb.Append("[error]");
-                    break;
                 }
 
                 if (0 <= opcode && opcode <= opcodetype.OP_PUSHDATA4)
