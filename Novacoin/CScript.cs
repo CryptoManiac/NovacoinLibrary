@@ -180,6 +180,64 @@ namespace Novacoin
         }
 
         /// <summary>
+        /// Is it true that script doesn't contain anything except push value operations?
+        /// </summary>
+        /// <returns>Checking result</returns>
+        public bool IsPushonly()
+        {
+            WrappedList<byte> wCodeBytes = new WrappedList<byte>(codeBytes);
+
+            opcodetype opcode; // Current opcode
+            IEnumerable<byte> pushArgs; // OP_PUSHDATAn argument
+            
+            // Scan opcodes sequence
+            while (ScriptOpcode.GetOp(ref wCodeBytes, out opcode, out pushArgs))
+            {
+                if (opcode > opcodetype.OP_16)
+                {
+                    // We don't allow control opcodes here
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Is it true that script doesn't contain non-canonical push operations?
+        /// </summary>
+        /// <returns>Checking result</returns>
+        public bool HashOnlyCanonicalPushes()
+        {
+            WrappedList<byte> wCodeBytes = new WrappedList<byte>(codeBytes);
+
+            opcodetype opcode; // Current opcode
+            IEnumerable<byte> pushArgs; // OP_PUSHDATAn argument
+
+            // Scan opcodes sequence
+            while (ScriptOpcode.GetOp(ref wCodeBytes, out opcode, out pushArgs))
+            {
+                byte[] data = pushArgs.ToArray();
+
+                if (opcode < opcodetype.OP_PUSHDATA1 && opcode > opcodetype.OP_0 && (data.Length == 1 && data[0] <= 16))
+                    // Could have used an OP_n code, rather than a 1-byte push.
+                    return false;
+                if (opcode == opcodetype.OP_PUSHDATA1 && data.Length < (int)opcodetype.OP_PUSHDATA1)
+                    // Could have used a normal n-byte push, rather than OP_PUSHDATA1.
+                    return false;
+                if (opcode == opcodetype.OP_PUSHDATA2 && data.Length <= 0xFF)
+                    // Could have used an OP_PUSHDATA1.
+                    return false;
+                if (opcode == opcodetype.OP_PUSHDATA4 && data.Length <= 0xFFFF)
+                    // Could have used an OP_PUSHDATA2.
+                    return false;
+            }
+
+            return true;
+        }
+
+
+        /// <summary>
         /// Disassemble current script code
         /// </summary>
         /// <returns>Code listing</returns>
