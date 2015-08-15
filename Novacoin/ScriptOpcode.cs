@@ -488,15 +488,19 @@ namespace Novacoin
 
                 int nSize = BitConverter.ToInt32(szBytes, 0);
 
-                try
+                if (nSize > 0)
                 {
-                    // Read found number of bytes into list of OP_PUSHDATAn arguments.
-                    bytesRet = codeBytes.GetEnumerableItems(nSize);
-                }
-                catch (WrappedListException)
-                {
-                    // Unable to read data
-                    return false;
+                    // If nSize is greater than zero then there is some data available
+                    try
+                    {
+                        // Read found number of bytes into list of OP_PUSHDATAn arguments.
+                        bytesRet = codeBytes.GetEnumerableItems(nSize);
+                    }
+                    catch (WrappedListException)
+                    {
+                        // Unable to read data
+                        return false;
+                    }
                 }
             }
 

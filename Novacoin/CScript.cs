@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Text;
 
 using System.Collections;
@@ -94,38 +95,88 @@ namespace Novacoin
             codeBytes.AddRange(hash.hashBytes);
         }
 
+        /// <summary>
+        /// Create new OP_PUSHDATAn operator and add it to opcode bytes list
+        /// </summary>
+        /// <param name="dataBytes">List of data bytes</param>
         public void PushData(IList<byte> dataBytes)
         {
             if (dataBytes.Count < (int)opcodetype.OP_PUSHDATA1)
             {
+                // OP_0 and OP_FALSE
                 codeBytes.Add((byte)dataBytes.Count);
             }
             else if (dataBytes.Count < 0xff)
             {
+                // OP_PUSHDATA1 0x01 [0x5a]
                 codeBytes.Add((byte)opcodetype.OP_PUSHDATA1);
                 codeBytes.Add((byte)dataBytes.Count);
             }
             else if (dataBytes.Count < 0xffff)
             {
+                // OP_PUSHDATA1 0x00 0x01 [0x5a]
                 codeBytes.Add((byte)opcodetype.OP_PUSHDATA2);
 
                 byte[] szBytes = BitConverter.GetBytes((short)dataBytes.Count);
                 if (BitConverter.IsLittleEndian)
+                {
                     Array.Reverse(szBytes);
-
+                }
                 codeBytes.AddRange(szBytes);
             }
             else if ((uint)dataBytes.Count < 0xffffffff)
             {
-                codeBytes.Add((byte)opcodetype.OP_PUSHDATA2);
+                // OP_PUSHDATA1 0x00 0x00 0x00 0x01 [0x5a]
+                codeBytes.Add((byte)opcodetype.OP_PUSHDATA4);
 
                 byte[] szBytes = BitConverter.GetBytes((uint)dataBytes.Count);
                 if (BitConverter.IsLittleEndian)
+                {
                     Array.Reverse(szBytes);
-
+                }
                 codeBytes.AddRange(szBytes);
             }
+
+            // Add data bytes
             codeBytes.AddRange(dataBytes);
+        }
+
+        /// <summary>
+        /// Scan code bytes for pattern
+        /// </summary>
+        /// <param name="pattern">Pattern sequence</param>
+        /// <returns>Matches enumerator</returns>
+        private IEnumerable<int> FindPattern(IList<byte> pattern)
+        {
+            for (int i = 0; i < codeBytes.Count; i++)
+            {
+                if (codeBytes.Skip(i).Take(pattern.Count).SequenceEqual(pattern))
+                {
+                    yield return i;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Scan code bytes for pattern and remove it
+        /// </summary>
+        /// <param name="pattern">Pattern sequence</param>
+        /// <returns>Matches number</returns>
+        public int RemovePattern(IList<byte> pattern)
+        {
+            List<byte> resultBytes = new List<byte>(codeBytes);
+            int count = 0;
+            int patternLen = pattern.Count;
+                        
+            foreach (int i in FindPattern(pattern))
+            {
+                resultBytes.RemoveRange(i - count * patternLen, patternLen);
+                count++;
+            }
+
+            codeBytes = resultBytes;
+            
+            return count;
         }
 
         /// <summary>
