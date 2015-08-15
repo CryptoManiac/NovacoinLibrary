@@ -31,6 +31,10 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CKey.cs" />
+    <Compile Include="CKeyID.cs" />
+    <Compile Include="CPubKey.cs" />
+    <Compile Include="CScriptID.cs" />
     <Compile Include="Hash.cs" />
     <Compile Include="WrappedList.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -565,7 +565,7 @@ namespace Novacoin
         /// </summary>
         /// <param name="opcode">Small integer opcode (OP_0 - OP_16)</param>
         /// <returns>Small integer</returns>
-        static int DecodeOP_N(opcodetype opcode)
+        public static int DecodeOP_N(opcodetype opcode)
         {
             if (opcode == opcodetype.OP_0)
                 return 0;
@@ -581,7 +581,7 @@ namespace Novacoin
         /// </summary>
         /// <param name="n">Small integer from the range of 0 up to 16.</param>
         /// <returns>Corresponding opcode.</returns>
-        static opcodetype EncodeOP_N(int n)
+        public static opcodetype EncodeOP_N(int n)
         {
             // The n value must be in the range of 0 to 16.
             if (n < 0 || n > 16)

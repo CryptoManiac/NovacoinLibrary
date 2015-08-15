@@ -42,19 +42,19 @@ namespace Novacoin
         /// <summary>
         /// Initializes new instance of CScript and fills it with supplied bytes
         /// </summary>
-        /// <param name="bytes">List of bytes</param>
-        public CScript(IList<byte> bytes)
+        /// <param name="bytes">Enumerator interface for byte sequence</param>
+        public CScript(IEnumerable<byte> bytes)
         {
             codeBytes = new List<byte>(bytes);
         }
 
         /// <summary>
-        /// Initializes new instance of CScript and fills it with supplied bytes
+        /// Return a new instance of WrappedList object for current code bytes
         /// </summary>
-        /// <param name="bytes">Array of bytes</param>
-        public CScript(byte[] bytes)
+        /// <returns></returns>
+        public WrappedList<byte> GetWrappedList()
         {
-            codeBytes = new List<byte>(bytes);
+             return new WrappedList<byte>(codeBytes);
         }
 
         /// <summary>
@@ -246,6 +246,112 @@ namespace Novacoin
                     codeBytes[0] == (byte)opcodetype.OP_HASH160 &&
                     codeBytes[1] == 0x14 &&
                     codeBytes[22] == (byte)opcodetype.OP_EQUAL);
+        }
+
+        /// <summary>
+        /// Pre-version-0.6, Bitcoin always counted CHECKMULTISIGs
+        /// as 20 sigops. With pay-to-script-hash, that changed:
+        /// CHECKMULTISIGs serialized in scriptSigs are
+        /// counted more accurately, assuming they are of the form
+        ///  ... OP_N CHECKMULTISIG ...
+        /// </summary>
+        /// <param name="fAccurate">Legacy mode flag</param>
+        /// <returns>Amount of sigops</returns>
+        public int GetSigOpCount(bool fAccurate)
+        {
+            WrappedList<byte> wCodeBytes = new WrappedList<byte>(codeBytes);
+
+            opcodetype opcode; // Current opcode
+            IEnumerable<byte> pushArgs; // OP_PUSHDATAn argument
+
+            int nCount = 0;
+            opcodetype lastOpcode = opcodetype.OP_INVALIDOPCODE;
+
+            // Scan opcodes sequence
+            while (ScriptOpcode.GetOp(ref wCodeBytes, out opcode, out pushArgs))
+            {
+                if (opcode == opcodetype.OP_CHECKSIG || opcode == opcodetype.OP_CHECKSIGVERIFY)
+                {
+                    nCount++;
+                }
+                else if (opcode == opcodetype.OP_CHECKMULTISIG || opcode == opcodetype.OP_CHECKMULTISIGVERIFY)
+                {
+                    if (fAccurate && lastOpcode >= opcodetype.OP_1 && lastOpcode <= opcodetype.OP_16)
+                    {
+                        nCount += ScriptOpcode.DecodeOP_N(lastOpcode);
+                    }
+                    else
+                    {
+                        nCount += 20;
+                    }
+                }
+            }
+
+            return nCount;
+        }
+
+        /// <summary>
+        /// Accurately count sigOps, including sigOps in
+        /// pay-to-script-hash transactions
+        /// </summary>
+        /// <param name="scriptSig">pay-to-script-hash scriptPubKey</param>
+        /// <returns>SigOps count</returns>
+        public int GetSigOpCount(CScript scriptSig)
+        {
+            if (!IsPayToScriptHash())
+            {
+                return GetSigOpCount(true);
+            }
+
+            // This is a pay-to-script-hash scriptPubKey;
+            // get the last item that the scriptSig
+            // pushes onto the stack:
+            WrappedList<byte> wScriptSig = scriptSig.GetWrappedList();
+
+            opcodetype opcode; // Current opcode
+            IEnumerable<byte> pushArgs; // OP_PUSHDATAn argument
+
+            while (ScriptOpcode.GetOp(ref wScriptSig, out opcode, out pushArgs))
+            {
+                if (opcode > opcodetype.OP_16)
+                    return 0;
+            }
+
+            /// ... and return its opcount:
+            CScript subScript = new CScript(pushArgs);
+
+            return subScript.GetSigOpCount(true);
+
+        }
+
+        public void SetDestination(CKeyID ID)
+        {
+            codeBytes.Clear();
+            AddOp(opcodetype.OP_DUP);
+            AddOp(opcodetype.OP_HASH160);
+            AddHash(ID);
+            AddOp(opcodetype.OP_EQUAL);
+        }
+
+        public void SetDestination(CScriptID ID)
+        {
+            codeBytes.Clear();
+            AddOp(opcodetype.OP_HASH160);
+            AddHash(ID);
+            AddOp(opcodetype.OP_EQUAL);
+        }
+
+        public void SetMultiSig(int nRequired, IEnumerable<CKey> keys)
+        {
+            codeBytes.Clear();
+            AddOp(ScriptOpcode.EncodeOP_N(nRequired));
+
+            foreach (CKey key in keys)
+            {
+                PushData(key.GetPubKey().Raw);
+            }
+            AddOp(ScriptOpcode.EncodeOP_N(keys.Count()));
+            AddOp(opcodetype.OP_CHECKMULTISIG);
         }
 
         /// <summary>
