@@ -31,7 +31,7 @@ namespace Novacoin
         /// Initializes a new instance of Hash256 class with first 32 bytes from supplied list
         /// </summary>
         /// <param name="bytesList">List of bytes</param>
-        public Hash256(List<byte> bytesList)
+        public Hash256(IList<byte> bytesList)
         {
             hashBytes = bytesList.Take<byte>(hashSize).ToArray<byte>();
         }

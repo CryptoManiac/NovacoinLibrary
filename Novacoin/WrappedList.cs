@@ -26,15 +26,15 @@ namespace Novacoin
     public class WrappedList<T>
     {
         private int Index;
-        private List<T> Elements;
+        private IList<T> Elements;
 
-        public WrappedList(List<T> List, int Start)
+        public WrappedList(IList<T> List, int Start)
         {
             Elements = List;
             Index = Start;
         }
 
-        public WrappedList(List<T> List)
+        public WrappedList(IList<T> List)
         {
             Elements = List;
             Index = 0;

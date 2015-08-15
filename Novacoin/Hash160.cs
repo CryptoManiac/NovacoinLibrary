@@ -30,7 +30,7 @@ namespace Novacoin
         /// Initializes a new instance of Hash160 class with first 20 bytes from supplied list
         /// </summary>
         /// <param name="bytesList">List of bytes</param>
-        public Hash160(List<byte> bytesList)
+        public Hash160(IList<byte> bytesList)
         {
             hashBytes = bytesList.Take<byte>(hashSize).ToArray<byte>();
         }

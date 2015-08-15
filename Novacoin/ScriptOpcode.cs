@@ -381,7 +381,7 @@ namespace Novacoin
                 case opcodetype.OP_CHECKMULTISIGVERIFY:
                     return "OP_CHECKMULTISIGVERIFY";
 
-                // expanson
+                // expansion
                 case opcodetype.OP_NOP1:
                     return "OP_NOP1";
                 case opcodetype.OP_NOP2:
@@ -512,7 +512,7 @@ namespace Novacoin
         /// </summary>
         /// <param name="bytesList">List of value bytes.</param>
         /// <returns>Formatted value.</returns>
-        public static string ValueString(List<byte> bytesList)
+        public static string ValueString(IList<byte> bytesList)
         {
             StringBuilder sb = new StringBuilder();
 
@@ -545,10 +545,10 @@ namespace Novacoin
         /// </summary>
         /// <param name="stackList">List of stack items.</param>
         /// <returns>Formatted value.</returns>
-        public static string StackString(List<List<byte>> stackList)
+        public static string StackString(IList<IList<byte>> stackList)
         {
             StringBuilder sb = new StringBuilder();
-            foreach(List<byte> bytesList in stackList)
+            foreach(IList<byte> bytesList in stackList)
             {
                 sb.Append(ValueString(bytesList));
             }
