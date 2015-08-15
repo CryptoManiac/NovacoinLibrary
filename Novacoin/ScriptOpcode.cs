@@ -507,19 +507,29 @@ namespace Novacoin
 
         /// <summary>
         /// Convert value bytes into readable representation.
+        /// 
+        /// If list lengh is equal or lesser than 4 bytes then bytes are interpreted as integer value. Otherwise you will get hex representation of supplied data.
         /// </summary>
         /// <param name="bytesList">List of value bytes.</param>
         /// <returns>Formatted value.</returns>
         public static string ValueString(List<byte> bytesList)
         {
             StringBuilder sb = new StringBuilder();
-            byte[] valueBytes = bytesList.ToArray();
 
-            if (bytesList.Count <= 4){
-                Array.Reverse(valueBytes);
+            if (bytesList.Count <= 4)
+            {
+                byte[] valueBytes = new byte[4] {0, 0, 0, 0};
+                bytesList.ToArray().CopyTo(valueBytes, valueBytes.Length - bytesList.Count);
+
+                // Reverse array if we are on little-endian machine
+                if (BitConverter.IsLittleEndian)
+                {
+                    Array.Reverse(valueBytes);
+                }
+
                 sb.Append(BitConverter.ToInt32(valueBytes, 0));
             }
-            else 
+            else
             {
                 foreach (byte b in bytesList)
                 {
