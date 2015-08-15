@@ -422,10 +422,10 @@ namespace Novacoin
         /// Get next opcode from passed list of bytes and extract push arguments if there are some.
         /// </summary>
         /// <param name="codeBytes">WrappedList reference.</param>
-        /// <param name="opcodeRet">Opcode reference.</param>
-        /// <param name="bytesRet">IEnumerable reference which is used to get the push arguments.</param>
+        /// <param name="opcodeRet">Found opcode.</param>
+        /// <param name="bytesRet">IEnumerable out param which is used to get the push arguments.</param>
         /// <returns>Result of operation</returns>
-        public static bool GetOp(ref WrappedList<byte> codeBytes, ref opcodetype opcodeRet, ref IEnumerable<byte> bytesRet)
+        public static bool GetOp(ref WrappedList<byte> codeBytes, out opcodetype opcodeRet, out IEnumerable<byte> bytesRet)
         {
             bytesRet = new List<byte>();
             opcodeRet = opcodetype.OP_INVALIDOPCODE;
@@ -510,16 +510,16 @@ namespace Novacoin
         /// 
         /// If list lengh is equal or lesser than 4 bytes then bytes are interpreted as integer value. Otherwise you will get hex representation of supplied data.
         /// </summary>
-        /// <param name="bytesList">List of value bytes.</param>
+        /// <param name="bytes">Collection of value bytes.</param>
         /// <returns>Formatted value.</returns>
-        public static string ValueString(IList<byte> bytesList)
+        public static string ValueString(IEnumerable<byte> bytes)
         {
             StringBuilder sb = new StringBuilder();
 
-            if (bytesList.Count <= 4)
+            if (bytes.Count() <= 4)
             {
                 byte[] valueBytes = new byte[4] {0, 0, 0, 0};
-                bytesList.ToArray().CopyTo(valueBytes, valueBytes.Length - bytesList.Count);
+                bytes.ToArray().CopyTo(valueBytes, valueBytes.Length - bytes.Count());
 
                 // Reverse array if we are on little-endian machine
                 if (BitConverter.IsLittleEndian)
@@ -531,7 +531,7 @@ namespace Novacoin
             }
             else
             {
-                foreach (byte b in bytesList)
+                foreach (byte b in bytes)
                 {
                     sb.AppendFormat("{0:x2}", b);
                 }

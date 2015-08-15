@@ -28,6 +28,11 @@ namespace Novacoin
         private int Index;
         private List<T> Elements;
 
+        public int ItemsLeft
+        {
+            get { return Elements.Count - Index; }
+        }
+
         public WrappedList(IList<T> List, int Start)
         {
             Elements = new List<T>(List);
@@ -52,7 +57,7 @@ namespace Novacoin
 
         public T[] GetItems(int Count)
         {
-            if (Elements.Count - Index < Count)
+            if (ItemsLeft < Count)
             {
                 throw new WrappedListException("Unable to read requested amount of data.");
             }

@@ -128,14 +128,41 @@ namespace Novacoin
             codeBytes.AddRange(dataBytes);
         }
 
+        /// <summary>
+        /// Disassemble current script code
+        /// </summary>
+        /// <returns>Code listing</returns>
 		public override string ToString()
 		{
-			// TODO: disassembly 
-
 			StringBuilder sb = new StringBuilder();
 
-            //
-            
+            WrappedList<byte> wCodeBytes = new WrappedList<byte>(codeBytes);
+
+            while (wCodeBytes.ItemsLeft > 0)
+            {
+                if (sb.Length != 0)
+                {
+                    sb.Append(" ");
+                }
+
+                opcodetype opcode;
+                IEnumerable<byte> pushArgs;
+                if (!ScriptOpcode.GetOp(ref wCodeBytes, out opcode, out pushArgs))
+                {
+                    sb.Append("[error]");
+                    break;
+                }
+
+                if (0 <= opcode && opcode <= opcodetype.OP_PUSHDATA4)
+                {
+                    sb.Append(ScriptOpcode.ValueString(pushArgs));
+                }
+                else
+                {
+                    sb.Append(ScriptOpcode.GetOpName(opcode));
+                }
+            }
+
             return sb.ToString();
 		}
 	}
