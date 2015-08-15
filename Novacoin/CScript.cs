@@ -236,6 +236,17 @@ namespace Novacoin
             return true;
         }
 
+        /// <summary>
+        /// Quick test for pay-to-script-hash CScripts
+        /// </summary>
+        /// <returns>Checking result</returns>
+        public bool IsPayToScriptHash()
+        {
+            return (codeBytes.Count() == 23 &&
+                    codeBytes[0] == (byte)opcodetype.OP_HASH160 &&
+                    codeBytes[1] == 0x14 &&
+                    codeBytes[22] == (byte)opcodetype.OP_EQUAL);
+        }
 
         /// <summary>
         /// Disassemble current script code
