@@ -101,35 +101,37 @@ namespace Novacoin
         /// <param name="dataBytes">List of data bytes</param>
         public void PushData(IList<byte> dataBytes)
         {
-            if (dataBytes.Count < (int)opcodetype.OP_PUSHDATA1)
+            long nCount = dataBytes.LongCount();
+
+            if (nCount < (int)opcodetype.OP_PUSHDATA1)
             {
                 // OP_0 and OP_FALSE
-                codeBytes.Add((byte)dataBytes.Count);
+                codeBytes.Add((byte)nCount);
             }
-            else if (dataBytes.Count < 0xff)
+            else if (nCount < 0xff)
             {
                 // OP_PUSHDATA1 0x01 [0x5a]
                 codeBytes.Add((byte)opcodetype.OP_PUSHDATA1);
-                codeBytes.Add((byte)dataBytes.Count);
+                codeBytes.Add((byte)nCount);
             }
-            else if (dataBytes.Count < 0xffff)
+            else if (nCount < 0xffff)
             {
                 // OP_PUSHDATA1 0x00 0x01 [0x5a]
                 codeBytes.Add((byte)opcodetype.OP_PUSHDATA2);
 
-                byte[] szBytes = BitConverter.GetBytes((short)dataBytes.Count);
+                byte[] szBytes = BitConverter.GetBytes((ushort)nCount);
                 if (BitConverter.IsLittleEndian)
                 {
                     Array.Reverse(szBytes);
                 }
                 codeBytes.AddRange(szBytes);
             }
-            else if ((uint)dataBytes.Count < 0xffffffff)
+            else if (nCount < 0xffffffff)
             {
                 // OP_PUSHDATA1 0x00 0x00 0x00 0x01 [0x5a]
                 codeBytes.Add((byte)opcodetype.OP_PUSHDATA4);
 
-                byte[] szBytes = BitConverter.GetBytes((uint)dataBytes.Count);
+                byte[] szBytes = BitConverter.GetBytes((uint)nCount);
                 if (BitConverter.IsLittleEndian)
                 {
                     Array.Reverse(szBytes);
@@ -228,7 +230,7 @@ namespace Novacoin
                 if (opcode == opcodetype.OP_PUSHDATA2 && data.Length <= 0xFF)
                     // Could have used an OP_PUSHDATA1.
                     return false;
-                if (opcode == opcodetype.OP_PUSHDATA4 && data.Length <= 0xFFFF)
+                if (opcode == opcodetype.OP_PUSHDATA4 && data.LongLength <= 0xFFFF)
                     // Could have used an OP_PUSHDATA2.
                     return false;
             }
