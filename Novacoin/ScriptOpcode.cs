@@ -446,30 +446,30 @@ namespace Novacoin
             // Immediate operand
             if (opcode <= opcodetype.OP_PUSHDATA4)
             {
-                byte[] szBytes = null;
+                byte[] szBytes = new byte[4] {0, 0, 0, 0}; // Zero length
 
                 try
                 {
                     if (opcode < opcodetype.OP_PUSHDATA1)
                     {
-                        // Zero values
-                        szBytes = new byte[1] { (byte)opcode };
+                        // Zero value opcodes (OP_0, OP_FALSE)
+                        szBytes[3] = (byte)opcode;
                     }
                     else if (opcode == opcodetype.OP_PUSHDATA1)
                     {
                         // The next byte contains the number of bytes to be pushed onto the stack, 
                         //    i.e. you have something like OP_PUSHDATA1 0x01 [0x5a]
-                        szBytes = new byte[1] { codeBytes.GetItem() };
+                        szBytes[3] = (byte) codeBytes.GetItem();
                     }
                     else if (opcode == opcodetype.OP_PUSHDATA2)
                     {
-                        // The next two bytes contain the number of bytes to be pushed onto the stack.
+                        // The next two bytes contain the number of bytes to be pushed onto the stack,
                         //    i.e. now your operation will seem like this: OP_PUSHDATA2 0x00 0x01 [0x5a]
-                        szBytes = codeBytes.GetItems(2);
+                        codeBytes.GetItems(2).CopyTo(szBytes, 2);
                     }
                     else if (opcode == opcodetype.OP_PUSHDATA4)
                     {
-                        // The next four bytes contain the number of bytes to be pushed onto the stack.
+                        // The next four bytes contain the number of bytes to be pushed onto the stack,
                         //   OP_PUSHDATA4 0x00 0x00 0x00 0x01 [0x5a]
                         szBytes = codeBytes.GetItems(4);
                     }
@@ -479,8 +479,13 @@ namespace Novacoin
                     // Unable to read operand length
                     return false;
                 }
-                
-                Array.Reverse(szBytes);
+
+                // Reverse array if we are on little-endian machine
+                if (BitConverter.IsLittleEndian)
+                {
+                    Array.Reverse(szBytes);
+                }
+
                 int nSize = BitConverter.ToInt32(szBytes, 0);
 
                 try
