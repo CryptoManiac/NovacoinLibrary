@@ -79,25 +79,69 @@ namespace Novacoin
             byte prefix = bytes[0];
 
             bytes.RemoveAt(0); // Remove prefix
+
             byte[] bytesArray = bytes.ToArray();
 
-            if (!BitConverter.IsLittleEndian)
+            if (BitConverter.IsLittleEndian)
+            {
+                switch (prefix)
+                {
+                    case 0xfd: // ushort flag
+                        return BitConverter.ToUInt16(bytesArray, 0);
+                    case 0xfe: // uint flag
+                        return BitConverter.ToUInt32(bytesArray, 0);
+                    case 0xff: // ulong flag
+                        return BitConverter.ToUInt64(bytesArray, 0);
+                    default:
+                        return prefix;
+                }
+            }
+            else
             {
                 // Values are stored in little-endian order
-                Array.Reverse(bytesArray);
+                switch (prefix)
+                {
+                    case 0xfd: // ushort flag
+                        Array.Resize<byte>(ref bytesArray, 2);
+                        Array.Reverse(bytesArray);
+                        return BitConverter.ToUInt16(bytesArray, 0);
+                    case 0xfe: // uint flag
+                        Array.Resize<byte>(ref bytesArray, 4);
+                        Array.Reverse(bytesArray);
+                        return BitConverter.ToUInt32(bytesArray, 0);
+                    case 0xff: // ulong flag
+                        Array.Resize<byte>(ref bytesArray, 8);
+                        Array.Reverse(bytesArray);
+                        return BitConverter.ToUInt64(bytesArray, 0);
+                    default:
+                        return prefix;
+                }
             }
+        }
+
+        /// <summary>
+        /// Read and decode variable integer from wrapped list object.
+        /// 
+        /// Note: Should be used only if there is some variable integer data at current position. Otherwise you will get undefined behavior, so make sure that you know what you are doing.
+        /// </summary>
+        /// <param name="wBytes"></param>
+        /// <returns></returns>
+        public static ulong ReadVarInt(WrappedList<byte> wBytes)
+        {
+            byte prefix = wBytes.GetItem();
 
             switch (prefix)
             {
-                case 0xfd: // ushort flag
-                    return BitConverter.ToUInt16(bytesArray, 0);
-                case 0xfe: // uint flag
-                    return BitConverter.ToUInt32(bytesArray, 0);
-                case 0xff: // ulong flag
-                    return BitConverter.ToUInt64(bytesArray, 0);
+                case 0xfd: // ushort
+                    return Interop.LEBytesToUInt16(wBytes.GetItems(2));
+                case 0xfe: // uint
+                    return Interop.LEBytesToUInt32(wBytes.GetItems(4));
+                case 0xff: // ulong
+                    return Interop.LEBytesToUInt64(wBytes.GetItems(8));
                 default:
                     return prefix;
             }
+
         }
     }
 }

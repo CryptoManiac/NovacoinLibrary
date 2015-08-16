@@ -29,14 +29,40 @@ namespace Novacoin
 		/// </summary>
 		private uint nSequence = 0xffffffff;
 
-		public CTxIn ()
+        /// <summary>
+        /// Initialize new CTxIn instance as copy of another one.
+        /// </summary>
+        /// <param name="i">CTxIn instance.</param>
+        public CTxIn(CTxIn i)
+        {
+            txID = i.txID;
+            nInput = i.nInput;
+            scriptSig = i.scriptSig;
+            nSequence = i.nSequence;
+        }
+
+        /// <summary>
+        /// Decode byte sequence and initialize new instance of CTxIn class.
+        /// </summary>
+        /// <param name="bytes">Byte sequence</param>
+		public CTxIn (IList<byte> bytes)
 		{
+            WrappedList<byte> wBytes = new WrappedList<byte>(bytes);
+
+            txID = new Hash256(wBytes.GetItems(32));
+            nInput = Interop.LEBytesToUInt32(wBytes.GetItems(4));
+            int ssLength = (int)VarInt.ReadVarInt(wBytes);
+            scriptSig = wBytes.GetItems(ssLength);
+            nSequence = Interop.LEBytesToUInt32(wBytes.GetItems(4));
 		}
 
+        /// <summary>
+        /// Get raw bytes representation of our input.
+        /// </summary>
+        /// <returns>Byte sequence.</returns>
         public IList<byte> ToBytes()
         {
             List<byte> inputBytes = new List<byte>();
-
 
             inputBytes.AddRange(txID.hashBytes); // Input transaction id
             inputBytes.AddRange(Interop.LEBytes(nInput)); // Input number
