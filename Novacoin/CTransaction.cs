@@ -33,9 +33,40 @@ namespace Novacoin
 		/// </summary>
 		public uint nLockTime = 0;
 
-		public CTransaction ()
+        /// <summary>
+        /// Parse byte sequence and initialize new instance of CTransaction
+        /// </summary>
+        /// <param name="txBytes"></param>
+		public CTransaction (IList<byte> txBytes)
 		{
+            WrappedList<byte> wBytes = new WrappedList<byte>(txBytes);
 
+            nVersion = Interop.LEBytesToUInt32(wBytes.GetItems(4));
+            nTime = Interop.LEBytesToUInt32(wBytes.GetItems(4));
+
+            int nInputs = (int)VarInt.ReadVarInt(wBytes);
+            inputs = new CTxIn[nInputs];
+
+            for (int nCurrentInput = 0; nCurrentInput < nInputs; nCurrentInput++)
+            {
+                // Fill inputs array
+                inputs[nCurrentInput].txID = new Hash256(wBytes.GetItems(32));
+                inputs[nCurrentInput].n = Interop.LEBytesToUInt32(wBytes.GetItems(4));
+                inputs[nCurrentInput].scriptSig = wBytes.GetItems((int)VarInt.ReadVarInt(wBytes));
+                inputs[nCurrentInput].nSequence = Interop.LEBytesToUInt32(wBytes.GetItems(4));
+            }
+
+            int nOutputs = (int)VarInt.ReadVarInt(wBytes);
+            outputs = new CTxOut[nOutputs];
+
+            for (int nCurrentOutput = 0; nCurrentOutput < nInputs; nCurrentOutput++)
+            {
+                // Fill outputs array
+                outputs[nCurrentOutput].nValue = Interop.LEBytesToUInt64(wBytes.GetItems(8));
+                outputs[nCurrentOutput].scriptPubKey = wBytes.GetItems((int)VarInt.ReadVarInt(wBytes));
+            }
+
+            nLockTime = Interop.LEBytesToUInt32(wBytes.GetItems(4));
 		}
 
         IList<byte> ToBytes()

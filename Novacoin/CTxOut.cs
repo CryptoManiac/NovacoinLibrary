@@ -12,12 +12,12 @@ namespace Novacoin
 		/// <summary>
 		/// Input value.
 		/// </summary>
-		private ulong nValue;
+        public ulong nValue;
 
 		/// <summary>
 		/// Second half of script which contains spending instructions.
 		/// </summary>
-		private byte[] scriptPubKey;
+        public byte[] scriptPubKey;
 
         /// <summary>
         /// Initialize new CTxOut instance as a copy of another instance.
@@ -27,20 +27,6 @@ namespace Novacoin
         {
             nValue = o.nValue;
             scriptPubKey = o.scriptPubKey;
-        }
-
-        /// <summary>
-        /// Parse input byte sequence and initialize new CTxOut instance.
-        /// </summary>
-        /// <param name="bytes">Byte sequence.</param>
-        public CTxOut(IList<byte> bytes)
-        {
-            WrappedList<byte> wBytes = new WrappedList<byte>(bytes);
-            
-            nValue = Interop.LEBytesToUInt64(wBytes.GetItems(8));
-            int spkLength = (int)VarInt.ReadVarInt(wBytes);
-
-            scriptPubKey = wBytes.GetItems(spkLength);
         }
 
         /// <summary>
