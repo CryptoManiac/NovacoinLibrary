@@ -36,6 +36,9 @@
     <Compile Include="CPubKey.cs" />
     <Compile Include="CScriptID.cs" />
     <Compile Include="Hash.cs" />
+    <Compile Include="Interop.cs" />
+    <Compile Include="VarInt.cs" />
+    <Compile Include="VarStr.cs" />
     <Compile Include="WrappedList.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="CTxIn.cs" />

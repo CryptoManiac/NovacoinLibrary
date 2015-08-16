@@ -119,11 +119,7 @@ namespace Novacoin
                 // OP_PUSHDATA1 0x00 0x01 [0x5a]
                 codeBytes.Add((byte)opcodetype.OP_PUSHDATA2);
 
-                byte[] szBytes = BitConverter.GetBytes((ushort)nCount);
-                if (BitConverter.IsLittleEndian)
-                {
-                    Array.Reverse(szBytes);
-                }
+                byte[] szBytes = Interop.BEBytes((ushort)nCount);
                 codeBytes.AddRange(szBytes);
             }
             else if (nCount < 0xffffffff)
@@ -131,11 +127,7 @@ namespace Novacoin
                 // OP_PUSHDATA1 0x00 0x00 0x00 0x01 [0x5a]
                 codeBytes.Add((byte)opcodetype.OP_PUSHDATA4);
 
-                byte[] szBytes = BitConverter.GetBytes((uint)nCount);
-                if (BitConverter.IsLittleEndian)
-                {
-                    Array.Reverse(szBytes);
-                }
+                byte[] szBytes = Interop.BEBytes((uint)nCount);
                 codeBytes.AddRange(szBytes);
             }
 
@@ -222,17 +214,25 @@ namespace Novacoin
                 byte[] data = pushArgs.ToArray();
 
                 if (opcode < opcodetype.OP_PUSHDATA1 && opcode > opcodetype.OP_0 && (data.Length == 1 && data[0] <= 16))
+                {
                     // Could have used an OP_n code, rather than a 1-byte push.
                     return false;
+                }
                 if (opcode == opcodetype.OP_PUSHDATA1 && data.Length < (int)opcodetype.OP_PUSHDATA1)
+                {
                     // Could have used a normal n-byte push, rather than OP_PUSHDATA1.
                     return false;
+                }
                 if (opcode == opcodetype.OP_PUSHDATA2 && data.Length <= 0xFF)
+                {
                     // Could have used an OP_PUSHDATA1.
                     return false;
+                }
                 if (opcode == opcodetype.OP_PUSHDATA4 && data.LongLength <= 0xFFFF)
+                {
                     // Could have used an OP_PUSHDATA2.
                     return false;
+                }
             }
 
             return true;
@@ -316,7 +316,9 @@ namespace Novacoin
             while (ScriptOpcode.GetOp(ref wScriptSig, out opcode, out pushArgs))
             {
                 if (opcode > opcodetype.OP_16)
+                {
                     return 0;
+                }
             }
 
             /// ... and return its opcount:

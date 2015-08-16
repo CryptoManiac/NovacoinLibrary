@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text;
+using System.Collections.Generic;
 
 namespace Novacoin
 {
@@ -11,26 +12,40 @@ namespace Novacoin
 		/// <summary>
 		/// Hash of parent transaction.
 		/// </summary>
-		public Hash256 txID = new Hash256();
+		private Hash256 txID = new Hash256();
 
 		/// <summary>
 		/// Parent input number.
 		/// </summary>
-		public uint nInput = 0;
+		private uint nInput = 0;
 
 		/// <summary>
 		/// First half of script, signatures for the scriptPubKey
 		/// </summary>
-		public byte[] scriptSig;
+		private byte[] scriptSig;
 
 		/// <summary>
 		/// Transaction variant number, irrelevant if nLockTime isn't specified. Its value is 0xffffffff by default.
 		/// </summary>
-		public uint nSequence = 0xffffffff;
+		private uint nSequence = 0xffffffff;
 
 		public CTxIn ()
 		{
 		}
+
+        public IList<byte> ToBytes()
+        {
+            List<byte> inputBytes = new List<byte>();
+
+
+            inputBytes.AddRange(txID.hashBytes); // Input transaction id
+            inputBytes.AddRange(Interop.LEBytes(nInput)); // Input number
+            inputBytes.AddRange(VarInt.EncodeVarInt(scriptSig.LongLength)); // Scriptsig length
+            inputBytes.AddRange(scriptSig); // ScriptSig
+            inputBytes.AddRange(Interop.LEBytes(nSequence)); // Sequence
+
+            return inputBytes;
+        }
 
 		public override string ToString ()
 		{

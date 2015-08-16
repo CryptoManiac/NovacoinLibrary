@@ -6,11 +6,8 @@ using System.Threading.Tasks;
 
 namespace Novacoin
 {
-    public class CKeyID : Hash160
+    public class VarStr
     {
-        public CKeyID(Hash160 pubKeyHash)
-        {
-            _hashBytes = pubKeyHash.hashBytes;
-        }
+
     }
 }
