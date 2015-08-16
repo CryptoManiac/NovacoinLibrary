@@ -480,13 +480,7 @@ namespace Novacoin
                     return false;
                 }
 
-                // Reverse array if we are on little-endian machine
-                if (BitConverter.IsLittleEndian)
-                {
-                    Array.Reverse(szBytes);
-                }
-
-                int nSize = BitConverter.ToInt32(szBytes, 0);
+                int nSize = (int)Interop.BEBytesToUInt32(szBytes);
 
                 if (nSize > 0)
                 {

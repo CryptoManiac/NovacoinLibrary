@@ -31,6 +31,7 @@ namespace Novacoin
 
             if (!BitConverter.IsLittleEndian)
             {
+                // Reverse array if we are on big-endian machine
                 Array.Reverse(resultBytes);
             }
 
@@ -43,6 +44,7 @@ namespace Novacoin
 
             if (!BitConverter.IsLittleEndian)
             {
+                // Reverse array if we are on big-endian machine
                 Array.Reverse(resultBytes);
             }
 
@@ -55,6 +57,7 @@ namespace Novacoin
 
             if (!BitConverter.IsLittleEndian)
             {
+                // Reverse array if we are on big-endian machine
                 Array.Reverse(resultBytes);
             }
 
@@ -67,6 +70,7 @@ namespace Novacoin
 
             if (BitConverter.IsLittleEndian)
             {
+                // Reverse array if we are on little-endian machine
                 Array.Reverse(resultBytes);
             }
 
@@ -79,6 +83,7 @@ namespace Novacoin
 
             if (BitConverter.IsLittleEndian)
             {
+                // Reverse array if we are on little-endian machine
                 Array.Reverse(resultBytes);
             }
 
@@ -91,6 +96,7 @@ namespace Novacoin
 
             if (BitConverter.IsLittleEndian)
             {
+                // Reverse array if we are on little-endian machine
                 Array.Reverse(resultBytes);
             }
 
@@ -106,6 +112,7 @@ namespace Novacoin
 
             if (!BitConverter.IsLittleEndian)
             {
+                // Reverse array if we are on big-endian machine
                 Array.Reverse(bytes);
             }
 
@@ -114,13 +121,14 @@ namespace Novacoin
 
         public static uint LEBytesToUInt32(byte[] bytes)
         {
-            if (bytes.Length != sizeof(ushort))
+            if (bytes.Length != sizeof(uint))
             {
                 throw new InteropException("Array size doesn't match the uint data type.");
             }
 
             if (!BitConverter.IsLittleEndian)
             {
+                // Reverse array if we are on big-endian machine
                 Array.Reverse(bytes);
             }
 
@@ -129,19 +137,67 @@ namespace Novacoin
 
         public static ulong LEBytesToUInt64(byte[] bytes)
         {
-            if (bytes.Length != sizeof(ushort))
+            if (bytes.Length != sizeof(ulong))
             {
                 throw new InteropException("Array size doesn't match the ulong data type.");
             }
 
             if (!BitConverter.IsLittleEndian)
             {
+                // Reverse array if we are on big-endian machine
                 Array.Reverse(bytes);
             }
 
             return BitConverter.ToUInt64(bytes, 0);
         }
 
+        public static ushort BEBytesToUInt16(byte[] bytes)
+        {
+            if (bytes.Length != sizeof(ushort))
+            {
+                throw new InteropException("Array size doesn't match the ushort data type.");
+            }
+
+            if (BitConverter.IsLittleEndian)
+            {
+                // Reverse array if we are on little-endian machine
+                Array.Reverse(bytes);
+            }
+
+            return BitConverter.ToUInt16(bytes, 0);
+        }
+
+        public static uint BEBytesToUInt32(byte[] bytes)
+        {
+            if (bytes.Length != sizeof(uint))
+            {
+                throw new InteropException("Array size doesn't match the uint data type.");
+            }
+
+            if (BitConverter.IsLittleEndian)
+            {
+                // Reverse array if we are on little-endian machine
+                Array.Reverse(bytes);
+            }
+
+            return BitConverter.ToUInt32(bytes, 0);
+        }
+
+        public static ulong BEBytesToUInt64(byte[] bytes)
+        {
+            if (bytes.Length != sizeof(ulong))
+            {
+                throw new InteropException("Array size doesn't match the ulong data type.");
+            }
+
+            if (BitConverter.IsLittleEndian)
+            {
+                // Reverse array if we are on little-endian machine
+                Array.Reverse(bytes);
+            }
+
+            return BitConverter.ToUInt64(bytes, 0);
+        }
 
     }
 }
