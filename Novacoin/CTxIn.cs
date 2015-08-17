@@ -65,10 +65,23 @@ namespace Novacoin
             return inputBytes;
         }
 
+        public bool IsCoinBase()
+        {
+            return txID.IsZero();
+        }
+
 		public override string ToString ()
 		{
 			StringBuilder sb = new StringBuilder ();
-			sb.AppendFormat ("CTxIn(txId={0},n={1},scriptSig={2})", txID.ToString(), n, (new CScript(scriptSig)).ToString());
+
+            if (IsCoinBase())
+            {
+                sb.AppendFormat("CTxIn(txId={0},coinbase={2},nSequence={3})", txID.ToString(), n, Interop.ToHex(scriptSig), nSequence);
+            }
+            else
+            {
+                sb.AppendFormat("CTxIn(txId={0},n={1},scriptSig={2},nSequence={3})", txID.ToString(), n, (new CScript(scriptSig)).ToString(), nSequence);
+            }
 
 			return sb.ToString ();
 		}

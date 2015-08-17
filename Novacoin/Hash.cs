@@ -55,6 +55,11 @@ namespace Novacoin
             _hashBytes = bytesArray;
         }
 
+        public bool IsZero()
+        {
+            return !_hashBytes.Any(b => b != 0);
+        }
+
         public override string ToString()
         {
             return Interop.ToHex(_hashBytes);
