@@ -67,6 +67,18 @@ namespace Novacoin
             return signer.GenerateSignature();
         }
 
+        public bool Verify(IEnumerable<byte> data, IEnumerable<byte> signature)
+        {
+            byte[] dataBytes = data.ToArray();
+
+            ISigner signer = SignerUtilities.GetSigner("SHA-256withECDSA");
+            ECPublicKeyParameters keyParameters = new ECPublicKeyParameters(Q, domain);
+            signer.Init(false, keyParameters);
+            signer.BlockUpdate(dataBytes, 0, dataBytes.Length);
+
+            return signer.VerifySignature(signature.ToArray());
+        }
+
         /// <summary>
         /// Secret part of key pair
         /// </summary>
