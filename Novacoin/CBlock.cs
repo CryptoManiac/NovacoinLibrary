@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using System.Collections.Generic;
 
 namespace Novacoin
@@ -50,8 +51,20 @@ namespace Novacoin
 
         public override string ToString()
         {
+            StringBuilder sb = new StringBuilder();
+
+            sb.AppendFormat("CBlock(\n header={0},\n", header.ToString());
+
+            foreach(CTransaction t in tx)
+            {
+                sb.AppendFormat("{0}, \n", t.ToString());
+            }
+
+            sb.AppendFormat("signature={0})\n", Interop.ToHex(signature));
+            
+
             // TODO
-            return base.ToString();
+            return sb.ToString();
         }
 	}
 }
