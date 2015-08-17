@@ -47,6 +47,12 @@ namespace Novacoin
             // Read block signature
             signature = wBytes.GetItems((int)VarInt.ReadVarInt(ref wBytes));
 		}
+
+        public override string ToString()
+        {
+            // TODO
+            return base.ToString();
+        }
 	}
 }
 
