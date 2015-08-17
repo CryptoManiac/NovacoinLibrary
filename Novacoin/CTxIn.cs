@@ -42,6 +42,13 @@ namespace Novacoin
         }
 
         /// <summary>
+        /// Initialize an empty instance of CTxIn class
+        /// </summary>
+        public CTxIn()
+        {
+        }
+
+        /// <summary>
         /// Get raw bytes representation of our input.
         /// </summary>
         /// <returns>Byte sequence.</returns>
@@ -61,7 +68,7 @@ namespace Novacoin
 		public override string ToString ()
 		{
 			StringBuilder sb = new StringBuilder ();
-			sb.AppendFormat ("CTxIn(txId={0},n={1},scriptSig={2}", txID.ToString(), n, scriptSig.ToString());
+			sb.AppendFormat ("CTxIn(txId={0},n={1},scriptSig={2})", txID.ToString(), n, (new CScript(scriptSig)).ToString());
 
 			return sb.ToString ();
 		}

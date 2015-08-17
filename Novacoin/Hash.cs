@@ -57,12 +57,7 @@ namespace Novacoin
 
         public override string ToString()
         {
-            StringBuilder sb = new StringBuilder(hashSize * 2);
-            foreach (byte b in _hashBytes)
-            {
-                sb.AppendFormat("{0:x2}", b);
-            }
-            return sb.ToString();
+            return Interop.ToHex(_hashBytes);
         }
     }
 }

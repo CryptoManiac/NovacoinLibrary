@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using System.Collections.Generic;
 
 namespace Novacoin
@@ -50,6 +51,8 @@ namespace Novacoin
             for (int nCurrentInput = 0; nCurrentInput < nInputs; nCurrentInput++)
             {
                 // Fill inputs array
+                inputs[nCurrentInput] = new CTxIn();
+
                 inputs[nCurrentInput].txID = new Hash256(wBytes.GetItems(32));
                 inputs[nCurrentInput].n = Interop.LEBytesToUInt32(wBytes.GetItems(4));
                 inputs[nCurrentInput].scriptSig = wBytes.GetItems((int)VarInt.ReadVarInt(wBytes));
@@ -59,9 +62,10 @@ namespace Novacoin
             int nOutputs = (int)VarInt.ReadVarInt(wBytes);
             outputs = new CTxOut[nOutputs];
 
-            for (int nCurrentOutput = 0; nCurrentOutput < nInputs; nCurrentOutput++)
+            for (int nCurrentOutput = 0; nCurrentOutput < nOutputs; nCurrentOutput++)
             {
                 // Fill outputs array
+                outputs[nCurrentOutput] = new CTxOut();
                 outputs[nCurrentOutput].nValue = Interop.LEBytesToUInt64(wBytes.GetItems(8));
                 outputs[nCurrentOutput].scriptPubKey = wBytes.GetItems((int)VarInt.ReadVarInt(wBytes));
             }
@@ -136,7 +140,27 @@ namespace Novacoin
             resultBytes.AddRange(Interop.LEBytes(nLockTime));
 
             return resultBytes;
+        }
 
+        public override string ToString()
+        {
+            StringBuilder sb = new StringBuilder();
+
+            sb.AppendFormat("CTransaction(\n nVersion={0},\n nTime={1},\n", nVersion, nTime);
+
+            foreach (CTxIn txin in inputs)
+            {
+                sb.AppendFormat(" {0},\n", txin.ToString());
+            }
+
+            foreach (CTxOut txout in outputs)
+            {
+                sb.AppendFormat(" {0},\n", txout.ToString());
+            }
+
+            sb.AppendFormat("nLockTime={0})\n", nLockTime);
+
+            return sb.ToString();
         }
 	}
 }

@@ -519,20 +519,11 @@ namespace Novacoin
                 byte[] valueBytes = new byte[4] {0, 0, 0, 0};
                 bytes.ToArray().CopyTo(valueBytes, valueBytes.Length - bytes.Count());
 
-                // Reverse array if we are on little-endian machine
-                if (BitConverter.IsLittleEndian)
-                {
-                    Array.Reverse(valueBytes);
-                }
-
-                sb.Append(BitConverter.ToInt32(valueBytes, 0));
+                sb.Append(Interop.BEBytesToUInt32(valueBytes));
             }
             else
             {
-                foreach (byte b in bytes)
-                {
-                    sb.AppendFormat("{0:x2}", b);
-                }
+                return Interop.ToHex(bytes);
             }
 
             return sb.ToString();

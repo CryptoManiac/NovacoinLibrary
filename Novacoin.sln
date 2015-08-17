@@ -1,7 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio Express 2012 for Windows Desktop
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Novacoin", "Novacoin\Novacoin.csproj", "{6C657EA6-E9FB-41D7-B949-B41DD5136748}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NovacoinTest", "NovacoinTest\NovacoinTest.csproj", "{BFBAD4AE-BCD5-4025-9637-3CE724126448}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -13,6 +15,13 @@ Global
 		{6C657EA6-E9FB-41D7-B949-B41DD5136748}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6C657EA6-E9FB-41D7-B949-B41DD5136748}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6C657EA6-E9FB-41D7-B949-B41DD5136748}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BFBAD4AE-BCD5-4025-9637-3CE724126448}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BFBAD4AE-BCD5-4025-9637-3CE724126448}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BFBAD4AE-BCD5-4025-9637-3CE724126448}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BFBAD4AE-BCD5-4025-9637-3CE724126448}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
 		StartupItem = Novacoin\Novacoin.csproj

@@ -30,6 +30,13 @@ namespace Novacoin
         }
 
         /// <summary>
+        /// Initialize an empty instance of CTxOut class
+        /// </summary>
+        public CTxOut()
+        {
+        }
+
+        /// <summary>
         /// Get raw bytes representation of our output.
         /// </summary>
         /// <returns>Byte sequence.</returns>
@@ -47,7 +54,7 @@ namespace Novacoin
 		public override string ToString ()
 		{
 			StringBuilder sb = new StringBuilder ();
-			sb.AppendFormat ("CTxOut(nValue={0},scriptPubKey={1}", nValue, scriptPubKey.ToString());
+			sb.AppendFormat ("CTxOut(nValue={0},scriptPubKey={1})", nValue, (new CScript(scriptPubKey)).ToString());
 
 			return sb.ToString ();
 		}

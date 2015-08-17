@@ -23,7 +23,7 @@ namespace Novacoin
         }
     }
 
-    class Interop
+    public class Interop
     {
         public static byte[] LEBytes(ushort n)
         {
@@ -199,5 +199,21 @@ namespace Novacoin
             return BitConverter.ToUInt64(bytes, 0);
         }
 
+        public static IEnumerable<byte> ParseHex(string hex)
+        {
+            return Enumerable.Range(0, hex.Length)
+                             .Where(x => x % 2 == 0)
+                             .Select(x => Convert.ToByte(hex.Substring(x, 2), 16));
+        }
+
+        public static string ToHex(IEnumerable<byte> bytes)
+        {
+            StringBuilder sb = new StringBuilder();
+            foreach (byte b in bytes)
+            {
+                sb.AppendFormat("{0:x2}", b);
+            }
+            return sb.ToString();
+        }
     }
 }
