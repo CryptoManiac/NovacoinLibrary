@@ -113,7 +113,7 @@ namespace Novacoin
             return tx;
         }
 
-        IList<byte> ToBytes()
+        public IList<byte> ToBytes()
         {
             List<byte> resultBytes = new List<byte>();
 

@@ -49,6 +49,28 @@ namespace Novacoin
             signature = wBytes.GetItems((int)VarInt.ReadVarInt(ref wBytes));
 		}
 
+        /// <summary>
+        /// Convert current instance into sequence of bytes
+        /// </summary>
+        /// <returns>Byte sequence</returns>
+        public IList<byte> ToBytes()
+        {
+            List<byte> r = new List<byte>();
+
+            r.AddRange(header.ToBytes());
+            r.AddRange(VarInt.EncodeVarInt(tx.LongLength)); // transactions count
+
+            foreach (CTransaction t in tx)
+            {
+                r.AddRange(t.ToBytes());
+            }
+
+            r.AddRange(VarInt.EncodeVarInt(signature.LongLength));
+            r.AddRange(signature);
+
+            return r;
+        }
+
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder();

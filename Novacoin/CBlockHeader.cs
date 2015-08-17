@@ -39,9 +39,30 @@ namespace Novacoin
 		/// </summary>
 		public uint nNonce = 0;
 
+        /// <summary>
+        /// Initialize an empty instance
+        /// </summary>
 		public CBlockHeader ()
 		{
 		}
+
+        /// <summary>
+        /// Convert current block header instance into sequence of bytes
+        /// </summary>
+        /// <returns>Byte sequence</returns>
+        public IList<byte> ToBytes()
+        {
+            List<byte> r = new List<byte>();
+
+            r.AddRange(Interop.LEBytes(nVersion));
+            r.AddRange(prevHash.hashBytes);
+            r.AddRange(merkleRoot.hashBytes);
+            r.AddRange(Interop.LEBytes(nTime));
+            r.AddRange(Interop.LEBytes(nBits));
+            r.AddRange(Interop.LEBytes(nNonce));
+
+            return r;
+        }
 
         public override string ToString()
         {
