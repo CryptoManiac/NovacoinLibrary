@@ -102,15 +102,15 @@ namespace Novacoin
                 switch (prefix)
                 {
                     case 0xfd: // ushort flag
-                        Array.Resize<byte>(ref bytesArray, 2);
+                        Array.Resize(ref bytesArray, 2);
                         Array.Reverse(bytesArray);
                         return BitConverter.ToUInt16(bytesArray, 0);
                     case 0xfe: // uint flag
-                        Array.Resize<byte>(ref bytesArray, 4);
+                        Array.Resize(ref bytesArray, 4);
                         Array.Reverse(bytesArray);
                         return BitConverter.ToUInt32(bytesArray, 0);
                     case 0xff: // ulong flag
-                        Array.Resize<byte>(ref bytesArray, 8);
+                        Array.Resize(ref bytesArray, 8);
                         Array.Reverse(bytesArray);
                         return BitConverter.ToUInt64(bytesArray, 0);
                     default:
