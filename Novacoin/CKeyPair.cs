@@ -51,6 +51,23 @@ namespace Novacoin
         }
 
         /// <summary>
+        /// Create signature for supplied data
+        /// </summary>
+        /// <param name="data">Data bytes sequence</param>
+        /// <returns>Signature bytes sequence</returns>
+        public IEnumerable<byte> Sign(IEnumerable<byte> data)
+        {
+            byte[] dataBytes = data.ToArray();
+
+            ISigner signer = SignerUtilities.GetSigner("SHA-256withECDSA");
+            ECPrivateKeyParameters keyParameters = new ECPrivateKeyParameters(D, domain);
+            signer.Init(true, keyParameters);
+            signer.BlockUpdate(dataBytes, 0, dataBytes.Length);
+
+            return signer.GenerateSignature();
+        }
+
+        /// <summary>
         /// Secret part of key pair
         /// </summary>
         public IEnumerable<byte> Secret

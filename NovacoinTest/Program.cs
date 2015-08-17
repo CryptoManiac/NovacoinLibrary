@@ -49,6 +49,13 @@ namespace NovacoinTest
             Console.WriteLine(keyPair1.ToString());
             Console.WriteLine("OK: {0}\n", keyPair1.ToString() == keyPair2.ToString());
 
+            /// ECDSA keypair signing test
+
+            string data = "Превед!";
+            byte[] signature = keyPair1.Sign(Encoding.UTF8.GetBytes(data)).ToArray();
+
+            Console.WriteLine("Signature: {0}", Interop.ToHex(signature));
+
             Console.ReadLine();
         }
     }
