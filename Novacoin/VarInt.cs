@@ -126,7 +126,7 @@ namespace Novacoin
         /// </summary>
         /// <param name="wBytes"></param>
         /// <returns></returns>
-        public static ulong ReadVarInt(WrappedList<byte> wBytes)
+        public static ulong ReadVarInt(ref WrappedList<byte> wBytes)
         {
             byte prefix = wBytes.GetItem();
 

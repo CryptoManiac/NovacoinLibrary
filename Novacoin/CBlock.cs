@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Novacoin
 {
@@ -20,10 +21,31 @@ namespace Novacoin
 		/// <summary>
 		/// Block header signature.
 		/// </summary>
-		public byte[] signature = {};
+		public byte[] signature;
 
-		public CBlock ()
+        /// <summary>
+        /// Parse byte sequence and initialize new block instance
+        /// </summary>
+        /// <param name="blockBytes"></param>
+		public CBlock (List<byte> blockBytes)
 		{
+            header = new CBlockHeader();
+
+            WrappedList<byte> wBytes = new WrappedList<byte>(blockBytes);
+
+            // Fill the block header fields
+            header.nVersion = Interop.LEBytesToUInt32(wBytes.GetItems(4));
+            header.prevHash = new Hash256(wBytes.GetItems(32));
+            header.merkleRoot = new Hash256(wBytes.GetItems(32));
+            header.nTime = Interop.LEBytesToUInt32(wBytes.GetItems(4));
+            header.nBits = Interop.LEBytesToUInt32(wBytes.GetItems(4));
+            header.nNonce = Interop.LEBytesToUInt32(wBytes.GetItems(4));
+
+            // Parse transactions list
+            tx = CTransaction.ParseTransactionsList(ref wBytes);
+
+            // Read block signature
+            signature = wBytes.GetItems((int)VarInt.ReadVarInt(ref wBytes));
 		}
 	}
 }
