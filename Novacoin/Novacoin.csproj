@@ -28,11 +28,16 @@
     <ConsolePause>false</ConsolePause>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="BouncyCastle.Crypto, Version=1.7.4137.9688, Culture=neutral, PublicKeyToken=a4292a325f69b123, processorArchitecture=MSIL">
+      <HintPath>..\packages\BouncyCastle.1.7.0\lib\Net40-Client\BouncyCastle.Crypto.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CKey.cs" />
     <Compile Include="CKeyID.cs" />
+    <Compile Include="CKeyPair.cs" />
     <Compile Include="CPubKey.cs" />
     <Compile Include="CScriptID.cs" />
     <Compile Include="Hash.cs" />
@@ -50,6 +55,9 @@
     <Compile Include="CBlock.cs" />
     <Compile Include="CScript.cs" />
     <Compile Include="ScriptOpcode.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>
