@@ -48,6 +48,11 @@ namespace Novacoin
         {
         }
 
+        /// <summary>
+        /// Read vin list from byte sequence.
+        /// </summary>
+        /// <param name="wBytes">Reference to byte sequence</param>
+        /// <returns>Inputs array</returns>
         public static CTxIn[] ReadTxInList(ref WrappedList<byte> wBytes)
         {
             CTxIn[] vin;
