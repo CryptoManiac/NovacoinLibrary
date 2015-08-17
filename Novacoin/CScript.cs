@@ -345,14 +345,14 @@ namespace Novacoin
             AddOp(opcodetype.OP_EQUAL);
         }
 
-        public void SetMultiSig(int nRequired, IEnumerable<CKey> keys)
+        public void SetMultiSig(int nRequired, IEnumerable<CPubKey> keys)
         {
             codeBytes.Clear();
             AddOp(ScriptOpcode.EncodeOP_N(nRequired));
 
-            foreach (CKey key in keys)
+            foreach (CPubKey key in keys)
             {
-                PushData(key.GetPubKey().Raw);
+                PushData(key.Raw.ToList());
             }
             AddOp(ScriptOpcode.EncodeOP_N(keys.Count()));
             AddOp(opcodetype.OP_CHECKMULTISIG);

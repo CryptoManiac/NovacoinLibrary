@@ -79,6 +79,20 @@ namespace Novacoin
             return signer.VerifySignature(signature.ToArray());
         }
 
+        public CPubKey GetPubKey()
+        {
+            return new CPubKey(Q);
+        }
+
+        /// <summary>
+        /// Calculate Hash160 and create new CKeyID instance.
+        /// </summary>
+        /// <returns>New key ID</returns>
+        public CKeyID GetKeyID()
+        {
+            return new CKeyID(Hash160.Compute160(Public));
+        }
+
         /// <summary>
         /// Secret part of key pair
         /// </summary>

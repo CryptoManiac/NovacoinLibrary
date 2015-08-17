@@ -45,8 +45,10 @@ namespace NovacoinTest
 
             CKeyPair keyPair1 = new CKeyPair();
             CKeyPair keyPair2 = new CKeyPair(keyPair1.Secret);
+            CPubKey pubKey = keyPair2.GetPubKey();
        
             Console.WriteLine(keyPair1.ToString());
+            Console.WriteLine("PubKey: {0}", pubKey.ToString());
             Console.WriteLine("OK: {0}\n", keyPair1.ToString() == keyPair2.ToString());
 
             /// ECDSA keypair signing test
@@ -56,7 +58,8 @@ namespace NovacoinTest
             byte[] signature = keyPair1.Sign(dataBytes).ToArray();
 
             Console.WriteLine("Signature: {0}", Interop.ToHex(signature));
-            Console.WriteLine("Signature is OK: {0}", keyPair1.Verify(dataBytes, signature));
+            Console.WriteLine("Signature is OK: {0} (CKeyPair)", keyPair1.Verify(dataBytes, signature));
+            Console.WriteLine("Signature is OK: {0} (CPubKey)", pubKey.Verify(dataBytes, signature));
 
             Console.ReadLine();
         }

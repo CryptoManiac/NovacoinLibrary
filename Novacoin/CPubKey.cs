@@ -4,6 +4,17 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using Org.BouncyCastle.Math;
+using Org.BouncyCastle.Math.EC;
+
+using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Crypto.Generators;
+using Org.BouncyCastle.Crypto.Parameters;
+
+using Org.BouncyCastle.Asn1.X9;
+using Org.BouncyCastle.Security;
+using Org.BouncyCastle.Asn1.Sec;
+
 namespace Novacoin
 {
     /// <summary>
@@ -11,10 +22,9 @@ namespace Novacoin
     /// </summary>
     public class CPubKey
     {
-        /// <summary>
-        /// Public key bytes
-        /// </summary>
-        private List<byte> pubKeyBytes;
+        private ECPoint Q;
+        private static X9ECParameters curve = SecNamedCurves.GetByName("secp256k1");
+        private static ECDomainParameters domain = new ECDomainParameters(curve.Curve, curve.G, curve.N, curve.H, curve.GetSeed());
 
         /// <summary>
         /// Initializes a new instance of CPubKey class as the copy of another instance
@@ -22,35 +32,39 @@ namespace Novacoin
         /// <param name="pubKey">Another CPubKey instance</param>
         public CPubKey(CPubKey pubKey)
         {
-            pubKeyBytes = pubKey.pubKeyBytes;
+            Q = pubKey.Q;
         }
 
         /// <summary>
         /// Initializes a new instance of CPubKey class using supplied sequence of bytes
         /// </summary>
-        /// <param name="bytesList"></param>
-        public CPubKey(IEnumerable<byte> bytesList)
+        /// <param name="bytes">Byte sequence</param>
+        public CPubKey(IEnumerable<byte> bytes)
         {
-            pubKeyBytes = new List<byte>(bytesList);
+            Q = ((ECPublicKeyParameters)PublicKeyFactory.CreateKey(bytes.ToArray())).Q;
+        }
+
+        public CPubKey(ECPoint pQ)
+        {
+            Q = pQ;
         }
 
         /// <summary>
         /// Quick validity test
         /// </summary>
         /// <returns>Validation result</returns>
-        public bool IsValid()
+        public bool IsValid
         {
-            return pubKeyBytes.Count == 33 || pubKeyBytes.Count == 65;
+            get { return !Q.IsInfinity; }
         }
 
         /// <summary>
         /// Is this a compressed public key?
         /// </summary>
         /// <returns></returns>
-        public bool IsCompressed()
+        public bool IsCompressed
         {
-            // Compressed public keys are 33 bytes long
-            return pubKeyBytes.Count == 33;
+            get { return Q.IsCompressed; }
         }
 
         /// <summary>
@@ -59,15 +73,32 @@ namespace Novacoin
         /// <returns>New key ID</returns>
         public CKeyID GetKeyID()
         {
-            return new CKeyID(Hash160.Compute160(this.Raw));
+            return new CKeyID(Hash160.Compute160(Raw));
+        }
+
+        public bool Verify(IEnumerable<byte> data, IEnumerable<byte> signature)
+        {
+            byte[] dataBytes = data.ToArray();
+
+            ISigner signer = SignerUtilities.GetSigner("SHA-256withECDSA");
+            ECPublicKeyParameters keyParameters = new ECPublicKeyParameters(Q, domain);
+            signer.Init(false, keyParameters);
+            signer.BlockUpdate(dataBytes, 0, dataBytes.Length);
+
+            return signer.VerifySignature(signature.ToArray());
         }
 
         /// <summary>
         /// Accessor for internal representation
         /// </summary>
-        public IList<byte> Raw
+        public IEnumerable<byte> Raw
         {
-            get { return pubKeyBytes; }
+            get { return Q.GetEncoded(); }
+        }
+
+        public override string ToString()
+        {
+            return Interop.ToHex(Raw);
         }
     }
 }
