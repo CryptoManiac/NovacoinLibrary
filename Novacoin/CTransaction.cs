@@ -22,12 +22,12 @@ namespace Novacoin
 		/// <summary>
 		/// Array of transaction inputs
 		/// </summary>
-		public CTxIn[] inputs;
+		public CTxIn[] vin;
 
 		/// <summary>
 		/// Array of transaction outputs
 		/// </summary>
-		public CTxOut[] outputs;
+		public CTxOut[] vout;
 
 		/// <summary>
 		/// Block height or timestamp when transaction is final
@@ -53,28 +53,28 @@ namespace Novacoin
             nTime = Interop.LEBytesToUInt32(wBytes.GetItems(4));
 
             int nInputs = (int)VarInt.ReadVarInt(ref wBytes);
-            inputs = new CTxIn[nInputs];
+            vin = new CTxIn[nInputs];
 
             for (int nCurrentInput = 0; nCurrentInput < nInputs; nCurrentInput++)
             {
                 // Fill inputs array
-                inputs[nCurrentInput] = new CTxIn();
+                vin[nCurrentInput] = new CTxIn();
 
-                inputs[nCurrentInput].txID = new Hash256(wBytes.GetItems(32));
-                inputs[nCurrentInput].n = Interop.LEBytesToUInt32(wBytes.GetItems(4));
-                inputs[nCurrentInput].scriptSig = wBytes.GetItems((int)VarInt.ReadVarInt(ref wBytes));
-                inputs[nCurrentInput].nSequence = Interop.LEBytesToUInt32(wBytes.GetItems(4));
+                vin[nCurrentInput].txID = new Hash256(wBytes.GetItems(32));
+                vin[nCurrentInput].n = Interop.LEBytesToUInt32(wBytes.GetItems(4));
+                vin[nCurrentInput].scriptSig = wBytes.GetItems((int)VarInt.ReadVarInt(ref wBytes));
+                vin[nCurrentInput].nSequence = Interop.LEBytesToUInt32(wBytes.GetItems(4));
             }
 
             int nOutputs = (int)VarInt.ReadVarInt(ref wBytes);
-            outputs = new CTxOut[nOutputs];
+            vout = new CTxOut[nOutputs];
 
             for (int nCurrentOutput = 0; nCurrentOutput < nOutputs; nCurrentOutput++)
             {
                 // Fill outputs array
-                outputs[nCurrentOutput] = new CTxOut();
-                outputs[nCurrentOutput].nValue = Interop.LEBytesToUInt64(wBytes.GetItems(8));
-                outputs[nCurrentOutput].scriptPubKey = wBytes.GetItems((int)VarInt.ReadVarInt(ref wBytes));
+                vout[nCurrentOutput] = new CTxOut();
+                vout[nCurrentOutput].nValue = Interop.LEBytesToUInt64(wBytes.GetItems(8));
+                vout[nCurrentOutput].scriptPubKey = wBytes.GetItems((int)VarInt.ReadVarInt(ref wBytes));
             }
 
             nLockTime = Interop.LEBytesToUInt32(wBytes.GetItems(4));
@@ -102,10 +102,10 @@ namespace Novacoin
                 tx[nTx].nTime = Interop.LEBytesToUInt32(wTxBytes.GetItems(4));
 
                 // Inputs array
-                tx[nTx].inputs = CTxIn.ReadTxInList(ref wTxBytes);
+                tx[nTx].vin = CTxIn.ReadTxInList(ref wTxBytes);
 
                 // outputs array
-                tx[nTx].outputs = CTxOut.ReadTxOutList(ref wTxBytes);
+                tx[nTx].vout = CTxOut.ReadTxOutList(ref wTxBytes);
 
                 tx[nTx].nLockTime = Interop.LEBytesToUInt32(wTxBytes.GetItems(4));
             }
@@ -163,16 +163,16 @@ namespace Novacoin
 
             resultBytes.AddRange(Interop.LEBytes(nVersion));
             resultBytes.AddRange(Interop.LEBytes(nTime));
-            resultBytes.AddRange(VarInt.EncodeVarInt(inputs.LongLength));
+            resultBytes.AddRange(VarInt.EncodeVarInt(vin.LongLength));
 
-            foreach(CTxIn input in inputs)
+            foreach(CTxIn input in vin)
             {
                 resultBytes.AddRange(input.ToBytes());
             }
 
-            resultBytes.AddRange(VarInt.EncodeVarInt(outputs.LongLength));
+            resultBytes.AddRange(VarInt.EncodeVarInt(vout.LongLength));
             
-            foreach(CTxOut output in outputs)
+            foreach(CTxOut output in vout)
             {
                 resultBytes.AddRange(output.ToBytes());
             }
@@ -188,20 +188,19 @@ namespace Novacoin
 
             sb.AppendFormat("CTransaction(\n nVersion={0},\n nTime={1},\n", nVersion, nTime);
 
-            foreach (CTxIn txin in inputs)
+            foreach (CTxIn txin in vin)
             {
                 sb.AppendFormat(" {0},\n", txin.ToString());
             }
 
-            foreach (CTxOut txout in outputs)
+            foreach (CTxOut txout in vout)
             {
                 sb.AppendFormat(" {0},\n", txout.ToString());
             }
 
-            sb.AppendFormat("nLockTime={0})\n", nLockTime);
+            sb.AppendFormat("\nnLockTime={0}\n)", nLockTime);
 
             return sb.ToString();
         }
 	}
 }
-

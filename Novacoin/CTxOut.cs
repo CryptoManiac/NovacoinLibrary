@@ -75,7 +75,7 @@ namespace Novacoin
 		public override string ToString ()
 		{
 			StringBuilder sb = new StringBuilder ();
-			sb.AppendFormat ("CTxOut(nValue={0},scriptPubKey={1})", nValue, (new CScript(scriptPubKey)).ToString());
+			sb.AppendFormat ("CTxOut(nValue={0}, scriptPubKey={1})", nValue, (new CScript(scriptPubKey)).ToString());
 
 			return sb.ToString ();
 		}

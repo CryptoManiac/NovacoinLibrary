@@ -17,7 +17,7 @@ namespace Novacoin
 		/// <summary>
 		/// Transactions array.
 		/// </summary>
-		public CTransaction[] tx;
+		public CTransaction[] vtx;
 
 		/// <summary>
 		/// Block header signature.
@@ -43,7 +43,7 @@ namespace Novacoin
             header.nNonce = Interop.LEBytesToUInt32(wBytes.GetItems(4));
 
             // Parse transactions list
-            tx = CTransaction.ReadTransactionsList(ref wBytes);
+            vtx = CTransaction.ReadTransactionsList(ref wBytes);
 
             // Read block signature
             signature = wBytes.GetItems((int)VarInt.ReadVarInt(ref wBytes));
@@ -58,11 +58,11 @@ namespace Novacoin
             List<byte> r = new List<byte>();
 
             r.AddRange(header.ToBytes());
-            r.AddRange(VarInt.EncodeVarInt(tx.LongLength)); // transactions count
+            r.AddRange(VarInt.EncodeVarInt(vtx.LongLength)); // transactions count
 
-            foreach (CTransaction t in tx)
+            foreach (CTransaction tx in vtx)
             {
-                r.AddRange(t.ToBytes());
+                r.AddRange(tx.ToBytes());
             }
 
             r.AddRange(VarInt.EncodeVarInt(signature.LongLength));
@@ -77,14 +77,13 @@ namespace Novacoin
 
             sb.AppendFormat("CBlock(\n header={0},\n", header.ToString());
 
-            foreach(CTransaction t in tx)
+            foreach(CTransaction tx in vtx)
             {
-                sb.AppendFormat("{0}, \n", t.ToString());
+                sb.AppendFormat("{0},\n", tx.ToString());
             }
 
             sb.AppendFormat("signature={0})\n", Interop.ToHex(signature));
             
-
             // TODO
             return sb.ToString();
         }
