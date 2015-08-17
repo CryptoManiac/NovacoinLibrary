@@ -37,6 +37,27 @@ namespace Novacoin
         }
 
         /// <summary>
+        /// Read vout list from byte sequence.
+        /// </summary>
+        /// <param name="wBytes">Reference to byte sequence</param>
+        /// <returns>Outputs array</returns>
+        public static CTxOut[] ReadTxOutList(ref WrappedList<byte> wBytes)
+        {
+            int nOutputs = (int)VarInt.ReadVarInt(ref wBytes);
+            CTxOut[] vout =new CTxOut[nOutputs];
+
+            for (int nIndex = 0; nIndex < nOutputs; nIndex++)
+            {
+                // Fill outputs array
+                vout[nIndex] = new CTxOut();
+                vout[nIndex].nValue = Interop.LEBytesToUInt64(wBytes.GetItems(8));
+                vout[nIndex].scriptPubKey = wBytes.GetItems((int)VarInt.ReadVarInt(ref wBytes));
+            }
+
+            return vout;
+        }
+
+        /// <summary>
         /// Get raw bytes representation of our output.
         /// </summary>
         /// <returns>Byte sequence.</returns>

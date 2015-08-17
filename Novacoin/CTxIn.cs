@@ -48,6 +48,29 @@ namespace Novacoin
         {
         }
 
+        public static CTxIn[] ReadTxInList(ref WrappedList<byte> wBytes)
+        {
+            CTxIn[] vin;
+
+            // Get amount
+            int nInputs = (int)VarInt.ReadVarInt(ref wBytes);
+            vin = new CTxIn[nInputs];
+
+            for (int nIndex = 0; nIndex < nInputs; nIndex++)
+            {
+                // Fill inputs array
+                vin[nIndex] = new CTxIn();
+
+                vin[nIndex].txID = new Hash256(wBytes.GetItems(32));
+                vin[nIndex].n = Interop.LEBytesToUInt32(wBytes.GetItems(4));
+                vin[nIndex].scriptSig = wBytes.GetItems((int)VarInt.ReadVarInt(ref wBytes));
+                vin[nIndex].nSequence = Interop.LEBytesToUInt32(wBytes.GetItems(4));
+            }
+
+            // Return inputs array
+            return vin;
+        }
+
         /// <summary>
         /// Get raw bytes representation of our input.
         /// </summary>

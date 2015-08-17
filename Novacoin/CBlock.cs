@@ -42,7 +42,7 @@ namespace Novacoin
             header.nNonce = Interop.LEBytesToUInt32(wBytes.GetItems(4));
 
             // Parse transactions list
-            tx = CTransaction.ParseTransactionsList(ref wBytes);
+            tx = CTransaction.ReadTransactionsList(ref wBytes);
 
             // Read block signature
             signature = wBytes.GetItems((int)VarInt.ReadVarInt(ref wBytes));
