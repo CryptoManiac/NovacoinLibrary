@@ -37,14 +37,6 @@ namespace Novacoin
             addrData = new List<byte>(scriptID.hashBytes);
         }
 
-        public static byte[] ConcatAddress(byte[] RipeHash, byte[] Checksum)
-        {
-            byte[] ret = new byte[RipeHash.Length + 4];
-            Array.Copy(RipeHash, ret, RipeHash.Length);
-            Array.Copy(Checksum, 0, ret, RipeHash.Length, 4);
-            return ret;
-        }
-
         public bool IsValid()
         {
             int nExpectedSize = 20;
@@ -79,7 +71,7 @@ namespace Novacoin
 
             r.Add(nVersion);
             r.AddRange(addrData);
-            r.AddRange(checkSum);
+            r.AddRange(checkSum); // First four bytes of SHA256 hash
 
             return AddressTools.Base58Encode(r.ToArray());
         }
