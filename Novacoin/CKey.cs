@@ -8,6 +8,9 @@ using Org.BouncyCastle.Asn1.X9;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.Asn1.Sec;
 
+using Org.BouncyCastle.Math.EC;
+
+
 namespace Novacoin
 {
     /// <summary>
@@ -20,6 +23,42 @@ namespace Novacoin
 
         protected static X9ECParameters curve = SecNamedCurves.GetByName("secp256k1");
         protected static ECDomainParameters domain = new ECDomainParameters(curve.Curve, curve.G, curve.N, curve.H, curve.GetSeed());
+
+        /// <summary>
+        /// Regenerate public key parameters (ECPoint compression)
+        /// </summary>
+        /// <param name="pubKeyParams">Non-compressed key parameters</param>
+        /// <returns>Parameters for compressed key</returns>
+        protected ECPublicKeyParameters Compress(ECPublicKeyParameters pubKeyParams)
+        {
+            if (pubKeyParams.Q.IsCompressed)
+            {
+                // Already compressed
+                return pubKeyParams;
+            }
+
+            ECPoint q = new FpPoint(curve.Curve, pubKeyParams.Q.X, pubKeyParams.Q.Y, true);
+
+            return new ECPublicKeyParameters(q, domain);
+        }
+
+        /// <summary>
+        /// Regenerate public key parameters (ECPoint decompression)
+        /// </summary>
+        /// <param name="pubKeyParams">Compressed key parameters</param>
+        /// <returns>Parameters for non-compressed key</returns>
+        protected ECPublicKeyParameters Decompress(ECPublicKeyParameters pubKeyParams)
+        {
+            if (!pubKeyParams.Q.IsCompressed)
+            {
+                // Isn't compressed
+                return pubKeyParams;
+            }
+
+            ECPoint q = new FpPoint(curve.Curve, pubKeyParams.Q.X, pubKeyParams.Q.Y, false);
+
+            return new ECPublicKeyParameters(q, domain);
+        }
 
         /// <summary>
         /// Does the signature matches our public key?

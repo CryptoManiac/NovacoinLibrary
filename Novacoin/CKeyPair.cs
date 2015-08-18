@@ -20,22 +20,27 @@ namespace Novacoin
         /// <summary>
         /// Initialize new CKeyPair instance with random secret.
         /// </summary>
-        public CKeyPair()
+        public CKeyPair(bool Compressed=true)
         {
             ECKeyGenerationParameters genParams = new ECKeyGenerationParameters(domain, new SecureRandom());
             ECKeyPairGenerator generator = new ECKeyPairGenerator("ECDSA");
             generator.Init(genParams);
             AsymmetricCipherKeyPair ecKeyPair = generator.GenerateKeyPair();
 
-            _Public = (ECPublicKeyParameters)ecKeyPair.Public;
             _Private = (ECPrivateKeyParameters)ecKeyPair.Private;
+            _Public = (ECPublicKeyParameters)ecKeyPair.Public;
+
+            if (Compressed)
+            {
+                _Public = Compress(_Public);
+            }
         }
 
         /// <summary>
         /// Init key pair using secret sequence of bytes
         /// </summary>
         /// <param name="secretBytes">Byte sequence</param>
-        public CKeyPair(IEnumerable<byte> secretBytes)
+        public CKeyPair(IEnumerable<byte> secretBytes, bool Compressed=true)
         {
             // Deserialize secret value
             BigInteger D = new BigInteger(secretBytes.ToArray());
@@ -43,8 +48,13 @@ namespace Novacoin
             // Calculate public key
             ECPoint Q = curve.G.Multiply(D);
 
-            _Public = new ECPublicKeyParameters(Q, domain);
             _Private = new ECPrivateKeyParameters(D, domain);
+            _Public = new ECPublicKeyParameters(Q, domain);
+
+            if (Compressed)
+            {
+                _Public = Compress(_Public);
+            }
         }
 
         /// <summary>
