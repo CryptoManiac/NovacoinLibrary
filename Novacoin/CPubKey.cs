@@ -30,6 +30,16 @@ namespace Novacoin
         }
 
         /// <summary>
+        /// Init with base58 encoded sequence of bytes
+        /// </summary>
+        /// <param name="strBase58"></param>
+        public CPubKey(string strBase58)
+        {
+            ECPoint pQ = curve.Curve.DecodePoint(AddressTools.Base58DecodeCheck(strBase58).ToArray());
+            _Public = new ECPublicKeyParameters(pQ, domain);
+        }
+
+        /// <summary>
         /// Quick validity test
         /// </summary>
         /// <returns>Validation result</returns>
@@ -38,18 +48,20 @@ namespace Novacoin
             get { return !_Public.Q.IsInfinity; }
         }
 
-        /// <summary>
-        /// Is this a compressed public key?
-        /// </summary>
-        /// <returns></returns>
-        public bool IsCompressed
+        public string ToHex()
         {
-            get { return _Public.Q.IsCompressed; }
+            return Interop.ToHex(Public);
         }
 
         public override string ToString()
         {
-            return Interop.ToHex(Public);
+            List<byte> r = new List<byte>();
+
+            r.Add((byte)(AddrType.PUBKEY_ADDRESS));
+
+            r.AddRange(Public);
+
+            return AddressTools.Base58EncodeCheck(r);
         }
     }
 }

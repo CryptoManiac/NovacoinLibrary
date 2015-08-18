@@ -44,9 +44,18 @@ namespace NovacoinTest
             CKeyPair keyPair1 = new CKeyPair();
             CKeyPair keyPair2 = new CKeyPair(keyPair1.Secret);
             CPubKey pubKey = keyPair2.GetPubKey();
-       
-            Console.WriteLine(keyPair1.ToString());
-            Console.WriteLine("PubKey: {0}", pubKey.ToString());
+
+            string strPrivKeyBase58 = keyPair1.ToString();
+
+            Console.WriteLine("Privkey in Base58: {0}", strPrivKeyBase58);
+            Console.WriteLine("Privkey in Hex: {0}", keyPair1.ToHex());
+
+            CKeyPair keyPair3 = new CKeyPair(strPrivKeyBase58);
+            Console.WriteLine("Privkey base58 deserialization is OK: {0}", keyPair3.GetKeyID().ToString() == keyPair1.GetKeyID().ToString());
+
+            Console.WriteLine("Pubkey in Base58: {0}", pubKey.ToString());
+            Console.WriteLine("Pubkey in Hex: {0}", pubKey.ToHex());
+
             Console.WriteLine("Reinitialization is OK: {0}\n", keyPair1.ToString() == keyPair2.ToString());
 
             /// Address generation test

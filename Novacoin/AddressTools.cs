@@ -2,10 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
-using System.Numerics;
+using Org.BouncyCastle.Math;
 
 namespace Novacoin
 {
@@ -29,40 +27,37 @@ namespace Novacoin
 
     public class AddressTools
     {
-        const string strDigits = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+        private const string strDigits = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+        private static readonly BigInteger _base = BigInteger.ValueOf(58);
 
         /// <summary>
         /// Encode a byte sequence as a base58-encoded string
         /// </summary>
         /// <param name="bytes">Byte sequence</param>
         /// <returns>Encoding result</returns>
-        public static string Base58Encode(byte[] bytes)
+        public static string Base58Encode(byte[] input)
         {
-            string strResult = "";
-
-            int nBytes = bytes.Length;
-            BigInteger arrayToInt = 0;
-            BigInteger encodeSize = strDigits.Length;
-
-            for (int i = 0; i < nBytes; ++i)
+            // TODO: This could be a lot more efficient.
+            var bi = new BigInteger(1, input);
+            var s = new StringBuilder();
+            while (bi.CompareTo(_base) >= 0)
             {
-                arrayToInt = arrayToInt * 256 + bytes[i];
+                var mod = bi.Mod(_base);
+                s.Insert(0, new[] { strDigits[mod.IntValue] });
+                bi = bi.Subtract(mod).Divide(_base);
             }
-            while (arrayToInt > 0)
+            s.Insert(0, new[] { strDigits[bi.IntValue] });
+            // Convert leading zeros too.
+            foreach (var anInput in input)
             {
-                int rem = (int)(arrayToInt % encodeSize);
-                arrayToInt /= encodeSize;
-                strResult = strDigits[rem] + strResult;
+                if (anInput == 0)
+                    s.Insert(0, new[] { strDigits[0] });
+                else
+                    break;
             }
-
-            // Leading zeroes encoded as base58 zeros
-            for (int i = 0; i < nBytes && bytes[i] == 0; ++i)
-            {
-                strResult = strDigits[0] + strResult;
-            }
-
-            return strResult;
+            return s.ToString();
         }
+
 
         /// <summary>
         /// Encode a byte sequence to a base58-encoded string, including checksum
@@ -86,32 +81,41 @@ namespace Novacoin
         /// </summary>
         /// <param name="strBase58">Base58 data string</param>
         /// <returns>Byte array</returns>
-        public static IEnumerable<byte> Base58Decode(string strBase58)
+        public static byte[] Base58Decode(string input)
         {
-            // Remove whitespaces
-            strBase58 = Regex.Replace(strBase58, @"s", "");
-
-            BigInteger intData = 0;
-            for (int i = 0; i < strBase58.Length; i++)
+            var bytes = DecodeToBigInteger(input).ToByteArray();
+            // We may have got one more byte than we wanted, if the high bit of the next-to-last byte was not zero. This
+            // is because BigIntegers are represented with twos-compliment notation, thus if the high bit of the last
+            // byte happens to be 1 another 8 zero bits will be added to ensure the number parses as positive. Detect
+            // that case here and chop it off.
+            var stripSignByte = bytes.Length > 1 && bytes[0] == 0 && bytes[1] >= 0x80;
+            // Count the leading zeros, if any.
+            var leadingZeros = 0;
+            for (var i = 0; input[i] == strDigits[0]; i++)
             {
-                int digit = strDigits.IndexOf(strBase58[i]);
-
-                if (digit < 0)
-                {
-                    throw new FormatException(string.Format("Invalid Base58 character `{0}` at position {1}", strBase58[i], i));
-                }
-
-                intData = intData * 58 + digit;
+                leadingZeros++;
             }
-
-            // Leading zero bytes get encoded as leading `1` characters
-            int leadingZeroCount = strBase58.TakeWhile(c => c == '1').Count();
-
-            IEnumerable<byte> leadingZeros = Enumerable.Repeat((byte)0, leadingZeroCount);
-            IEnumerable<byte> bytesWithoutLeadingZeros = intData.ToByteArray().Reverse().SkipWhile(b => b == 0);
-
-            return leadingZeros.Concat(bytesWithoutLeadingZeros);
+            var tmp = new byte[bytes.Length - (stripSignByte ? 1 : 0) + leadingZeros];
+            Array.Copy(bytes, stripSignByte ? 1 : 0, tmp, leadingZeros, tmp.Length - leadingZeros);
+            return tmp;
         }
+
+        public static BigInteger DecodeToBigInteger(string input)
+        {
+            var bi = BigInteger.ValueOf(0);
+            // Work backwards through the string.
+            for (var i = input.Length - 1; i >= 0; i--)
+            {
+                var alphaIndex = strDigits.IndexOf(input[i]);
+                if (alphaIndex == -1)
+                {
+                    throw new FormatException("Illegal character " + input[i] + " at " + i);
+                }
+                bi = bi.Add(BigInteger.ValueOf(alphaIndex).Multiply(_base.Pow(input.Length - 1 - i)));
+            }
+            return bi;
+        }
+
         public static IEnumerable<byte> Base58DecodeCheck(string strBase58Check)
         {
             byte[] rawData = Base58Decode(strBase58Check).ToArray();

@@ -93,5 +93,15 @@ namespace Novacoin
         {
             get { return _Public.Q.GetEncoded(); }
         }
+
+        /// <summary>
+        /// Is this a compressed public key?
+        /// </summary>
+        /// <returns></returns>
+        public bool IsCompressed
+        {
+            get { return _Public.Q.IsCompressed; }
+        }
+
     }
 }

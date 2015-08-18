@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System;
 
 using Org.BouncyCastle.Math;
 using Org.BouncyCastle.Math.EC;
@@ -57,6 +57,34 @@ namespace Novacoin
             }
         }
 
+        public CKeyPair(string strBase58)
+        {
+            List<byte> rawBytes = AddressTools.Base58DecodeCheck(strBase58).ToList();
+            rawBytes.RemoveAt(0); // Remove key version byte
+
+            int nSecretLen = rawBytes[0] == 0x00 ? 33 : 32;
+            int nTaggedSecretLen = nSecretLen + 1;
+
+            if (rawBytes.Count > nTaggedSecretLen || rawBytes.Count < nSecretLen)
+            {
+                throw new FormatException("Invalid private key");
+            }
+
+            // Deserialize secret value
+            BigInteger D = new BigInteger(rawBytes.Take(nSecretLen).ToArray());
+
+            // Calculate public key
+            ECPoint Q = curve.G.Multiply(D);
+
+            _Private = new ECPrivateKeyParameters(D, domain);
+            _Public = new ECPublicKeyParameters(Q, domain);
+
+            if (rawBytes.Count == nTaggedSecretLen && rawBytes.Last() == 0x01) // Check compression tag
+            {
+                _Public = Compress(_Public);
+            }
+        }
+
         /// <summary>
         /// Create signature for supplied data
         /// </summary>
@@ -86,13 +114,32 @@ namespace Novacoin
             get { return _Private.D.ToByteArray(); }
         }
 
+        public string ToHex()
+        {
+            List<byte> r = new List<byte>(Secret);
+            
+            if (IsCompressed)
+            {
+                r.Add(0x01);
+            }
+
+            return Interop.ToHex(r);
+        }
+
         public override string ToString()
         {
-            StringBuilder sb = new StringBuilder();
+            List<byte> r = new List<byte>();
 
-            sb.AppendFormat("CKeyPair(Secret={0}, Public={1})", Interop.ToHex(Secret), Interop.ToHex(Public));
+            r.Add((byte)(128 + AddrType.PUBKEY_ADDRESS));
 
-            return sb.ToString();
+            r.AddRange(Secret);
+
+            if (IsCompressed)
+            {
+                r.Add(0x01);
+            }
+
+            return AddressTools.Base58EncodeCheck(r);
         }
     }
 }
