@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Linq;
 using System.Text;
-
-using System.Collections;
 using System.Collections.Generic;
 
 namespace Novacoin
@@ -352,7 +350,7 @@ namespace Novacoin
 
             foreach (CPubKey key in keys)
             {
-                PushData(key.Raw.ToList());
+                PushData(key.Public.ToList());
             }
             AddOp(ScriptOpcode.EncodeOP_N(keys.Count()));
             AddOp(opcodetype.OP_CHECKMULTISIG);

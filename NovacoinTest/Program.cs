@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 
 namespace NovacoinTest
@@ -58,8 +56,8 @@ namespace NovacoinTest
             byte[] signature = keyPair1.Sign(dataBytes).ToArray();
 
             Console.WriteLine("Signature: {0}", Interop.ToHex(signature));
-            Console.WriteLine("Signature is OK: {0} (CKeyPair)", keyPair1.Verify(dataBytes, signature));
-            Console.WriteLine("Signature is OK: {0} (CPubKey)", pubKey.Verify(dataBytes, signature));
+            Console.WriteLine("Signature is OK: {0} (CKeyPair)", keyPair1.VerifySignature(dataBytes, signature));
+            Console.WriteLine("Signature is OK: {0} (CPubKey)", pubKey.VerifySignature(dataBytes, signature));
 
             Console.ReadLine();
         }
