@@ -37,6 +37,15 @@ namespace Novacoin
             return strResult;
         }
 
+        public static string Base58EncodeCheck(byte[] bytes)
+        {
+            byte[] dataBytes = new byte[bytes.Length + 4];
+            byte[] checkSum = Hash256.Compute256(bytes).hashBytes.Take(4).ToArray();
 
+            bytes.CopyTo(dataBytes, 0);
+            checkSum.CopyTo(dataBytes, bytes.Length);
+
+            return Base58Encode(dataBytes);
+        }
     }
 }

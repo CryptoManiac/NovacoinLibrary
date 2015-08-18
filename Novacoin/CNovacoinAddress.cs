@@ -66,14 +66,10 @@ namespace Novacoin
         {
             List<byte> r = new List<byte>();
 
-            byte[] checkSum = Hash256.Compute256(addrData).hashBytes;
-            Array.Resize(ref checkSum, 4);
-
             r.Add(nVersion);
             r.AddRange(addrData);
-            r.AddRange(checkSum); // First four bytes of SHA256 hash
 
-            return AddressTools.Base58Encode(r.ToArray());
+            return AddressTools.Base58EncodeCheck(r.ToArray());
         }
     }
 }
