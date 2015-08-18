@@ -55,10 +55,6 @@ namespace NovacoinTest
             Console.WriteLine("Key ID: {0}", Interop.ToHex(keyID.hashBytes));
             Console.WriteLine("Novacoin address: {0}\n", keyID.ToString());
 
-            string strPubKeyTest = "029780fac8b85b4a47a616acb4e19d7958eaf02acc5123f65e7824ce720b1ae788";
-            CPubKey pubKeyTest = new CPubKey(Interop.ParseHex(strPubKeyTest));
-            Console.WriteLine("Donations may be sent to: {0}\n", pubKeyTest.GetKeyID().ToString());
-
             /// ECDSA keypair signing test
 
             string data = "Превед!";
@@ -68,6 +64,15 @@ namespace NovacoinTest
             Console.WriteLine("Signature: {0}", Interop.ToHex(signature));
             Console.WriteLine("Signature is OK: {0} (CKeyPair)", keyPair1.VerifySignature(dataBytes, signature));
             Console.WriteLine("Signature is OK: {0} (CPubKey)", pubKey.VerifySignature(dataBytes, signature));
+
+            /// Donation address
+
+            string strPubKeyTest = "029780fac8b85b4a47a616acb4e19d7958eaf02acc5123f65e7824ce720b1ae788";
+            CPubKey pubKeyTest = new CPubKey(Interop.ParseHex(strPubKeyTest));
+            string strDonationAddress = pubKeyTest.GetKeyID().ToString();
+            Console.WriteLine("\nDonations may be sent to: {0}", strDonationAddress);
+            Console.WriteLine("Address generation is OK: {0}", strDonationAddress == "4T2t8uiDtyHceMwMjMHPn88TyJB3trCg3o");
+
 
             Console.ReadLine();
         }
