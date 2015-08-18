@@ -12,5 +12,10 @@ namespace Novacoin
         {
             _hashBytes = pubKeyHash.hashBytes;
         }
+
+        public override string ToString()
+        {
+            return (new CNovacoinAddress(this)).ToString();
+        }
     }
 }

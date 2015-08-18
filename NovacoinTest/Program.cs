@@ -37,7 +37,7 @@ namespace NovacoinTest
             Console.WriteLine("OK: {0}\n", strBlock1 == strBlock1Bytes);
 
             Console.WriteLine(b2.ToString());
-            Console.WriteLine("OK: {0}\n", strBlock2 == strBlock2Bytes);
+            Console.WriteLine("Reserialization is OK: {0}\n", strBlock2 == strBlock2Bytes);
 
             /// ECDSA keypair generation test
 
@@ -47,7 +47,13 @@ namespace NovacoinTest
        
             Console.WriteLine(keyPair1.ToString());
             Console.WriteLine("PubKey: {0}", pubKey.ToString());
-            Console.WriteLine("OK: {0}\n", keyPair1.ToString() == keyPair2.ToString());
+            Console.WriteLine("Reinitialization is OK: {0}\n", keyPair1.ToString() == keyPair2.ToString());
+
+            /// Address generation test
+
+            CKeyID keyID = keyPair1.GetKeyID();
+            Console.WriteLine("Key ID: {0}", Interop.ToHex(keyID.hashBytes));
+            Console.WriteLine("Novacoin address: {0}\n", keyID.ToString());
 
             /// ECDSA keypair signing test
 

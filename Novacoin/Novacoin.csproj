@@ -33,11 +33,14 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AddressTools.cs" />
     <Compile Include="CKey.cs" />
     <Compile Include="CKeyID.cs" />
     <Compile Include="CKeyPair.cs" />
+    <Compile Include="CNovacoinAddress.cs" />
     <Compile Include="CPubKey.cs" />
     <Compile Include="CScriptID.cs" />
     <Compile Include="Hash.cs" />
