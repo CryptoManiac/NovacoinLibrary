@@ -46,6 +46,14 @@ namespace Novacoin
             addrData = new List<byte>(keyID.hashBytes);
         }
 
+        public CNovacoinAddress(string strNovacoinAddress)
+        {
+            addrData = AddressTools.Base58DecodeCheck(strNovacoinAddress).ToList();
+
+            nVersion = addrData[0];
+            addrData.RemoveAt(0);
+        }
+
         /// <summary>
         /// Initialize new instance of SCRIPT_ADDRESS
         /// </summary>
@@ -97,7 +105,7 @@ namespace Novacoin
             r.Add(nVersion);
             r.AddRange(addrData);
 
-            return AddressTools.Base58EncodeCheck(r.ToArray());
+            return AddressTools.Base58EncodeCheck(r);
         }
     }
 }

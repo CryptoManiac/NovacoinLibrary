@@ -73,6 +73,10 @@ namespace NovacoinTest
             Console.WriteLine("\nDonations may be sent to: {0}", strDonationAddress);
             Console.WriteLine("Address generation is OK: {0}", strDonationAddress == "4T2t8uiDtyHceMwMjMHPn88TyJB3trCg3o");
 
+            /// Address deserialization test
+
+            CNovacoinAddress donationAddress = new CNovacoinAddress(strDonationAddress);
+            Console.WriteLine("Address reserialization is OK: {0}", donationAddress.ToString() == pubKeyTest.GetKeyID().ToString());
 
             Console.ReadLine();
         }
