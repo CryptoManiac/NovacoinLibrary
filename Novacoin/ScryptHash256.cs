@@ -3,11 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-//using System.Security.Cryptography;
-
-using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.Security;
-using Org.BouncyCastle.Asn1;
+using Medo.Security.Cryptography;
+using System.Security.Cryptography;
 
 namespace Novacoin
 {
@@ -29,15 +26,14 @@ namespace Novacoin
 
             uint[] V = new uint[(131072 + 63) / sizeof(uint)];
 
-            // sha1 test:
-            //            Rfc2898DeriveBytes key1 = new Rfc2898DeriveBytes(dataBytes, dataBytes, 1);
-            //            byte[] keyBytes1 = key1.GetBytes(128);
+            uint[] X = null;
+            using (HMACSHA256 hmac = new HMACSHA256())
+            {
+                Pbkdf2 df = new Pbkdf2(hmac, dataBytes, dataBytes, 1);
+                byte[] keyBytes1 = df.GetBytes(128);
 
-
-            // stub:
-            byte[] keyBytes1 = null;
-
-            uint[] X = Interop.ToUInt32Array(keyBytes1);
+                X = Interop.ToUInt32Array(keyBytes1);
+            }
 
             ushort i, j, k;
             for (i = 0; i < 1024; i++)
@@ -58,11 +54,12 @@ namespace Novacoin
 
             byte[] xBytes = Interop.LEBytes(X);
 
-            // sha1 test:
-            //            Rfc2898DeriveBytes key2 = new Rfc2898DeriveBytes(dataBytes, xBytes, 1);
-            //            byte[] keyBytes2 = key2.GetBytes(32);
-
             byte[] keyBytes2 = null;
+            using (HMACSHA256 hmac = new HMACSHA256())
+            {
+                Pbkdf2 df = new Pbkdf2(hmac, dataBytes, xBytes, 1);
+                keyBytes2 = df.GetBytes(32);
+            }
 
             return new ScryptHash256(keyBytes2);
         }

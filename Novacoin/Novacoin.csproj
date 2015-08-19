@@ -45,6 +45,7 @@
     <Compile Include="CScriptID.cs" />
     <Compile Include="Hash.cs" />
     <Compile Include="Interop.cs" />
+    <Compile Include="PBKDF2.cs" />
     <Compile Include="ScryptHash256.cs" />
     <Compile Include="VarInt.cs" />
     <Compile Include="VarStr.cs" />

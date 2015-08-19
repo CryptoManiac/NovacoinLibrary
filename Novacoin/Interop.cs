@@ -61,7 +61,7 @@ namespace Novacoin
             if (BitConverter.IsLittleEndian)
             {
                 uint[] result = new uint[bytes.Length / sizeof(uint)];
-                Buffer.BlockCopy(bytes, 0, result, 0, result.Length);
+                Buffer.BlockCopy(bytes, 0, result, 0, bytes.Length);
 
                 return result;
             }
