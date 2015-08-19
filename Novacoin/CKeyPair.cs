@@ -40,6 +40,7 @@ namespace Novacoin
         /// Init key pair using secret sequence of bytes
         /// </summary>
         /// <param name="secretBytes">Byte sequence</param>
+        /// <param name="Compressed">Compression flag</param>
         public CKeyPair(IEnumerable<byte> secretBytes, bool Compressed=true)
         {
             // Deserialize secret value
@@ -63,6 +64,15 @@ namespace Novacoin
             {
                 _Public = Compress(_Public);
             }
+        }
+
+        /// <summary>
+        /// Init key pair using secret sequence of bytes
+        /// </summary>
+        /// <param name="secretBytes">Byte sequence</param>
+        public CKeyPair(IEnumerable<byte> secretBytes) : 
+            this (secretBytes.Take(32), (secretBytes.Count() == 33 && secretBytes.Last() == 0x01))
+        {
         }
 
         public CKeyPair(string strBase58)
@@ -129,7 +139,24 @@ namespace Novacoin
         /// </summary>
         public IEnumerable<byte> Secret
         {
-            get { return _Private.D.ToByteArray(); }
+            get
+            {
+                List<byte> secretBytes = new List<byte>(_Private.D.ToByteArray());
+
+                if (secretBytes[0] == 0x00)
+                {
+                    // Remove sign
+                    secretBytes.RemoveAt(0);
+                }
+
+                if (IsCompressed)
+                {
+                    // Set compression flag
+                    secretBytes.Add(0x01);
+                }
+
+                return secretBytes;
+            }
         }
 
         public string ToHex()
@@ -143,18 +170,6 @@ namespace Novacoin
 
             r.Add((byte)(128 + AddrType.PUBKEY_ADDRESS)); // Key version
             r.AddRange(Secret); // Key data
-
-            if (r[1] == 0x00)
-            {
-                // Remove sign
-                r.RemoveAt(1);
-            }
-
-            if (IsCompressed)
-            {
-                // Set compression flag
-                r.Add(0x01);
-            }
 
             return AddressTools.Base58EncodeCheck(r);
         }

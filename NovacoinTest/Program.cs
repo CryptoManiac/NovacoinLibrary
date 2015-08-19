@@ -70,6 +70,10 @@ namespace NovacoinTest
             Console.WriteLine("Hard-Coded privkey address: {0}", keyPair4.GetKeyID().ToString());
             Console.WriteLine("Hard-Coded privkey: {0}\n", keyPair4.ToString());
 
+            // Privkey hex deserialization test
+            CKeyPair keyPair5 = new CKeyPair(keyPair4.Secret.ToArray());
+            Console.WriteLine("Decoded privkey in Hex: {0}", keyPair5.ToHex());
+            Console.WriteLine("Decoded privkey address: {0}\n", keyPair5.GetKeyID().ToString());
 
             /// ECDSA keypair signing test
 
