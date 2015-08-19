@@ -43,7 +43,15 @@ namespace Novacoin
         public CKeyPair(IEnumerable<byte> secretBytes, bool Compressed=true)
         {
             // Deserialize secret value
-            BigInteger D = new BigInteger(secretBytes.ToArray());
+            BigInteger D = new BigInteger(secretBytes.Take(32).ToArray());
+
+            if (D.SignValue == -1)
+            {
+                List<byte> fixedKeyBytes = secretBytes.Take(32).ToList();
+                fixedKeyBytes.Insert(0, 0x00); // prepend with sign byte
+
+                D = new BigInteger(fixedKeyBytes.ToArray());
+            }
 
             // Calculate public key
             ECPoint Q = curve.G.Multiply(D);
@@ -62,16 +70,16 @@ namespace Novacoin
             List<byte> rawBytes = AddressTools.Base58DecodeCheck(strBase58).ToList();
             rawBytes.RemoveAt(0); // Remove key version byte
 
-            int nSecretLen = rawBytes[0] == 0x00 ? 33 : 32;
-            int nTaggedSecretLen = nSecretLen + 1;
-
-            if (rawBytes.Count > nTaggedSecretLen || rawBytes.Count < nSecretLen)
-            {
-                throw new FormatException("Invalid private key");
-            }
-
             // Deserialize secret value
-            BigInteger D = new BigInteger(rawBytes.Take(nSecretLen).ToArray());
+            BigInteger D = new BigInteger(rawBytes.Take(32).ToArray());
+
+            if (D.SignValue == -1)
+            {
+                List<byte> secretbytes = rawBytes.Take(32).ToList(); // Copy secret
+                secretbytes.Insert(0, 0x00); // Prepend with sign byte
+
+                D = new BigInteger(secretbytes.ToArray()); // Try decoding again
+            }
 
             // Calculate public key
             ECPoint Q = curve.G.Multiply(D);
@@ -79,10 +87,20 @@ namespace Novacoin
             _Private = new ECPrivateKeyParameters(D, domain);
             _Public = new ECPublicKeyParameters(Q, domain);
 
-            if (rawBytes.Count == nTaggedSecretLen && rawBytes.Last() == 0x01) // Check compression tag
+            if (rawBytes.Count == 33 && rawBytes.Last() == 0x01) // Check compression tag
             {
                 _Public = Compress(_Public);
             }
+        }
+
+        /// <summary>
+        /// Initialize a copy of CKeyPair instance
+        /// </summary>
+        /// <param name="pair">CKyPair instance</param>
+        public CKeyPair(CKeyPair pair)
+        {
+            _Public = pair._Public;
+            _Private = pair._Private;
         }
 
         /// <summary>
@@ -116,26 +134,25 @@ namespace Novacoin
 
         public string ToHex()
         {
-            List<byte> r = new List<byte>(Secret);
-            
-            if (IsCompressed)
-            {
-                r.Add(0x01);
-            }
-
-            return Interop.ToHex(r);
+            return Interop.ToHex(Secret);
         }
 
         public override string ToString()
         {
             List<byte> r = new List<byte>();
 
-            r.Add((byte)(128 + AddrType.PUBKEY_ADDRESS));
+            r.Add((byte)(128 + AddrType.PUBKEY_ADDRESS)); // Key version
+            r.AddRange(Secret); // Key data
 
-            r.AddRange(Secret);
+            if (r[1] == 0x00)
+            {
+                // Remove sign
+                r.RemoveAt(1);
+            }
 
             if (IsCompressed)
             {
+                // Set compression flag
                 r.Add(0x01);
             }
 
