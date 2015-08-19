@@ -24,6 +24,61 @@ namespace Novacoin
 
     public class Interop
     {
+        public static byte[] ReverseIfLE(byte[] source)
+        {
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(source);
+            }
+
+            return source;
+        }
+
+        public static byte[] LEBytes(uint[] values)
+        {
+            if (BitConverter.IsLittleEndian)
+            {
+                byte[] result = new byte[values.Length * sizeof(uint)];
+                Buffer.BlockCopy(values, 0, result, 0, result.Length);
+
+                return result;
+            }
+            else
+            {
+                List<byte> result = new List<byte>();
+
+                foreach (uint i in values)
+                {
+                    result.AddRange(LEBytes(i));
+                }
+
+                return result.ToArray();
+            }
+        }
+
+        public static uint[] ToUInt32Array(byte[] bytes)
+        {
+            if (BitConverter.IsLittleEndian)
+            {
+                uint[] result = new uint[bytes.Length / sizeof(uint)];
+                Buffer.BlockCopy(bytes, 0, result, 0, result.Length);
+
+                return result;
+            }
+            else
+            {
+                List<uint> result = new List<uint>();
+
+                for (int i = 0; i < bytes.Length; i += 4)
+                {
+                    result.Add(LEBytesToUInt32(bytes.Skip(i).Take(4).ToArray()));
+                }
+
+                return result.ToArray();
+            }
+
+        }
+
         public static byte[] LEBytes(ushort n)
         {
             byte[] resultBytes = BitConverter.GetBytes(n);

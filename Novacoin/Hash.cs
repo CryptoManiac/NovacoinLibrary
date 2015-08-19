@@ -62,7 +62,7 @@ namespace Novacoin
 
         public override string ToString()
         {
-            return Interop.ToHex(_hashBytes);
+            return Interop.ToHex(Interop.ReverseIfLE(_hashBytes));
         }
     }
 }
