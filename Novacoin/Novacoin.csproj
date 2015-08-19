@@ -18,6 +18,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>full</DebugType>
@@ -45,7 +46,6 @@
     <Compile Include="CScriptID.cs" />
     <Compile Include="Hash.cs" />
     <Compile Include="Interop.cs" />
-    <Compile Include="PBKDF2.cs" />
     <Compile Include="ScryptHash256.cs" />
     <Compile Include="VarInt.cs" />
     <Compile Include="VarStr.cs" />

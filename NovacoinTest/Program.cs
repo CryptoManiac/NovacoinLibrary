@@ -99,13 +99,12 @@ namespace NovacoinTest
             CNovacoinAddress donationAddress = new CNovacoinAddress(strDonationAddress);
             Console.WriteLine("Address reserialization is OK: {0}", donationAddress.ToString() == pubKeyTest.GetKeyID().ToString());
 
-            /*
+            /// Block header hashing test
             IEnumerable<byte> dataBytesForScrypt = b1.header.ToBytes();
             ScryptHash256 scryptHash = ScryptHash256.Compute256(dataBytesForScrypt);
 
-            Console.WriteLine(scryptHash.ToString());
+            Console.WriteLine("block1 header hash: {0}", scryptHash.ToString());
 
-            */
             Console.ReadLine();
         }
     }

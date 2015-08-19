@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
-using Medo.Security.Cryptography;
 using System.Security.Cryptography;
 
 namespace Novacoin
 {
+    /// <summary>
+    /// Representation of scrypt hash
+    /// </summary>
     public class ScryptHash256 : Hash
     {
         // 32 bytes
@@ -20,22 +21,20 @@ namespace Novacoin
         public ScryptHash256(byte[] bytesArray) : base(bytesArray) { }
         public ScryptHash256(IList<byte> bytesList) : base(bytesList) { }
 
+        /// <summary>
+        /// Calculate scrypt hash and return new instance of ScryptHash256 class
+        /// </summary>
+        /// <param name="inputBytes">Byte sequence to hash</param>
+        /// <returns>Hashing result instance</returns>
         public static ScryptHash256 Compute256(IEnumerable<byte> inputBytes)
         {
-            byte[] dataBytes = inputBytes.ToArray();
-
             uint[] V = new uint[(131072 + 63) / sizeof(uint)];
 
-            uint[] X = null;
-            using (HMACSHA256 hmac = new HMACSHA256())
-            {
-                Pbkdf2 df = new Pbkdf2(hmac, dataBytes, dataBytes, 1);
-                byte[] keyBytes1 = df.GetBytes(128);
+            byte[] dataBytes = inputBytes.ToArray();
+            byte[] keyBytes1 = PBKDF2Sha256GetBytes(128, dataBytes, dataBytes, 1);
+            uint[] X = Interop.ToUInt32Array(keyBytes1);
 
-                X = Interop.ToUInt32Array(keyBytes1);
-            }
-
-            ushort i, j, k;
+            uint i, j, k;
             for (i = 0; i < 1024; i++)
             {
                 Array.Copy(X, 0, V, i * 32, 32);
@@ -45,7 +44,7 @@ namespace Novacoin
             }
             for (i = 0; i < 1024; i++)
             {
-                j = (ushort)(32 * (X[16] & 1023));
+                j = 32 * (X[16] & 1023);
                 for (k = 0; k < 32; k++)
                     X[k] ^= V[j + k];
                 xor_salsa8(ref X, 0, ref X, 16);
@@ -53,15 +52,60 @@ namespace Novacoin
             }
 
             byte[] xBytes = Interop.LEBytes(X);
-
-            byte[] keyBytes2 = null;
-            using (HMACSHA256 hmac = new HMACSHA256())
-            {
-                Pbkdf2 df = new Pbkdf2(hmac, dataBytes, xBytes, 1);
-                keyBytes2 = df.GetBytes(32);
-            }
+            byte[] keyBytes2 = PBKDF2Sha256GetBytes(32, dataBytes, xBytes, 1);
 
             return new ScryptHash256(keyBytes2);
+        }
+
+        private static byte[] PBKDF2Sha256GetBytes(int dklen, byte[] password, byte[] salt, int iterationCount)
+        {
+            using (var hmac = new HMACSHA256(password))
+            {
+                int hashLength = hmac.HashSize / 8;
+                if ((hmac.HashSize & 7) != 0)
+                    hashLength++;
+                int keyLength = dklen / hashLength;
+                if ((long)dklen > (0xFFFFFFFFL * hashLength) || dklen < 0)
+                    throw new ArgumentOutOfRangeException("dklen");
+                if (dklen % hashLength != 0)
+                    keyLength++;
+                byte[] extendedkey = new byte[salt.Length + 4];
+                Buffer.BlockCopy(salt, 0, extendedkey, 0, salt.Length);
+                using (var ms = new System.IO.MemoryStream())
+                {
+                    for (int i = 0; i < keyLength; i++)
+                    {
+                        extendedkey[salt.Length] = (byte)(((i + 1) >> 24) & 0xFF);
+                        extendedkey[salt.Length + 1] = (byte)(((i + 1) >> 16) & 0xFF);
+                        extendedkey[salt.Length + 2] = (byte)(((i + 1) >> 8) & 0xFF);
+                        extendedkey[salt.Length + 3] = (byte)(((i + 1)) & 0xFF);
+                        byte[] u = hmac.ComputeHash(extendedkey);
+                        Array.Clear(extendedkey, salt.Length, 4);
+                        byte[] f = u;
+                        for (int j = 1; j < iterationCount; j++)
+                        {
+                            u = hmac.ComputeHash(u);
+                            for (int k = 0; k < f.Length; k++)
+                            {
+                                f[k] ^= u[k];
+                            }
+                        }
+                        ms.Write(f, 0, f.Length);
+                        Array.Clear(u, 0, u.Length);
+                        Array.Clear(f, 0, f.Length);
+                    }
+                    byte[] dk = new byte[dklen];
+                    ms.Position = 0;
+                    ms.Read(dk, 0, dklen);
+                    ms.Position = 0;
+                    for (long i = 0; i < ms.Length; i++)
+                    {
+                        ms.WriteByte(0);
+                    }
+                    Array.Clear(extendedkey, 0, extendedkey.Length);
+                    return dk;
+                }
+            }
         }
 
         private static void xor_salsa8(ref uint[] B, int indexB, ref uint[] Bx, int indexBx)
