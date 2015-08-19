@@ -76,7 +76,6 @@ namespace Novacoin
 
                 return result.ToArray();
             }
-
         }
 
         public static byte[] LEBytes(ushort n)
@@ -269,5 +268,172 @@ namespace Novacoin
             }
             return sb.ToString();
         }
+
+        public static void UInt16ToBE(ushort n, byte[] bs)
+        {
+            bs[0] = (byte)(n >> 8);
+            bs[1] = (byte)(n);
+        }
+
+        public static ushort BEToUInt16(byte[] bs)
+        {
+            ushort n = (ushort)(bs[0] << 8);
+            n |= (ushort)bs[1];
+            return n;
+        }
+
+        public static ushort BEToUInt16(byte[] bs, int off)
+        {
+            ushort n = (ushort)(bs[off] << 8);
+            n |= (ushort)bs[++off];
+            return n;
+        }
+
+        public static void UInt16ToLE(ushort n, byte[] bs)
+        {
+            bs[0] = (byte)(n);
+            bs[1] = (byte)(n >> 8);
+        }
+
+        public static void UInt16ToLE(ushort n, byte[] bs, int off)
+        {
+            bs[off] = (byte)(n);
+            bs[++off] = (byte)(n >> 8);
+        }
+
+        public static ushort LEToUInt16(byte[] bs)
+        {
+            ushort n = (ushort)bs[0];
+            n |= (ushort)(bs[1] << 8);
+            return n;
+        }
+
+        public static ushort LEToUInt16(byte[] bs, int off)
+        {
+            ushort n = (ushort)bs[off];
+            n |= (ushort)(bs[++off] << 8);
+            return n;
+        }
+
+        public static void UInt32ToBE(uint n, byte[] bs)
+        {
+            bs[0] = (byte)(n >> 24);
+            bs[1] = (byte)(n >> 16);
+            bs[2] = (byte)(n >> 8);
+            bs[3] = (byte)(n);
+        }
+
+        public static void UInt32ToBE(uint n, byte[] bs, int off)
+        {
+            bs[off] = (byte)(n >> 24);
+            bs[++off] = (byte)(n >> 16);
+            bs[++off] = (byte)(n >> 8);
+            bs[++off] = (byte)(n);
+        }
+
+        public static uint BEToUInt32(byte[] bs)
+        {
+            uint n = (uint)bs[0] << 24;
+            n |= (uint)bs[1] << 16;
+            n |= (uint)bs[2] << 8;
+            n |= (uint)bs[3];
+            return n;
+        }
+
+        public static uint BEToUInt32(byte[] bs, int off)
+        {
+            uint n = (uint)bs[off] << 24;
+            n |= (uint)bs[++off] << 16;
+            n |= (uint)bs[++off] << 8;
+            n |= (uint)bs[++off];
+            return n;
+        }
+
+        public static ulong BEToUInt64(byte[] bs)
+        {
+            uint hi = BEToUInt32(bs);
+            uint lo = BEToUInt32(bs, 4);
+            return ((ulong)hi << 32) | (ulong)lo;
+        }
+
+        public static ulong BEToUInt64(byte[] bs, int off)
+        {
+            uint hi = BEToUInt32(bs, off);
+            uint lo = BEToUInt32(bs, off + 4);
+            return ((ulong)hi << 32) | (ulong)lo;
+        }
+
+        public static void UInt64ToBE(ulong n, byte[] bs)
+        {
+            UInt32ToBE((uint)(n >> 32), bs);
+            UInt32ToBE((uint)(n), bs, 4);
+        }
+
+        public static void UInt64ToBE(ulong n, byte[] bs, int off)
+        {
+            UInt32ToBE((uint)(n >> 32), bs, off);
+            UInt32ToBE((uint)(n), bs, off + 4);
+        }
+
+        public static void UInt32ToLE(uint n, byte[] bs)
+        {
+            bs[0] = (byte)(n);
+            bs[1] = (byte)(n >> 8);
+            bs[2] = (byte)(n >> 16);
+            bs[3] = (byte)(n >> 24);
+        }
+
+        public static void UInt32ToLE(uint n, byte[] bs, int off)
+        {
+            bs[off] = (byte)(n);
+            bs[++off] = (byte)(n >> 8);
+            bs[++off] = (byte)(n >> 16);
+            bs[++off] = (byte)(n >> 24);
+        }
+
+        public static uint LEToUInt32(byte[] bs)
+        {
+            uint n = (uint)bs[0];
+            n |= (uint)bs[1] << 8;
+            n |= (uint)bs[2] << 16;
+            n |= (uint)bs[3] << 24;
+            return n;
+        }
+
+        public static uint LEToUInt32(byte[] bs, int off)
+        {
+            uint n = (uint)bs[off];
+            n |= (uint)bs[++off] << 8;
+            n |= (uint)bs[++off] << 16;
+            n |= (uint)bs[++off] << 24;
+            return n;
+        }
+
+        public static ulong LEToUInt64(byte[] bs)
+        {
+            uint lo = LEToUInt32(bs);
+            uint hi = LEToUInt32(bs, 4);
+            return ((ulong)hi << 32) | (ulong)lo;
+        }
+
+        public static ulong LEToUInt64(byte[] bs, int off)
+        {
+            uint lo = LEToUInt32(bs, off);
+            uint hi = LEToUInt32(bs, off + 4);
+            return ((ulong)hi << 32) | (ulong)lo;
+        }
+
+        public static void UInt64ToLE(ulong n, byte[] bs)
+        {
+            UInt32ToLE((uint)(n), bs);
+            UInt32ToLE((uint)(n >> 32), bs, 4);
+        }
+
+        public static void UInt64ToLE(ulong n, byte[] bs, int off)
+        {
+            UInt32ToLE((uint)(n), bs, off);
+            UInt32ToLE((uint)(n >> 32), bs, off + 4);
+        }
+
     }
 }

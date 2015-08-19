@@ -43,6 +43,7 @@
     <Compile Include="CKeyPair.cs" />
     <Compile Include="CNovacoinAddress.cs" />
     <Compile Include="CPubKey.cs" />
+    <Compile Include="CryptoUtils.cs" />
     <Compile Include="CScriptID.cs" />
     <Compile Include="Hash.cs" />
     <Compile Include="Interop.cs" />
