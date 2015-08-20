@@ -169,7 +169,7 @@ namespace Novacoin
 
     public static class ScriptCode
     {
-        
+
         /// <summary>
         /// Get the name of supplied opcode
         /// </summary>
@@ -460,7 +460,7 @@ namespace Novacoin
             // Immediate operand
             if (opcode <= opcodetype.OP_PUSHDATA4)
             {
-                byte[] szBytes = new byte[4] {0, 0, 0, 0}; // Zero length
+                byte[] szBytes = new byte[4] { 0, 0, 0, 0 }; // Zero length
 
                 try
                 {
@@ -473,7 +473,7 @@ namespace Novacoin
                     {
                         // The next byte contains the number of bytes to be pushed onto the stack, 
                         //    i.e. you have something like OP_PUSHDATA1 0x01 [0x5a]
-                        szBytes[3] = (byte) codeBytes.GetItem();
+                        szBytes[3] = (byte)codeBytes.GetItem();
                     }
                     else if (opcode == opcodetype.OP_PUSHDATA2)
                     {
@@ -530,7 +530,7 @@ namespace Novacoin
 
             if (bytes.Count() <= 4)
             {
-                byte[] valueBytes = new byte[4] {0, 0, 0, 0};
+                byte[] valueBytes = new byte[4] { 0, 0, 0, 0 };
                 bytes.ToArray().CopyTo(valueBytes, valueBytes.Length - bytes.Count());
 
                 sb.Append(Interop.BEBytesToUInt32(valueBytes));
@@ -551,7 +551,7 @@ namespace Novacoin
         public static string StackString(IList<IList<byte>> stackList)
         {
             StringBuilder sb = new StringBuilder();
-            foreach(IList<byte> bytesList in stackList)
+            foreach (IList<byte> bytesList in stackList)
             {
                 sb.Append(ValueString(bytesList));
             }
@@ -590,6 +590,65 @@ namespace Novacoin
             return (opcodetype)(opcodetype.OP_1 + n - 1);
         }
 
+        public static int ScriptSigArgsExpected(txnouttype t, IList<IEnumerable<byte>> solutions)
+        {
+            switch (t)
+            {
+                case txnouttype.TX_NONSTANDARD:
+                    return -1;
+                case txnouttype.TX_NULL_DATA:
+                    return 1;
+                case txnouttype.TX_PUBKEY:
+                    return 1;
+                case txnouttype.TX_PUBKEYHASH:
+                    return 2;
+                case txnouttype.TX_MULTISIG:
+                    if (solutions.Count() < 1 || solutions.First().Count() < 1)
+                        return -1;
+                    return solutions.First().First() + 1;
+                case txnouttype.TX_SCRIPTHASH:
+                    return 1; // doesn't include args needed by the script
+            }
+            return -1;
+        }
+
+
+        public static bool IsStandard(CScript scriptPubKey, out txnouttype whichType)
+        {
+            IList<IEnumerable<byte>> solutions = new List<IEnumerable<byte>>();
+
+            if (!Solver(scriptPubKey, out whichType, out solutions))
+            {
+                // No solutions found
+                return false;
+            }
+
+            if (whichType == txnouttype.TX_MULTISIG)
+            {
+                byte m = solutions.First().First();
+                byte n = solutions.Last().First();
+
+                // Support up to x-of-3 multisig txns as standard
+                if (n < 1 || n > 3)
+                {
+                    return false;
+                }
+                if (m < 1 || m > n)
+                {
+                    return false;
+                }
+            }
+
+            return whichType != txnouttype.TX_NONSTANDARD;
+        }
+
+        /// <summary>
+        /// Return public keys or hashes from scriptPubKey, for 'standard' transaction types.
+        /// </summary>
+        /// <param name="scriptPubKey">CScript instance</param>
+        /// <param name="typeRet">Output type</param>
+        /// <param name="solutions">Set of solutions</param>
+        /// <returns>Result</returns>
         public static bool Solver(CScript scriptPubKey, out txnouttype typeRet, out IList<IEnumerable<byte>> solutions)
         {
             solutions = new List<IEnumerable<byte>>();
@@ -626,7 +685,7 @@ namespace Novacoin
             // [ECDSA public key] OP_CHECKSIG
             templateTuples.Add(
                 new Tuple<txnouttype, IEnumerable<byte>>(
-                    txnouttype.TX_PUBKEY, 
+                    txnouttype.TX_PUBKEY,
                     new byte[] { (byte)opcodetype.OP_PUBKEY, (byte)opcodetype.OP_CHECKSIG })
             );
 
@@ -643,7 +702,7 @@ namespace Novacoin
             // OP_RETURN [up to 80 bytes of data]
             templateTuples.Add(
                 new Tuple<txnouttype, IEnumerable<byte>>(
-                    txnouttype.TX_NULL_DATA, 
+                    txnouttype.TX_NULL_DATA,
                     new byte[] { (byte)opcodetype.OP_RETURN, (byte)opcodetype.OP_SMALLDATA })
             );
 
@@ -728,7 +787,7 @@ namespace Novacoin
                         solutions.Add(args1);
                     }
                     else if (opcode2 == opcodetype.OP_SMALLINTEGER)
-                    {   
+                    {
                         // Single-byte small integer pushed onto solutions
                         if (opcode1 == opcodetype.OP_0 || (opcode1 >= opcodetype.OP_1 && opcode1 <= opcodetype.OP_16))
                         {
