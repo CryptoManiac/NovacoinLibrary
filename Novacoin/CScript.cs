@@ -373,6 +373,14 @@ namespace Novacoin
             AddOp(opcodetype.OP_EQUAL);
         }
 
+        /// <summary>
+        /// Reset script code buffer.
+        /// </summary>
+        public void SetNullDestination()
+        {
+            codeBytes.Clear();
+        }
+
         public void SetMultiSig(int nRequired, IEnumerable<CPubKey> keys)
         {
             codeBytes.Clear();
