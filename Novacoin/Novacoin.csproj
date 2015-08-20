@@ -60,7 +60,7 @@
     <Compile Include="CBlockHeader.cs" />
     <Compile Include="CBlock.cs" />
     <Compile Include="CScript.cs" />
-    <Compile Include="ScriptOpcode.cs" />
+    <Compile Include="ScriptCode.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

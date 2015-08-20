@@ -183,7 +183,7 @@ namespace Novacoin
             IEnumerable<byte> pushArgs; // OP_PUSHDATAn argument
             
             // Scan opcodes sequence
-            while (ScriptOpcode.GetOp(ref wCodeBytes, out opcode, out pushArgs))
+            while (ScriptCode.GetOp(ref wCodeBytes, out opcode, out pushArgs))
             {
                 if (opcode > opcodetype.OP_16)
                 {
@@ -207,7 +207,7 @@ namespace Novacoin
             IEnumerable<byte> pushArgs; // OP_PUSHDATAn argument
 
             // Scan opcodes sequence
-            while (ScriptOpcode.GetOp(ref wCodeBytes, out opcode, out pushArgs))
+            while (ScriptCode.GetOp(ref wCodeBytes, out opcode, out pushArgs))
             {
                 byte[] data = pushArgs.ToArray();
 
@@ -242,10 +242,29 @@ namespace Novacoin
         /// <returns>Checking result</returns>
         public bool IsPayToScriptHash()
         {
+            // Sender provides redeem script hash, receiver provides signature list and redeem script
+            // OP_HASH160 20 [20 byte hash] OP_EQUAL
             return (codeBytes.Count() == 23 &&
                     codeBytes[0] == (byte)opcodetype.OP_HASH160 &&
-                    codeBytes[1] == 0x14 &&
+                    codeBytes[1] == 0x14 && // 20 bytes hash length prefix
                     codeBytes[22] == (byte)opcodetype.OP_EQUAL);
+        }
+
+        /// <summary>
+        /// Quick test for pay-to-pubkeyhash CScripts
+        /// </summary>
+        /// <returns>Checking result</returns>
+        public bool IsPayToPubKeyHash()
+        {
+            // Sender provides hash of pubkey, receiver provides signature and pubkey
+            // OP_DUP OP_HASH160 20 [20 byte hash] OP_EQUALVERIFY OP_CHECKSIG
+
+            return (codeBytes.Count == 25 &&
+                    codeBytes[0] == (byte) opcodetype.OP_DUP &&
+                    codeBytes[1] == (byte)opcodetype.OP_HASH160 &&
+                    codeBytes[2] == 0x14 && // 20 bytes hash length prefix
+                    codeBytes[23] == (byte)opcodetype.OP_EQUALVERIFY &&
+                    codeBytes[24] == (byte)opcodetype.OP_CHECKSIG);
         }
 
         /// <summary>
@@ -268,7 +287,7 @@ namespace Novacoin
             opcodetype lastOpcode = opcodetype.OP_INVALIDOPCODE;
 
             // Scan opcodes sequence
-            while (ScriptOpcode.GetOp(ref wCodeBytes, out opcode, out pushArgs))
+            while (ScriptCode.GetOp(ref wCodeBytes, out opcode, out pushArgs))
             {
                 if (opcode == opcodetype.OP_CHECKSIG || opcode == opcodetype.OP_CHECKSIGVERIFY)
                 {
@@ -278,7 +297,7 @@ namespace Novacoin
                 {
                     if (fAccurate && lastOpcode >= opcodetype.OP_1 && lastOpcode <= opcodetype.OP_16)
                     {
-                        nCount += ScriptOpcode.DecodeOP_N(lastOpcode);
+                        nCount += ScriptCode.DecodeOP_N(lastOpcode);
                     }
                     else
                     {
@@ -311,7 +330,7 @@ namespace Novacoin
             opcodetype opcode; // Current opcode
             IEnumerable<byte> pushArgs; // OP_PUSHDATAn argument
 
-            while (ScriptOpcode.GetOp(ref wScriptSig, out opcode, out pushArgs))
+            while (ScriptCode.GetOp(ref wScriptSig, out opcode, out pushArgs))
             {
                 if (opcode > opcodetype.OP_16)
                 {
@@ -346,14 +365,22 @@ namespace Novacoin
         public void SetMultiSig(int nRequired, IEnumerable<CPubKey> keys)
         {
             codeBytes.Clear();
-            AddOp(ScriptOpcode.EncodeOP_N(nRequired));
+            AddOp(ScriptCode.EncodeOP_N(nRequired));
 
             foreach (CPubKey key in keys)
             {
                 PushData(key.Public.ToList());
             }
-            AddOp(ScriptOpcode.EncodeOP_N(keys.Count()));
+            AddOp(ScriptCode.EncodeOP_N(keys.Count()));
             AddOp(opcodetype.OP_CHECKMULTISIG);
+        }
+
+        /// <summary>
+        /// Access to scrypt code.
+        /// </summary>
+        public IEnumerable<byte> Enumerable
+        {
+            get { return codeBytes; }
         }
 
         /// <summary>
@@ -367,7 +394,7 @@ namespace Novacoin
 
             opcodetype opcode; // Current opcode
             IEnumerable<byte> pushArgs; // OP_PUSHDATAn argument
-            while (ScriptOpcode.GetOp(ref wCodeBytes, out opcode, out pushArgs))
+            while (ScriptCode.GetOp(ref wCodeBytes, out opcode, out pushArgs))
             {
                 if (sb.Length != 0)
                 {
@@ -376,11 +403,11 @@ namespace Novacoin
 
                 if (0 <= opcode && opcode <= opcodetype.OP_PUSHDATA4)
                 {
-                    sb.Append(ScriptOpcode.ValueString(pushArgs));
+                    sb.Append(ScriptCode.ValueString(pushArgs));
                 }
                 else
                 {
-                    sb.Append(ScriptOpcode.GetOpName(opcode));
+                    sb.Append(ScriptCode.GetOpName(opcode));
                 }
             }
 

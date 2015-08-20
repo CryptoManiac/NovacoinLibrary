@@ -152,7 +152,22 @@ namespace Novacoin
         OP_INVALIDOPCODE = 0xff,
     };
 
-    public static class ScriptOpcode
+    /// <summary>
+    /// Transaction output types.
+    /// </summary>
+    public enum txnouttype
+    {
+        TX_NONSTANDARD,
+
+        // 'standard' transaction types:
+        TX_PUBKEY,
+        TX_PUBKEYHASH,
+        TX_SCRIPTHASH,
+        TX_MULTISIG,
+        TX_NULL_DATA,
+    };
+
+    public static class ScriptCode
     {
         
         /// <summary>
@@ -575,6 +590,176 @@ namespace Novacoin
             return (opcodetype)(opcodetype.OP_1 + n - 1);
         }
 
+        public static bool Solver(CScript scriptPubKey, out txnouttype typeRet, out IList<IEnumerable<byte>> solutions)
+        {
+            solutions = new List<IEnumerable<byte>>();
 
+            // There are shortcuts for pay-to-script-hash and pay-to-pubkey-hash, which are more constrained than the other types:
+
+            // It is always OP_HASH160 20 [20 byte hash] OP_EQUAL
+            if (scriptPubKey.IsPayToScriptHash())
+            {
+                typeRet = txnouttype.TX_SCRIPTHASH;
+
+                // Take 20 bytes with offset of 2 bytes
+                IEnumerable<byte> hashBytes = scriptPubKey.Enumerable.Skip(2).Take(20);
+                solutions.Add(hashBytes);
+
+                return true;
+            }
+
+            // It is always OP_DUP OP_HASH160 20 [20 byte hash] OP_EQUALVERIFY OP_CHECKSIG
+            if (scriptPubKey.IsPayToPubKeyHash())
+            {
+                typeRet = txnouttype.TX_PUBKEYHASH;
+
+                // Take 20 bytes with offset of 3 bytes
+                IEnumerable<byte> hashBytes = scriptPubKey.Enumerable.Skip(3).Take(20);
+                solutions.Add(hashBytes);
+
+                return true;
+            }
+
+            List<Tuple<txnouttype, IEnumerable<byte>>> templateTuples = new List<Tuple<txnouttype, IEnumerable<byte>>>();
+
+            // Sender provides pubkey, receiver adds signature
+            // [ECDSA public key] OP_CHECKSIG
+            templateTuples.Add(
+                new Tuple<txnouttype, IEnumerable<byte>>(
+                    txnouttype.TX_PUBKEY, 
+                    new byte[] { (byte)opcodetype.OP_PUBKEY, (byte)opcodetype.OP_CHECKSIG })
+            );
+
+            // Sender provides N pubkeys, receivers provides M signatures
+            // N [pubkey1] [pubkey2] ... [pubkeyN] M OP_CHECKMULTISIG
+            // Where N and M are small integer opcodes (OP1 ... OP_16)
+            templateTuples.Add(
+                new Tuple<txnouttype, IEnumerable<byte>>(
+                    txnouttype.TX_MULTISIG,
+                    new byte[] { (byte)opcodetype.OP_SMALLINTEGER, (byte)opcodetype.OP_PUBKEYS, (byte)opcodetype.OP_SMALLINTEGER, (byte)opcodetype.OP_CHECKMULTISIG })
+            );
+
+            // Data-carrying output
+            // OP_RETURN [up to 80 bytes of data]
+            templateTuples.Add(
+                new Tuple<txnouttype, IEnumerable<byte>>(
+                    txnouttype.TX_NULL_DATA, 
+                    new byte[] { (byte)opcodetype.OP_RETURN, (byte)opcodetype.OP_SMALLDATA })
+            );
+
+            // Nonstandard tx output
+            typeRet = txnouttype.TX_NONSTANDARD;
+
+            foreach (Tuple<txnouttype, IEnumerable<byte>> templateTuple in templateTuples)
+            {
+                CScript script2 = new CScript(templateTuple.Item2);
+                CScript script1 = scriptPubKey;
+
+                opcodetype opcode1, opcode2;
+
+                // Compare
+                WrappedList<byte> wl1 = script1.GetWrappedList();
+                WrappedList<byte> wl2 = script2.GetWrappedList();
+
+                IEnumerable<byte> args1, args2;
+
+                byte last1 = script1.Enumerable.Last();
+                byte last2 = script2.Enumerable.Last();
+
+                while (true)
+                {
+                    if (wl1.GetItem() == last1 && wl2.GetItem() == last2)
+                    {
+                        // Found a match
+                        typeRet = templateTuple.Item1;
+                        if (typeRet == txnouttype.TX_MULTISIG)
+                        {
+                            // Additional checks for TX_MULTISIG:
+                            byte m = solutions.First().First();
+                            byte n = solutions.Last().First();
+
+                            if (m < 1 || n < 1 || m > n || solutions.Count - 2 != n)
+                            {
+                                return false;
+                            }
+                        }
+                        return true;
+                    }
+
+                    if (!GetOp(ref wl1, out opcode1, out args1))
+                    {
+                        break;
+                    }
+                    if (!GetOp(ref wl2, out opcode2, out args2))
+                    {
+                        break;
+                    }
+
+                    // Template matching opcodes:
+                    if (opcode2 == opcodetype.OP_PUBKEYS)
+                    {
+                        while (args1.Count() >= 33 && args1.Count() <= 120)
+                        {
+                            solutions.Add(args1);
+                            if (!GetOp(ref wl1, out opcode1, out args1))
+                            {
+                                break;
+                            }
+                        }
+                        if (!GetOp(ref wl2, out opcode2, out args2))
+                            break;
+                        // Normal situation is to fall through
+                        // to other if/else statements
+                    }
+                    if (opcode2 == opcodetype.OP_PUBKEY)
+                    {
+                        if (args1.Count() < 33 || args1.Count() > 120)
+                        {
+                            break;
+                        }
+                        solutions.Add(args1);
+                    }
+                    else if (opcode2 == opcodetype.OP_PUBKEYHASH)
+                    {
+                        if (args1.Count() != 20) // hash160 size
+                        {
+                            break;
+                        }
+                        solutions.Add(args1);
+                    }
+                    else if (opcode2 == opcodetype.OP_SMALLINTEGER)
+                    {   
+                        // Single-byte small integer pushed onto solutions
+                        if (opcode1 == opcodetype.OP_0 || (opcode1 >= opcodetype.OP_1 && opcode1 <= opcodetype.OP_16))
+                        {
+                            byte n = (byte)DecodeOP_N(opcode1);
+                            solutions.Add(new byte[] { n });
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                    else if (opcode2 == opcodetype.OP_SMALLDATA)
+                    {
+                        // small pushdata, <= 80 bytes
+                        if (args1.Count() > 80)
+                        {
+                            break;
+                        }
+                    }
+                    else if (opcode1 != opcode2 || args1.SequenceEqual(args2))
+                    {
+                        // Others must match exactly
+                        break;
+                    }
+                }
+            }
+
+            solutions.Clear();
+            typeRet = txnouttype.TX_NONSTANDARD;
+
+            return false;
+        }
     };
 }
