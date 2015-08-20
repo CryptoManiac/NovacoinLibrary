@@ -112,11 +112,33 @@ namespace NovacoinTest
             txnouttype typeRet;
             IList<IEnumerable<byte>> solutions;
 
-            Console.WriteLine("scriptPubKey solved: {0}", ScriptCode.Solver(scriptPubKey, out typeRet, out solutions));
-            Console.WriteLine("scriptPubKey address: {0}", new CPubKey(solutions.First()).KeyID.ToString());
+            Console.WriteLine("\nscriptPubKey solved: {0}", ScriptCode.Solver(scriptPubKey, out typeRet, out solutions));
+            Console.WriteLine("scriptPubKey address: {0}\n", new CPubKey(solutions.First()).KeyID.ToString());
 
             Console.WriteLine("scriptPubKeyHash solved: {0}", ScriptCode.Solver(scriptPubKeyHash, out typeRet, out solutions));
-            Console.WriteLine("scriptPubKeyHash address: {0}", new CKeyID(new Hash160(solutions.First())).ToString());
+            Console.WriteLine("scriptPubKeyHash address: {0}\n", new CKeyID(new Hash160(solutions.First())).ToString());
+
+            /// Some SetDestination tests
+            CScript scriptDestinationTest = new CScript();
+
+            
+            Console.WriteLine("Creating and decoding new destination with {0} as public key.\n", keyPair1.PubKey.ToString());
+
+            Console.WriteLine("Pay-to-Pubkey:");
+
+            scriptDestinationTest.SetDestination(keyPair1.PubKey);
+
+            Console.WriteLine("\tscriptDestinationTest solved: {0}", ScriptCode.Solver(scriptDestinationTest, out typeRet, out solutions));
+            Console.WriteLine("\tscriptDestinationTest address: {0}\n", new CPubKey(solutions.First()).KeyID.ToString());
+
+            Console.WriteLine("Pay-to-PubkeyHash:");
+
+            scriptDestinationTest.SetDestination(keyPair1.PubKey.KeyID);
+
+            Console.WriteLine("\tscriptDestinationTest solved: {0}", ScriptCode.Solver(scriptDestinationTest, out typeRet, out solutions));
+            Console.WriteLine("\tscriptDestinationTest address: {0}\n", new CKeyID(new Hash160(solutions.First())).ToString());
+
+
 
             Console.ReadLine();
         }

@@ -96,8 +96,8 @@ namespace Novacoin
         /// <summary>
         /// Create new OP_PUSHDATAn operator and add it to opcode bytes list
         /// </summary>
-        /// <param name="dataBytes">List of data bytes</param>
-        public void PushData(IList<byte> dataBytes)
+        /// <param name="dataBytes">Set of data bytes</param>
+        public void PushData(IEnumerable<byte> dataBytes)
         {
             long nCount = dataBytes.LongCount();
 
@@ -356,15 +356,35 @@ namespace Novacoin
 
         }
 
+        /// <summary>
+        /// Set pay-to-pubkey destination.
+        /// </summary>
+        /// <param name="pubKey">Instance of CPubKey.</param>
+        public void SetDestination(CPubKey pubKey)
+        {
+            codeBytes.Clear();
+            PushData(pubKey.PublicBytes);
+            AddOp(opcodetype.OP_CHECKSIG);
+        }
+
+        /// <summary>
+        /// Set pay-to-pubkeyhash destination
+        /// </summary>
+        /// <param name="ID">Public key hash</param>
         public void SetDestination(CKeyID ID)
         {
             codeBytes.Clear();
             AddOp(opcodetype.OP_DUP);
             AddOp(opcodetype.OP_HASH160);
             AddHash(ID);
-            AddOp(opcodetype.OP_EQUAL);
+            AddOp(opcodetype.OP_EQUALVERIFY);
+            AddOp(opcodetype.OP_CHECKSIG);
         }
 
+        /// <summary>
+        /// Set pay-to-scripthash destination
+        /// </summary>
+        /// <param name="ID">Script hash</param>
         public void SetDestination(CScriptID ID)
         {
             codeBytes.Clear();
@@ -381,6 +401,11 @@ namespace Novacoin
             codeBytes.Clear();
         }
 
+        /// <summary>
+        /// Set multisig destination.
+        /// </summary>
+        /// <param name="nRequired">Amount of required signatures.</param>
+        /// <param name="keys">Set of public keys.</param>
         public void SetMultiSig(int nRequired, IEnumerable<CPubKey> keys)
         {
             codeBytes.Clear();
