@@ -711,8 +711,8 @@ namespace Novacoin
 
             foreach (Tuple<txnouttype, IEnumerable<byte>> templateTuple in templateTuples)
             {
-                CScript script2 = new CScript(templateTuple.Item2);
                 CScript script1 = scriptPubKey;
+                CScript script2 = new CScript(templateTuple.Item2);
 
                 opcodetype opcode1, opcode2;
 
@@ -727,7 +727,7 @@ namespace Novacoin
 
                 while (true)
                 {
-                    if (wl1.GetItem() == last1 && wl2.GetItem() == last2)
+                    if (wl1.GetCurrentItem() == last1 && wl2.GetCurrentItem() == last2)
                     {
                         // Found a match
                         typeRet = templateTuple.Item1;
@@ -807,7 +807,7 @@ namespace Novacoin
                             break;
                         }
                     }
-                    else if (opcode1 != opcode2 || args1.SequenceEqual(args2))
+                    else if (opcode1 != opcode2 || !args1.SequenceEqual(args2))
                     {
                         // Others must match exactly
                         break;

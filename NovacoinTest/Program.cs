@@ -103,7 +103,20 @@ namespace NovacoinTest
             IEnumerable<byte> dataBytesForScrypt = b1.header.ToBytes();
             ScryptHash256 scryptHash = ScryptHash256.Compute256(dataBytesForScrypt);
 
-            Console.WriteLine("block1 header hash: {0}", scryptHash.ToString());
+            Console.WriteLine("\nblock1 header hash: {0}", scryptHash.ToString());
+
+            /// Solver tests
+            CScript scriptPubKey = new CScript(Interop.ParseHex("21021ad6ae76a602310e86957d4ca752c81a8725f142fd2fc40f6a7fc2310bb2c749ac"));
+            CScript scriptPubKeyHash = new CScript(Interop.ParseHex("76a914edbf189bece45d4afa9848276e949183936bf6a488ac"));
+
+            txnouttype typeRet;
+            IList<IEnumerable<byte>> solutions;
+
+            Console.WriteLine("scriptPubKey solved: {0}", ScriptCode.Solver(scriptPubKey, out typeRet, out solutions));
+            Console.WriteLine("scriptPubKey address: {0}", new CPubKey(solutions.First()).GetKeyID().ToString());
+
+            Console.WriteLine("scriptPubKeyHash solved: {0}", ScriptCode.Solver(scriptPubKeyHash, out typeRet, out solutions));
+            Console.WriteLine("scriptPubKeyHash address: {0}", new CKeyID(new Hash160(solutions.First())).ToString());
 
             Console.ReadLine();
         }

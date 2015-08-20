@@ -41,14 +41,14 @@ namespace Novacoin
         /// Initializes a new instance of Hash class with first 20 bytes from supplied list
         /// </summary>
         /// <param name="bytesList">List of bytes</param>
-        public Hash(IList<byte> bytesList)
+        public Hash(IEnumerable<byte> bytes)
         {
-            _hashBytes = bytesList.Take<byte>(hashSize).ToArray<byte>();
+            _hashBytes = bytes.Take<byte>(hashSize).ToArray<byte>();
         }
 
-        public Hash(byte[] bytesArray)
+        public Hash(byte[] bytes)
         {
-            _hashBytes = bytesArray;
+            _hashBytes = bytes;
         }
 
         public bool IsZero()
