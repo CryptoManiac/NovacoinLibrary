@@ -51,9 +51,9 @@ namespace Novacoin
             _hashBytes = bytes;
         }
 
-        public bool IsZero()
+        public bool IsZero
         {
-            return !_hashBytes.Any(b => b != 0);
+            get { return !_hashBytes.Any(b => b != 0); }
         }
 
         public override string ToString()

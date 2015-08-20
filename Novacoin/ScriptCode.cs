@@ -656,7 +656,7 @@ namespace Novacoin
             // There are shortcuts for pay-to-script-hash and pay-to-pubkey-hash, which are more constrained than the other types:
 
             // It is always OP_HASH160 20 [20 byte hash] OP_EQUAL
-            if (scriptPubKey.IsPayToScriptHash())
+            if (scriptPubKey.IsPayToScriptHash)
             {
                 typeRet = txnouttype.TX_SCRIPTHASH;
 
@@ -668,7 +668,7 @@ namespace Novacoin
             }
 
             // It is always OP_DUP OP_HASH160 20 [20 byte hash] OP_EQUALVERIFY OP_CHECKSIG
-            if (scriptPubKey.IsPayToPubKeyHash())
+            if (scriptPubKey.IsPayToPubKeyHash)
             {
                 typeRet = txnouttype.TX_PUBKEYHASH;
 

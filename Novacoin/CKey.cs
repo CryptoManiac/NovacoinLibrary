@@ -81,15 +81,15 @@ namespace Novacoin
         /// Calculate Hash160 and create new CKeyID instance.
         /// </summary>
         /// <returns>New key ID</returns>
-        public CKeyID GetKeyID()
+        public CKeyID KeyID
         {
-            return new CKeyID(Hash160.Compute160(Public));
+            get { return new CKeyID(Hash160.Compute160(PublicBytes)); }
         }
 
         /// <summary>
-        /// Public part of key pair
+        /// PublicBytes part of key pair
         /// </summary>
-        public IEnumerable<byte> Public
+        public IEnumerable<byte> PublicBytes
         {
             get { return _Public.Q.GetEncoded(); }
         }

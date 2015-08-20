@@ -50,7 +50,7 @@ namespace Novacoin
 
         public string ToHex()
         {
-            return Interop.ToHex(Public);
+            return Interop.ToHex(PublicBytes);
         }
 
         public override string ToString()
@@ -59,7 +59,7 @@ namespace Novacoin
 
             r.Add((byte)(AddrType.PUBKEY_ADDRESS));
 
-            r.AddRange(Public);
+            r.AddRange(PublicBytes);
 
             return AddressTools.Base58EncodeCheck(r);
         }

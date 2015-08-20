@@ -129,15 +129,15 @@ namespace Novacoin
             return signer.GenerateSignature();
         }
 
-        public CPubKey GetPubKey()
+        public CPubKey PubKey
         {
-            return new CPubKey(Public);
+            get { return new CPubKey(PublicBytes); }
         }
 
         /// <summary>
-        /// Secret part of key pair
+        /// SecretBytes part of key pair
         /// </summary>
-        public IEnumerable<byte> Secret
+        public IEnumerable<byte> SecretBytes
         {
             get
             {
@@ -161,7 +161,7 @@ namespace Novacoin
 
         public string ToHex()
         {
-            return Interop.ToHex(Secret);
+            return Interop.ToHex(SecretBytes);
         }
 
         public override string ToString()
@@ -169,7 +169,7 @@ namespace Novacoin
             List<byte> r = new List<byte>();
 
             r.Add((byte)(128 + AddrType.PUBKEY_ADDRESS)); // Key version
-            r.AddRange(Secret); // Key data
+            r.AddRange(SecretBytes); // Key data
 
             return AddressTools.Base58EncodeCheck(r);
         }

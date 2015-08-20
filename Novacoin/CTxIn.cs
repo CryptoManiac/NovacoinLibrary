@@ -80,29 +80,32 @@ namespace Novacoin
         /// Get raw bytes representation of our input.
         /// </summary>
         /// <returns>Byte sequence.</returns>
-        public IList<byte> ToBytes()
+        public IList<byte> Bytes
         {
-            List<byte> inputBytes = new List<byte>();
+            get
+            {
+                List<byte> inputBytes = new List<byte>();
 
-            inputBytes.AddRange(txID.hashBytes); // Input transaction id
-            inputBytes.AddRange(BitConverter.GetBytes(n)); // Output number
-            inputBytes.AddRange(VarInt.EncodeVarInt(scriptSig.LongLength)); // scriptSig length
-            inputBytes.AddRange(scriptSig); // scriptSig
-            inputBytes.AddRange(BitConverter.GetBytes(nSequence)); // Sequence
+                inputBytes.AddRange(txID.hashBytes); // Input transaction id
+                inputBytes.AddRange(BitConverter.GetBytes(n)); // Output number
+                inputBytes.AddRange(VarInt.EncodeVarInt(scriptSig.LongLength)); // scriptSig length
+                inputBytes.AddRange(scriptSig); // scriptSig
+                inputBytes.AddRange(BitConverter.GetBytes(nSequence)); // Sequence
 
-            return inputBytes;
+                return inputBytes;
+            }
         }
 
-        public bool IsCoinBase()
+        public bool IsCoinBase
         {
-            return txID.IsZero();
+            get { return txID.IsZero; }
         }
 
 		public override string ToString ()
 		{
 			StringBuilder sb = new StringBuilder ();
 
-            if (IsCoinBase())
+            if (IsCoinBase)
             {
                 sb.AppendFormat("CTxIn(txId={0}, coinbase={2}, nSequence={3})", txID.ToString(), n, Interop.ToHex(scriptSig), nSequence);
             }

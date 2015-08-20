@@ -50,18 +50,21 @@ namespace Novacoin
         /// Convert current block header instance into sequence of bytes
         /// </summary>
         /// <returns>Byte sequence</returns>
-        public IList<byte> ToBytes()
+        public IList<byte> Bytes
         {
-            List<byte> r = new List<byte>();
+            get
+            {
+                List<byte> r = new List<byte>();
 
-            r.AddRange(BitConverter.GetBytes(nVersion));
-            r.AddRange(prevHash.hashBytes);
-            r.AddRange(merkleRoot.hashBytes);
-            r.AddRange(BitConverter.GetBytes(nTime));
-            r.AddRange(BitConverter.GetBytes(nBits));
-            r.AddRange(BitConverter.GetBytes(nNonce));
+                r.AddRange(BitConverter.GetBytes(nVersion));
+                r.AddRange(prevHash.hashBytes);
+                r.AddRange(merkleRoot.hashBytes);
+                r.AddRange(BitConverter.GetBytes(nTime));
+                r.AddRange(BitConverter.GetBytes(nBits));
+                r.AddRange(BitConverter.GetBytes(nNonce));
 
-            return r;
+                return r;
+            }
         }
 
         public override string ToString()

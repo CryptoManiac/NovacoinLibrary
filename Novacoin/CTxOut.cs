@@ -61,15 +61,18 @@ namespace Novacoin
         /// Get raw bytes representation of our output.
         /// </summary>
         /// <returns>Byte sequence.</returns>
-        public IList<byte> ToBytes()
+        public IList<byte> Bytes
         {
-            List<byte> resultBytes = new List<byte>();
+            get
+            {
+                List<byte> resultBytes = new List<byte>();
 
-            resultBytes.AddRange(BitConverter.GetBytes(nValue)); // txout value
-            resultBytes.AddRange(VarInt.EncodeVarInt(scriptPubKey.LongLength)); // scriptPubKey length
-            resultBytes.AddRange(scriptPubKey); // scriptPubKey
+                resultBytes.AddRange(BitConverter.GetBytes(nValue)); // txout value
+                resultBytes.AddRange(VarInt.EncodeVarInt(scriptPubKey.LongLength)); // scriptPubKey length
+                resultBytes.AddRange(scriptPubKey); // scriptPubKey
 
-            return resultBytes;
+                return resultBytes;
+            }
         }
 
 		public override string ToString ()

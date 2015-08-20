@@ -53,22 +53,25 @@ namespace Novacoin
         /// Convert current instance into sequence of bytes
         /// </summary>
         /// <returns>Byte sequence</returns>
-        public IList<byte> ToBytes()
+        public IList<byte> Bytes 
         {
-            List<byte> r = new List<byte>();
-
-            r.AddRange(header.ToBytes());
-            r.AddRange(VarInt.EncodeVarInt(vtx.LongLength)); // transactions count
-
-            foreach (CTransaction tx in vtx)
+            get
             {
-                r.AddRange(tx.ToBytes());
+                List<byte> r = new List<byte>();
+
+                r.AddRange(header.Bytes);
+                r.AddRange(VarInt.EncodeVarInt(vtx.LongLength)); // transactions count
+
+                foreach (CTransaction tx in vtx)
+                {
+                    r.AddRange(tx.Bytes);
+                }
+
+                r.AddRange(VarInt.EncodeVarInt(signature.LongLength));
+                r.AddRange(signature);
+
+                return r;
             }
-
-            r.AddRange(VarInt.EncodeVarInt(signature.LongLength));
-            r.AddRange(signature);
-
-            return r;
         }
 
         public override string ToString()
