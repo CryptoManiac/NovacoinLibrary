@@ -50,6 +50,11 @@ namespace Novacoin
             return Elements[Index++];
         }
 
+        public T GetCurrentItem()
+        {
+            return Elements[Index];
+        }
+
         public T[] GetItems(int Count)
         {
             if (Elements.Count - Index < Count)
@@ -59,6 +64,18 @@ namespace Novacoin
 
             T[] result = Elements.Skip<T>(Index).Take<T>(Count).ToArray<T>();
             Index += Count;
+
+            return result;
+        }
+
+        public T[] GetCurrentItems(int Count)
+        {
+            if (Elements.Count - Index < Count)
+            {
+                throw new WrappedListException("Unable to read requested amount of data.");
+            }
+
+            T[] result = Elements.Skip<T>(Index).Take<T>(Count).ToArray<T>();
 
             return result;
         }
