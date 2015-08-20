@@ -26,9 +26,13 @@ namespace Novacoin
     {
         public static byte[] ReverseBytes(byte[] source)
         {
-            Array.Reverse(source);
+            byte[] b = new byte[source.Length];
 
-            return source;
+            source.CopyTo(b, 0);
+
+            Array.Reverse(b);
+
+            return b;
         }
 
         public static byte[] LEBytes(uint[] values)
