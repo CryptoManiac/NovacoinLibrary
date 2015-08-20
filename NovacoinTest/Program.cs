@@ -138,7 +138,23 @@ namespace NovacoinTest
             Console.WriteLine("\tscriptDestinationTest solved: {0}", ScriptCode.Solver(scriptDestinationTest, out typeRet, out solutions));
             Console.WriteLine("\tscriptDestinationTest address: {0}\n", new CKeyID(new Hash160(solutions.First())).ToString());
 
+            Console.WriteLine("Multisig with three random keys:");
 
+            CKeyPair k1 = new CKeyPair(), k2 = new CKeyPair(), k3 = new CKeyPair();
+
+            scriptDestinationTest.SetMultiSig(2, new CPubKey[] { k1.PubKey, k2.PubKey, k3.PubKey });
+            Console.WriteLine("\tscriptDestinationTest solved: {0}", ScriptCode.Solver(scriptDestinationTest, out typeRet, out solutions));
+            Console.WriteLine("\tscriptDestinationTest addresses: \n");
+
+            int nRequired = solutions.First().First();
+            int nKeys = solutions.Last().First();
+
+            foreach (IEnumerable<byte> keyBytes in solutions.Skip(1).Take(nKeys))
+            {
+                Console.WriteLine("\t\t{0}", (new CPubKey(keyBytes)).KeyID.ToString());
+            }
+
+            Console.WriteLine("\n\tnRequired={0}", nRequired);
 
             Console.ReadLine();
         }
