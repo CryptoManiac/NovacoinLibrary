@@ -54,12 +54,12 @@ namespace Novacoin
         {
             List<byte> r = new List<byte>();
 
-            r.AddRange(Interop.LEBytes(nVersion));
+            r.AddRange(BitConverter.GetBytes(nVersion));
             r.AddRange(prevHash.hashBytes);
             r.AddRange(merkleRoot.hashBytes);
-            r.AddRange(Interop.LEBytes(nTime));
-            r.AddRange(Interop.LEBytes(nBits));
-            r.AddRange(Interop.LEBytes(nNonce));
+            r.AddRange(BitConverter.GetBytes(nTime));
+            r.AddRange(BitConverter.GetBytes(nBits));
+            r.AddRange(BitConverter.GetBytes(nNonce));
 
             return r;
         }

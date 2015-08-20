@@ -35,12 +35,12 @@ namespace Novacoin
             WrappedList<byte> wBytes = new WrappedList<byte>(blockBytes);
 
             // Fill the block header fields
-            header.nVersion = Interop.LEBytesToUInt32(wBytes.GetItems(4));
+            header.nVersion = BitConverter.ToUInt32(wBytes.GetItems(4), 0);
             header.prevHash = new Hash256(wBytes.GetItems(32));
             header.merkleRoot = new Hash256(wBytes.GetItems(32));
-            header.nTime = Interop.LEBytesToUInt32(wBytes.GetItems(4));
-            header.nBits = Interop.LEBytesToUInt32(wBytes.GetItems(4));
-            header.nNonce = Interop.LEBytesToUInt32(wBytes.GetItems(4));
+            header.nTime = BitConverter.ToUInt32(wBytes.GetItems(4), 0);
+            header.nBits = BitConverter.ToUInt32(wBytes.GetItems(4), 0);
+            header.nNonce = BitConverter.ToUInt32(wBytes.GetItems(4), 0);
 
             // Parse transactions list
             vtx = CTransaction.ReadTransactionsList(ref wBytes);

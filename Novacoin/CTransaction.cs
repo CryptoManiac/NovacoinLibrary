@@ -49,8 +49,8 @@ namespace Novacoin
 		{
             WrappedList<byte> wBytes = new WrappedList<byte>(txBytes);
 
-            nVersion = Interop.LEBytesToUInt32(wBytes.GetItems(4));
-            nTime = Interop.LEBytesToUInt32(wBytes.GetItems(4));
+            nVersion = BitConverter.ToUInt32(wBytes.GetItems(4),0);
+            nTime = BitConverter.ToUInt32(wBytes.GetItems(4),0);
 
             int nInputs = (int)VarInt.ReadVarInt(ref wBytes);
             vin = new CTxIn[nInputs];
@@ -61,9 +61,9 @@ namespace Novacoin
                 vin[nCurrentInput] = new CTxIn();
 
                 vin[nCurrentInput].txID = new Hash256(wBytes.GetItems(32));
-                vin[nCurrentInput].n = Interop.LEBytesToUInt32(wBytes.GetItems(4));
+                vin[nCurrentInput].n = BitConverter.ToUInt32(wBytes.GetItems(4),0);
                 vin[nCurrentInput].scriptSig = wBytes.GetItems((int)VarInt.ReadVarInt(ref wBytes));
-                vin[nCurrentInput].nSequence = Interop.LEBytesToUInt32(wBytes.GetItems(4));
+                vin[nCurrentInput].nSequence = BitConverter.ToUInt32(wBytes.GetItems(4),0);
             }
 
             int nOutputs = (int)VarInt.ReadVarInt(ref wBytes);
@@ -73,11 +73,11 @@ namespace Novacoin
             {
                 // Fill outputs array
                 vout[nCurrentOutput] = new CTxOut();
-                vout[nCurrentOutput].nValue = Interop.LEBytesToUInt64(wBytes.GetItems(8));
+                vout[nCurrentOutput].nValue = BitConverter.ToUInt64(wBytes.GetItems(8),0);
                 vout[nCurrentOutput].scriptPubKey = wBytes.GetItems((int)VarInt.ReadVarInt(ref wBytes));
             }
 
-            nLockTime = Interop.LEBytesToUInt32(wBytes.GetItems(4));
+            nLockTime = BitConverter.ToUInt32(wBytes.GetItems(4), 0);
 		}
 
         /// <summary>
@@ -98,8 +98,8 @@ namespace Novacoin
                 // Fill the transactions array
                 tx[nTx] = new CTransaction();
 
-                tx[nTx].nVersion = Interop.LEBytesToUInt32(wTxBytes.GetItems(4));
-                tx[nTx].nTime = Interop.LEBytesToUInt32(wTxBytes.GetItems(4));
+                tx[nTx].nVersion = BitConverter.ToUInt32(wTxBytes.GetItems(4), 0);
+                tx[nTx].nTime = BitConverter.ToUInt32(wTxBytes.GetItems(4), 0);
 
                 // Inputs array
                 tx[nTx].vin = CTxIn.ReadTxInList(ref wTxBytes);
@@ -107,7 +107,7 @@ namespace Novacoin
                 // outputs array
                 tx[nTx].vout = CTxOut.ReadTxOutList(ref wTxBytes);
 
-                tx[nTx].nLockTime = Interop.LEBytesToUInt32(wTxBytes.GetItems(4));
+                tx[nTx].nLockTime = BitConverter.ToUInt32(wTxBytes.GetItems(4), 0);
             }
 
             return tx;
@@ -161,8 +161,8 @@ namespace Novacoin
             // 76a91408c8768d5d6bf7c1d9609da4e766c3f1752247b188ac -- scriptPubKey
             // 00000000 -- lock time
 
-            resultBytes.AddRange(Interop.LEBytes(nVersion));
-            resultBytes.AddRange(Interop.LEBytes(nTime));
+            resultBytes.AddRange(BitConverter.GetBytes(nVersion));
+            resultBytes.AddRange(BitConverter.GetBytes(nTime));
             resultBytes.AddRange(VarInt.EncodeVarInt(vin.LongLength));
 
             foreach(CTxIn input in vin)
@@ -177,7 +177,7 @@ namespace Novacoin
                 resultBytes.AddRange(output.ToBytes());
             }
 
-            resultBytes.AddRange(Interop.LEBytes(nLockTime));
+            resultBytes.AddRange(BitConverter.GetBytes(nLockTime));
 
             return resultBytes;
         }

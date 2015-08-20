@@ -33,19 +33,19 @@ namespace Novacoin
                 {
                     // ushort flag
                     prefix = 0xfd;
-                    valueBytes = Interop.LEBytes((ushort)n);
+                    valueBytes = BitConverter.GetBytes((ushort)n);
                 }
                 else if (n <= uint.MaxValue)
                 {
                     // uint flag
                     prefix = 0xfe;
-                    valueBytes = Interop.LEBytes((uint)n);
+                    valueBytes = BitConverter.GetBytes((uint)n);
                 }
                 else
                 {
                     // ulong flag
                     prefix = 0xff;
-                    valueBytes = Interop.LEBytes(n);
+                    valueBytes = BitConverter.GetBytes(n);
                 }
 
                 resultBytes.Add(prefix);
@@ -82,40 +82,16 @@ namespace Novacoin
 
             byte[] bytesArray = bytes.ToArray();
 
-            if (BitConverter.IsLittleEndian)
+            switch (prefix)
             {
-                switch (prefix)
-                {
-                    case 0xfd: // ushort flag
-                        return BitConverter.ToUInt16(bytesArray, 0);
-                    case 0xfe: // uint flag
-                        return BitConverter.ToUInt32(bytesArray, 0);
-                    case 0xff: // ulong flag
-                        return BitConverter.ToUInt64(bytesArray, 0);
-                    default:
-                        return prefix;
-                }
-            }
-            else
-            {
-                // Values are stored in little-endian order
-                switch (prefix)
-                {
-                    case 0xfd: // ushort flag
-                        Array.Resize(ref bytesArray, 2);
-                        Array.Reverse(bytesArray);
-                        return BitConverter.ToUInt16(bytesArray, 0);
-                    case 0xfe: // uint flag
-                        Array.Resize(ref bytesArray, 4);
-                        Array.Reverse(bytesArray);
-                        return BitConverter.ToUInt32(bytesArray, 0);
-                    case 0xff: // ulong flag
-                        Array.Resize(ref bytesArray, 8);
-                        Array.Reverse(bytesArray);
-                        return BitConverter.ToUInt64(bytesArray, 0);
-                    default:
-                        return prefix;
-                }
+                case 0xfd: // ushort flag
+                    return BitConverter.ToUInt16(bytesArray, 0);
+                case 0xfe: // uint flag
+                    return BitConverter.ToUInt32(bytesArray, 0);
+                case 0xff: // ulong flag
+                    return BitConverter.ToUInt64(bytesArray, 0);
+                default:
+                    return prefix;
             }
         }
 
@@ -133,11 +109,11 @@ namespace Novacoin
             switch (prefix)
             {
                 case 0xfd: // ushort
-                    return Interop.LEBytesToUInt16(wBytes.GetItems(2));
+                    return BitConverter.ToUInt16(wBytes.GetItems(2), 0);
                 case 0xfe: // uint
-                    return Interop.LEBytesToUInt32(wBytes.GetItems(4));
+                    return BitConverter.ToUInt32(wBytes.GetItems(4), 0);
                 case 0xff: // ulong
-                    return Interop.LEBytesToUInt64(wBytes.GetItems(8));
+                    return BitConverter.ToUInt64(wBytes.GetItems(8), 0);
                 default:
                     return prefix;
             }

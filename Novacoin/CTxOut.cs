@@ -50,7 +50,7 @@ namespace Novacoin
             {
                 // Fill outputs array
                 vout[nIndex] = new CTxOut();
-                vout[nIndex].nValue = Interop.LEBytesToUInt64(wBytes.GetItems(8));
+                vout[nIndex].nValue = BitConverter.ToUInt32(wBytes.GetItems(8), 0);
                 vout[nIndex].scriptPubKey = wBytes.GetItems((int)VarInt.ReadVarInt(ref wBytes));
             }
 
@@ -65,7 +65,7 @@ namespace Novacoin
         {
             List<byte> resultBytes = new List<byte>();
 
-            resultBytes.AddRange(Interop.LEBytes(nValue)); // txout value
+            resultBytes.AddRange(BitConverter.GetBytes(nValue)); // txout value
             resultBytes.AddRange(VarInt.EncodeVarInt(scriptPubKey.LongLength)); // scriptPubKey length
             resultBytes.AddRange(scriptPubKey); // scriptPubKey
 

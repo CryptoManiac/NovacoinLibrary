@@ -67,9 +67,9 @@ namespace Novacoin
                 vin[nIndex] = new CTxIn();
 
                 vin[nIndex].txID = new Hash256(wBytes.GetItems(32));
-                vin[nIndex].n = Interop.LEBytesToUInt32(wBytes.GetItems(4));
+                vin[nIndex].n = BitConverter.ToUInt32(wBytes.GetItems(4), 0);
                 vin[nIndex].scriptSig = wBytes.GetItems((int)VarInt.ReadVarInt(ref wBytes));
-                vin[nIndex].nSequence = Interop.LEBytesToUInt32(wBytes.GetItems(4));
+                vin[nIndex].nSequence = BitConverter.ToUInt32(wBytes.GetItems(4), 0);
             }
 
             // Return inputs array
@@ -85,10 +85,10 @@ namespace Novacoin
             List<byte> inputBytes = new List<byte>();
 
             inputBytes.AddRange(txID.hashBytes); // Input transaction id
-            inputBytes.AddRange(Interop.LEBytes(n)); // Output number
+            inputBytes.AddRange(BitConverter.GetBytes(n)); // Output number
             inputBytes.AddRange(VarInt.EncodeVarInt(scriptSig.LongLength)); // scriptSig length
             inputBytes.AddRange(scriptSig); // scriptSig
-            inputBytes.AddRange(Interop.LEBytes(nSequence)); // Sequence
+            inputBytes.AddRange(BitConverter.GetBytes(nSequence)); // Sequence
 
             return inputBytes;
         }
