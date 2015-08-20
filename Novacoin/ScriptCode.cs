@@ -661,7 +661,7 @@ namespace Novacoin
                 typeRet = txnouttype.TX_SCRIPTHASH;
 
                 // Take 20 bytes with offset of 2 bytes
-                IEnumerable<byte> hashBytes = scriptPubKey.Enumerable.Skip(2).Take(20);
+                IEnumerable<byte> hashBytes = scriptPubKey.Bytes.Skip(2).Take(20);
                 solutions.Add(hashBytes);
 
                 return true;
@@ -673,7 +673,7 @@ namespace Novacoin
                 typeRet = txnouttype.TX_PUBKEYHASH;
 
                 // Take 20 bytes with offset of 3 bytes
-                IEnumerable<byte> hashBytes = scriptPubKey.Enumerable.Skip(3).Take(20);
+                IEnumerable<byte> hashBytes = scriptPubKey.Bytes.Skip(3).Take(20);
                 solutions.Add(hashBytes);
 
                 return true;
@@ -722,8 +722,8 @@ namespace Novacoin
 
                 IEnumerable<byte> args1, args2;
 
-                byte last1 = script1.Enumerable.Last();
-                byte last2 = script2.Enumerable.Last();
+                byte last1 = script1.Bytes.Last();
+                byte last2 = script2.Bytes.Last();
 
                 while (true)
                 {
