@@ -42,6 +42,33 @@ namespace Novacoin
         }
 
         /// <summary>
+        /// Initialize new instance as a copy of another transaction
+        /// </summary>
+        /// <param name="tx">Transaction to copy from</param>
+        public CTransaction(CTransaction tx)
+        {
+            nVersion = tx.nVersion;
+            nTime = tx.nTime;
+
+            vin = new CTxIn[tx.vin.Length];
+
+            for (int i = 0; i < vin.Length; i++)
+            {
+                vin[i] = new CTxIn(tx.vin[i]);
+            }
+
+            vout = new CTxOut[tx.vout.Length];
+
+            for (int i = 0; i < vout.Length; i++)
+            {
+                vout[i] = new CTxOut(tx.vout[i]);
+            }
+
+            nLockTime = tx.nLockTime;
+        }
+
+
+        /// <summary>
         /// Parse byte sequence and initialize new instance of CTransaction
         /// </summary>
         /// <param name="txBytes"></param>
