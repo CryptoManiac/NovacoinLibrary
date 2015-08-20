@@ -22,7 +22,6 @@ namespace Novacoin
         public virtual int hashSize 
         {
             get; 
-            private set;
         }
 
         public byte[] hashBytes
