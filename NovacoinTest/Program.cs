@@ -143,18 +143,31 @@ namespace NovacoinTest
             CKeyPair k1 = new CKeyPair(), k2 = new CKeyPair(), k3 = new CKeyPair();
 
             scriptDestinationTest.SetMultiSig(2, new CPubKey[] { k1.PubKey, k2.PubKey, k3.PubKey });
-            Console.WriteLine("\tscriptDestinationTest solved: {0}", ScriptCode.Solver(scriptDestinationTest, out typeRet, out solutions));
-            Console.WriteLine("\tscriptDestinationTest addresses: \n");
+
+            Console.WriteLine("\nscriptDestinationTest solved: {0}", ScriptCode.Solver(scriptDestinationTest, out typeRet, out solutions));
+            Console.WriteLine("scriptDestinationTest addresses: \n");
 
             int nRequired = solutions.First().First();
             int nKeys = solutions.Last().First();
 
             foreach (IEnumerable<byte> keyBytes in solutions.Skip(1).Take(nKeys))
             {
-                Console.WriteLine("\t\t{0}", (new CPubKey(keyBytes)).KeyID.ToString());
+                Console.WriteLine("\t{0}", (new CPubKey(keyBytes)).KeyID.ToString());
             }
 
-            Console.WriteLine("\n\tnRequired={0}", nRequired);
+            Console.WriteLine("\nnRequired={0}\n", nRequired);
+
+            Console.WriteLine("Script code: \n\n{0}", scriptDestinationTest.ToString());
+
+            Console.WriteLine("\nPay-to-ScriptHash with same script:\n");
+
+            CScript scriptP2SHTest = new CScript();
+            scriptP2SHTest.SetDestination(scriptDestinationTest.ScriptID);
+
+            Console.WriteLine("\tscriptP2SHTest solved: {0}", ScriptCode.Solver(scriptP2SHTest, out typeRet, out solutions));
+            Console.WriteLine("\tscriptP2SHTest address: {0}\n", new CScriptID(new Hash160(solutions.First())).ToString());
+
+
 
             Console.ReadLine();
         }

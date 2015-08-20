@@ -415,6 +415,7 @@ namespace Novacoin
             {
                 PushData(key.PublicBytes.ToList());
             }
+
             AddOp(ScriptCode.EncodeOP_N(keys.Count()));
             AddOp(opcodetype.OP_CHECKMULTISIG);
         }
@@ -425,6 +426,11 @@ namespace Novacoin
         public IEnumerable<byte> Bytes
         {
             get { return codeBytes; }
+        }
+
+        public CScriptID ScriptID
+        {
+            get { return new CScriptID(Hash160.Compute160(codeBytes)); }
         }
 
         /// <summary>
