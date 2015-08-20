@@ -19,7 +19,7 @@ namespace Novacoin
         /// <summary>
         /// Hash size, must be overriden
         /// </summary>
-        public virtual int hashSize 
+        public abstract int hashSize 
         {
             get; 
         }
