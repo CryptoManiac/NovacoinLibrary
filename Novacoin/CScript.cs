@@ -376,7 +376,7 @@ namespace Novacoin
         }
 
         /// <summary>
-        /// Access to scrypt code.
+        /// Access to script code.
         /// </summary>
         public IEnumerable<byte> Enumerable
         {
