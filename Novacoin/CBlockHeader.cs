@@ -46,6 +46,16 @@ namespace Novacoin
 		{
 		}
 
+        public CBlockHeader(CBlockHeader h)
+        {
+            nVersion = h.nVersion;
+            prevHash = new Hash256(h.prevHash);
+            merkleRoot = new Hash256(h.merkleRoot);
+            nTime = h.nTime;
+            nBits = h.nBits;
+            nNonce = h.nNonce;
+        }
+
         /// <summary>
         /// Convert current block header instance into sequence of bytes
         /// </summary>

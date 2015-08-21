@@ -39,11 +39,11 @@ namespace Novacoin
         /// </summary>
         public CTransaction()
         {
-            vin = new CTxIn[1]; /// Any transaction must provide at least one input ...
-            vin[0] = new CTxIn();
-
-            vout = new CTxOut[1]; // ... and output.
-            vout[0] = new CTxOut();
+            // Initialize empty input and output arrays. Please note that such 
+            // configuration is not valid for real transaction, you have to supply 
+            // at least one input and one output.
+            vin = new CTxIn[0];
+            vout = new CTxOut[0];
         }
 
         /// <summary>

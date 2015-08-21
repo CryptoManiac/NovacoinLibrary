@@ -51,6 +51,11 @@ namespace Novacoin
             _hashBytes = bytes;
         }
 
+        public Hash(Hash h)
+        {
+            h._hashBytes.CopyTo(_hashBytes, 0);
+        }
+
         public bool IsZero
         {
             get { return !_hashBytes.Any(b => b != 0); }

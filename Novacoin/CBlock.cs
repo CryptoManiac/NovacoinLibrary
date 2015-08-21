@@ -24,6 +24,18 @@ namespace Novacoin
 		/// </summary>
 		public byte[] signature;
 
+        public CBlock(CBlock b)
+        {
+            header = new CBlockHeader(b.header);
+
+            for (int i = 0; i < b.vtx.Length; i++)
+            {
+                vtx[i] = new CTransaction(b.vtx[i]);
+            }
+
+            b.signature.CopyTo(signature, 0);
+        }
+
         /// <summary>
         /// Parse byte sequence and initialize new block instance
         /// </summary>
@@ -48,6 +60,14 @@ namespace Novacoin
             // Read block signature
             signature = wBytes.GetItems((int)VarInt.ReadVarInt(ref wBytes));
 		}
+
+        public CBlock()
+        {
+            // Initialize empty array of transactions. Please note that such 
+            // configuration is not valid real block since it has to provide 
+            // at least one transaction.
+            vtx = new CTransaction[0];
+        }
 
         /// <summary>
         /// Convert current instance into sequence of bytes
