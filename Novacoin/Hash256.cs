@@ -19,8 +19,8 @@ namespace Novacoin
         }
 
         public Hash256() : base() { }
-        public Hash256(byte[] bytes) : base(bytes) { }
-        public Hash256(IEnumerable<byte> bytes) : base(bytes) { }
+        public Hash256(byte[] bytes, int offset=0) : base(bytes, offset) { }
+        public Hash256(IEnumerable<byte> bytes, int skip=0) : base(bytes, skip) { }
         public Hash256(Hash256 h) : base(h) { }
 
 

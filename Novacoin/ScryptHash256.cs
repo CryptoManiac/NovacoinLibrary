@@ -16,8 +16,8 @@ namespace Novacoin
         }
 
         public ScryptHash256() : base() { }
-        public ScryptHash256(byte[] bytes) : base(bytes) { }
-        public ScryptHash256(IEnumerable<byte> bytes) : base(bytes) { }
+        public ScryptHash256(byte[] bytes, int offset = 0) : base(bytes, offset) { }
+        public ScryptHash256(IEnumerable<byte> bytes, int skip = 0) : base(bytes, skip) { }
         public ScryptHash256(ScryptHash256 h) : base(h) { }
 
         /// <summary>

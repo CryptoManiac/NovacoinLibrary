@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using System;
+using System.Security.Cryptography;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -41,14 +42,15 @@ namespace Novacoin
         /// Initializes a new instance of Hash class with first 20 bytes from supplied list
         /// </summary>
         /// <param name="bytesList">List of bytes</param>
-        public Hash(IEnumerable<byte> bytes)
+        public Hash(IEnumerable<byte> bytes, int skip = 0)
         {
-            _hashBytes = bytes.Take(hashSize).ToArray();
+            _hashBytes = bytes.Skip(skip).Take(hashSize).ToArray();
         }
 
-        public Hash(byte[] bytes)
+        public Hash(byte[] bytes, int offset = 0)
         {
-            _hashBytes = bytes;
+            _hashBytes = new byte[hashSize];
+            Array.Copy(bytes, offset, _hashBytes, 0, hashSize);
         }
 
         public Hash(Hash h)

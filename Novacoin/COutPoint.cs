@@ -38,8 +38,8 @@ namespace Novacoin
 
         public COutPoint(IEnumerable<byte> bytes)
         {
-            hash = new Hash256(bytes.Take(32));
-            n = BitConverter.ToUInt32(bytes.Skip(32).Take(4).ToArray(), 0);
+            hash = new Hash256(bytes);
+            n = BitConverter.ToUInt32(bytes.ToArray(), 32);
         }
 
         public bool IsNull

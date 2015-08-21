@@ -62,7 +62,7 @@ namespace Novacoin
                 throw new WrappedListException("Unable to read requested amount of data.");
             }
 
-            T[] result = Elements.Skip<T>(Index).Take<T>(Count).ToArray<T>();
+            T[] result = Elements.Skip(Index).Take(Count).ToArray();
             Index += Count;
 
             return result;
@@ -75,7 +75,7 @@ namespace Novacoin
                 throw new WrappedListException("Unable to read requested amount of data.");
             }
 
-            T[] result = Elements.Skip<T>(Index).Take<T>(Count).ToArray<T>();
+            T[] result = Elements.Skip(Index).Take(Count).ToArray();
 
             return result;
         }
@@ -87,7 +87,7 @@ namespace Novacoin
                 throw new WrappedListException("Unable to read requested amount of data.");
             }
 
-            IEnumerable<T> result = Elements.Skip<T>(Index).Take<T>(Count);
+            IEnumerable<T> result = Elements.Skip(Index).Take(Count);
             Index += Count;
 
             return result;

@@ -23,8 +23,8 @@ namespace Novacoin
         }
 
         public Hash160() : base() { }
-        public Hash160(byte[] bytes) : base(bytes) { }
-        public Hash160(IEnumerable<byte> bytes) : base(bytes) { }
+        public Hash160(byte[] bytes, int offset = 0) : base(bytes, offset) { }
+        public Hash160(IEnumerable<byte> bytes, int skip = 0) : base(bytes, skip) { }
         public Hash160(Hash160 h) : base(h) { }
 
         public static Hash160 Compute160(IEnumerable<byte> inputBytes)
