@@ -4,35 +4,35 @@ using System.Collections.Generic;
 
 namespace Novacoin
 {
-	/// <summary>
-	/// Represents the transaction. Any transaction must provide one input and one output at least.
-	/// </summary>
-	public class CTransaction
-	{
-		/// <summary>
-		/// Version of transaction schema.
-		/// </summary>
-		public uint nVersion = 1;
+    /// <summary>
+    /// Represents the transaction. Any transaction must provide one input and one output at least.
+    /// </summary>
+    public class CTransaction
+    {
+        /// <summary>
+        /// Version of transaction schema.
+        /// </summary>
+        public uint nVersion = 1;
 
-		/// <summary>
-		/// Transaction timestamp.
-		/// </summary>
-		public uint nTime = 0;
+        /// <summary>
+        /// Transaction timestamp.
+        /// </summary>
+        public uint nTime = 0;
 
-		/// <summary>
-		/// Array of transaction inputs
-		/// </summary>
-		public CTxIn[] vin;
+        /// <summary>
+        /// Array of transaction inputs
+        /// </summary>
+        public CTxIn[] vin;
 
-		/// <summary>
-		/// Array of transaction outputs
-		/// </summary>
-		public CTxOut[] vout;
+        /// <summary>
+        /// Array of transaction outputs
+        /// </summary>
+        public CTxOut[] vout;
 
-		/// <summary>
-		/// Block height or timestamp when transaction is final
-		/// </summary>
-		public uint nLockTime = 0;
+        /// <summary>
+        /// Block height or timestamp when transaction is final
+        /// </summary>
+        public uint nLockTime = 0;
 
         /// <summary>
         /// Initialize an empty instance
@@ -77,12 +77,12 @@ namespace Novacoin
         /// Parse byte sequence and initialize new instance of CTransaction
         /// </summary>
         /// <param name="txBytes">Byte sequence</param>
-		public CTransaction (IList<byte> txBytes)
-		{
+		public CTransaction(IList<byte> txBytes)
+        {
             WrappedList<byte> wBytes = new WrappedList<byte>(txBytes);
 
-            nVersion = BitConverter.ToUInt32(wBytes.GetItems(4),0);
-            nTime = BitConverter.ToUInt32(wBytes.GetItems(4),0);
+            nVersion = BitConverter.ToUInt32(wBytes.GetItems(4), 0);
+            nTime = BitConverter.ToUInt32(wBytes.GetItems(4), 0);
 
             int nInputs = (int)VarInt.ReadVarInt(ref wBytes);
             vin = new CTxIn[nInputs];
@@ -92,8 +92,7 @@ namespace Novacoin
                 // Fill inputs array
                 vin[nCurrentInput] = new CTxIn();
 
-                vin[nCurrentInput].txID = new Hash256(wBytes.GetItems(32));
-                vin[nCurrentInput].n = BitConverter.ToUInt32(wBytes.GetItems(4), 0);
+                vin[nCurrentInput].prevout = new COutPoint(wBytes.GetItems(36));
 
                 int nScriptSigLen = (int)VarInt.ReadVarInt(ref wBytes);
                 vin[nCurrentInput].scriptSig = new CScript(wBytes.GetItems(nScriptSigLen));
@@ -107,14 +106,14 @@ namespace Novacoin
             {
                 // Fill outputs array
                 vout[nCurrentOutput] = new CTxOut();
-                vout[nCurrentOutput].nValue = BitConverter.ToUInt64(wBytes.GetItems(8), 0);
+                vout[nCurrentOutput].nValue = BitConverter.ToInt64(wBytes.GetItems(8), 0);
 
                 int nScriptPKLen = (int)VarInt.ReadVarInt(ref wBytes);
                 vout[nCurrentOutput].scriptPubKey = new CScript(wBytes.GetItems(nScriptPKLen));
             }
 
             nLockTime = BitConverter.ToUInt32(wBytes.GetItems(4), 0);
-		}
+        }
 
         /// <summary>
         /// Read transactions array which is encoded in the block body.
@@ -124,9 +123,9 @@ namespace Novacoin
         public static CTransaction[] ReadTransactionsList(ref WrappedList<byte> wTxBytes)
         {
             CTransaction[] tx;
-            
+
             // Read amount of transactions
-            int nTransactions = (int) VarInt.ReadVarInt(ref wTxBytes);
+            int nTransactions = (int)VarInt.ReadVarInt(ref wTxBytes);
             tx = new CTransaction[nTransactions];
 
             for (int nTx = 0; nTx < nTransactions; nTx++)
@@ -148,6 +147,20 @@ namespace Novacoin
 
             return tx;
         }
+
+        public bool IsCoinBase
+        {
+            get { return (vin.Length == 1 && vin[0].prevout.IsNull && vout.Length >= 1); }
+        }
+
+        public bool IsCoinStake
+        {
+            get
+            {
+                return (vin.Length > 0 && (!vin[0].prevout.IsNull) && vout.Length >= 2 && vout[0].IsEmpty);
+            }
+        }
+
 
         public IList<byte> Bytes
         {

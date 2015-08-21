@@ -53,6 +53,7 @@ namespace Novacoin
 
         public Hash(Hash h)
         {
+            _hashBytes = new byte[h.hashSize];
             h._hashBytes.CopyTo(_hashBytes, 0);
         }
 

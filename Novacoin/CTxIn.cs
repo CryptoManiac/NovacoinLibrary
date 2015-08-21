@@ -9,15 +9,10 @@ namespace Novacoin
 	/// </summary>
 	public class CTxIn
 	{
-		/// <summary>
-		/// Hash of parent transaction.
-		/// </summary>
-		public Hash256 txID;
-
-		/// <summary>
-		/// Parent input number.
-		/// </summary>
-        public uint n = 0;
+        /// <summary>
+        /// Previous input data
+        /// </summary>
+        public COutPoint prevout;
 
 		/// <summary>
 		/// First half of script, signatures for the scriptPubKey
@@ -35,8 +30,7 @@ namespace Novacoin
         /// <param name="i">CTxIn instance.</param>
         public CTxIn(CTxIn i)
         {
-            txID = i.txID;
-            n = i.n;
+            prevout = new COutPoint(i.prevout);
             scriptSig = i.scriptSig;
             nSequence = i.nSequence;
         }
@@ -46,7 +40,7 @@ namespace Novacoin
         /// </summary>
         public CTxIn()
         {
-            txID = new Hash256();
+            prevout = new COutPoint();
             scriptSig = new CScript();
         }
 
@@ -67,9 +61,7 @@ namespace Novacoin
             {
                 // Fill inputs array
                 vin[nIndex] = new CTxIn();
-
-                vin[nIndex].txID = new Hash256(wBytes.GetItems(32));
-                vin[nIndex].n = BitConverter.ToUInt32(wBytes.GetItems(4), 0);
+                vin[nIndex].prevout = new COutPoint(wBytes.GetItems(36));
                 vin[nIndex].scriptSig = new CScript(wBytes.GetItems((int)VarInt.ReadVarInt(ref wBytes)));
                 vin[nIndex].nSequence = BitConverter.ToUInt32(wBytes.GetItems(4), 0);
             }
@@ -88,8 +80,7 @@ namespace Novacoin
             {
                 List<byte> inputBytes = new List<byte>();
 
-                inputBytes.AddRange(txID.hashBytes); // Input transaction id
-                inputBytes.AddRange(BitConverter.GetBytes(n)); // Output number
+                inputBytes.AddRange(prevout.Bytes); // prevout
 
                 List<byte> s = new List<byte>(scriptSig.Bytes);
 
@@ -101,15 +92,15 @@ namespace Novacoin
             }
         }
 
-        public bool IsCoinBase
+        public bool IsFinal
         {
-            get { return txID.IsZero; }
+            get { return (nSequence == uint.MaxValue); }
         }
-
-		public override string ToString ()
+        public override string ToString ()
 		{
 			StringBuilder sb = new StringBuilder ();
 
+            /*
             if (IsCoinBase)
             {
                 sb.AppendFormat("CTxIn(txId={0}, coinbase={2}, nSequence={3})", txID.ToString(), n, Interop.ToHex(scriptSig.Bytes), nSequence);
@@ -118,8 +109,30 @@ namespace Novacoin
             {
                 sb.AppendFormat("CTxIn(txId={0}, n={1}, scriptSig={2}, nSequence={3})", txID.ToString(), n, scriptSig.ToString(), nSequence);
             }
+            */
 
-			return sb.ToString ();
+
+            sb.AppendFormat("CTxIn(");
+            sb.Append(prevout.ToString());
+
+            if(prevout.IsNull)
+            {
+                sb.AppendFormat(", coinbase={0}", Interop.ToHex(scriptSig.Bytes));
+            }
+            else
+            {
+                sb.AppendFormat(", scriptsig={0}", scriptSig.ToString());
+            }
+
+            if (nSequence != uint.MaxValue)
+            {
+                sb.AppendFormat(", nSequence={0}", nSequence);
+            }
+
+            sb.Append(")");
+
+
+            return sb.ToString ();
 		}
 
 	}

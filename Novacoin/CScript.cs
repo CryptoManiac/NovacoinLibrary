@@ -174,7 +174,6 @@ namespace Novacoin
         /// <summary>
         /// Is it true that script doesn't contain anything except push value operations?
         /// </summary>
-        /// <returns>Checking result</returns>
         public bool IsPushonly
         {
             get
@@ -201,7 +200,6 @@ namespace Novacoin
         /// <summary>
         /// Is it true that script doesn't contain non-canonical push operations?
         /// </summary>
-        /// <returns>Checking result</returns>
         public bool HasOnlyCanonicalPushes
         {
             get
@@ -245,7 +243,6 @@ namespace Novacoin
         /// <summary>
         /// Quick test for pay-to-script-hash CScripts
         /// </summary>
-        /// <returns>Checking result</returns>
         public bool IsPayToScriptHash
         {
             get
@@ -262,7 +259,6 @@ namespace Novacoin
         /// <summary>
         /// Quick test for pay-to-pubkeyhash CScripts
         /// </summary>
-        /// <returns>Checking result</returns>
         public bool IsPayToPubKeyHash
         {
             get
@@ -276,6 +272,14 @@ namespace Novacoin
                         codeBytes[23] == (byte)opcodetype.OP_EQUALVERIFY &&
                         codeBytes[24] == (byte)opcodetype.OP_CHECKSIG);
             }
+        }
+
+        /// <summary>
+        /// Quick test for Null destination
+        /// </summary>
+        public bool IsNull
+        {
+            get { return codeBytes.Count == 0; }
         }
 
         /// <summary>

@@ -12,7 +12,7 @@ namespace Novacoin
 		/// <summary>
 		/// Input value.
 		/// </summary>
-        public ulong nValue;
+        public long nValue = -1;
 
 		/// <summary>
 		/// Second half of script which contains spending instructions.
@@ -79,6 +79,28 @@ namespace Novacoin
 
                 return resultBytes;
             }
+        }
+
+        public void SetNull()
+        {
+            nValue = -1;
+            scriptPubKey.SetNullDestination();
+        }
+
+        public void SetEmpty()
+        {
+            nValue = 0;
+            scriptPubKey.SetNullDestination();
+        }
+
+        public bool IsNull
+        {
+            get { return (nValue == -1); }
+        }
+
+        public bool IsEmpty
+        {
+           get { return nValue == 0 && scriptPubKey.IsNull; }
         }
 
 		public override string ToString ()
