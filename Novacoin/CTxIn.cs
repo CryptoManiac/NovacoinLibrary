@@ -22,7 +22,7 @@ namespace Novacoin
 		/// <summary>
 		/// Transaction variant number, irrelevant if nLockTime isn't specified. Its value is 0xffffffff by default.
 		/// </summary>
-        public uint nSequence = 0xffffffff;
+        public uint nSequence = uint.MaxValue;
 
         /// <summary>
         /// Initialize new CTxIn instance as copy of another one.

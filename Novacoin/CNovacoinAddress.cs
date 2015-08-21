@@ -67,7 +67,6 @@ namespace Novacoin
         /// <summary>
         /// Basic sanity checking
         /// </summary>
-        /// <returns></returns>
         public bool IsValid
         {
             get

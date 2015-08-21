@@ -42,17 +42,10 @@ namespace Novacoin
         /// <param name="blockBytes"></param>
 		public CBlock (IList<byte> blockBytes)
 		{
-            header = new CBlockHeader();
-
             WrappedList<byte> wBytes = new WrappedList<byte>(blockBytes);
 
             // Fill the block header fields
-            header.nVersion = BitConverter.ToUInt32(wBytes.GetItems(4), 0);
-            header.prevHash = new Hash256(wBytes.GetItems(32));
-            header.merkleRoot = new Hash256(wBytes.GetItems(32));
-            header.nTime = BitConverter.ToUInt32(wBytes.GetItems(4), 0);
-            header.nBits = BitConverter.ToUInt32(wBytes.GetItems(4), 0);
-            header.nNonce = BitConverter.ToUInt32(wBytes.GetItems(4), 0);
+            header = new CBlockHeader(wBytes.GetItems(80));
 
             // Parse transactions list
             vtx = CTransaction.ReadTransactionsList(ref wBytes);

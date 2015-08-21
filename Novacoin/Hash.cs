@@ -43,7 +43,7 @@ namespace Novacoin
         /// <param name="bytesList">List of bytes</param>
         public Hash(IEnumerable<byte> bytes)
         {
-            _hashBytes = bytes.Take<byte>(hashSize).ToArray<byte>();
+            _hashBytes = bytes.Take(hashSize).ToArray();
         }
 
         public Hash(byte[] bytes)

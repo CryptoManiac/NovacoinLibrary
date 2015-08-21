@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Text;
 using System.Collections.Generic;
 
@@ -54,6 +55,16 @@ namespace Novacoin
             nTime = h.nTime;
             nBits = h.nBits;
             nNonce = h.nNonce;
+        }
+
+        public CBlockHeader(byte[] bytes)
+        {
+            nVersion = BitConverter.ToUInt32(bytes, 0);
+            prevHash = new Hash256(bytes.Skip(4).Take(32).ToArray());
+            merkleRoot = new Hash256(bytes.Skip(36).Take(32).ToArray());
+            nTime = BitConverter.ToUInt32(bytes, 68);
+            nBits = BitConverter.ToUInt32(bytes, 72);
+            nNonce = BitConverter.ToUInt32(bytes, 76);
         }
 
         /// <summary>

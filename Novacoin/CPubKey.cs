@@ -58,7 +58,6 @@ namespace Novacoin
             List<byte> r = new List<byte>();
 
             r.Add((byte)(AddrType.PUBKEY_ADDRESS));
-
             r.AddRange(PublicBytes);
 
             return AddressTools.Base58EncodeCheck(r);

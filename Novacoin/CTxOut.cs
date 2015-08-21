@@ -87,6 +87,7 @@ namespace Novacoin
         public void SetNull()
         {
             nValue = -1;
+            scriptPubKey = new CScript();
         }
 
         /// <summary>
@@ -95,7 +96,7 @@ namespace Novacoin
         public void SetEmpty()
         {
             nValue = 0;
-            scriptPubKey.SetNullDestination();
+            scriptPubKey = new CScript();
         }
 
         public bool IsNull
