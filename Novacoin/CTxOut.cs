@@ -34,7 +34,7 @@ namespace Novacoin
         /// </summary>
         public CTxOut()
         {
-            scriptPubKey = new CScript();
+            SetEmpty();
         }
 
         /// <summary>
@@ -81,12 +81,17 @@ namespace Novacoin
             }
         }
 
+        /// <summary>
+        /// Null prevouts have -1 value
+        /// </summary>
         public void SetNull()
         {
             nValue = -1;
-            scriptPubKey.SetNullDestination();
         }
 
+        /// <summary>
+        /// Empty outputs have zero value and empty scriptPubKey
+        /// </summary>
         public void SetEmpty()
         {
             nValue = 0;
