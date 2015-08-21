@@ -930,5 +930,71 @@ namespace Novacoin
             return Hash256.Compute256(b);
         }
 
+        public class StackMachineException : Exception
+        {
+            public StackMachineException()
+            {
+            }
+
+            public StackMachineException(string message)
+                : base(message)
+            {
+            }
+
+            public StackMachineException(string message, Exception inner)
+                : base(message, inner)
+            {
+            }
+        }
+
+
+        //
+        // Script is a stack machine (like Forth) that evaluates a predicate
+        // returning a bool indicating valid or not.  There are no loops.
+        //
+
+        /// <summary>
+        /// Remove last element from stack
+        /// </summary>
+        /// <param name="stack">Stack reference</param>
+        static void popstack(ref List<IEnumerable<byte>> stack)
+        {
+            int nCount = stack.Count;
+            if (nCount == 0)
+                throw new StackMachineException("popstack() : stack empty");
+            stack.RemoveAt(nCount - 1);
+        }
+
+        /// <summary>
+        /// Get element at specified stack depth
+        /// </summary>
+        /// <param name="stack">Stack reference</param>
+        /// <param name="nDepth">Depth</param>
+        /// <returns>Byte sequence</returns>
+        static IEnumerable<byte> stacktop(ref List<IEnumerable<byte>> stack, int nDepth)
+        {
+            int nStackElement = stack.Count + nDepth;
+
+            if (nDepth >= 0)
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.AppendFormat("stacktop() : positive depth ({0})", nDepth);
+
+                throw new StackMachineException(sb.ToString());
+            }
+
+            if (nStackElement < 0)
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.AppendFormat("stacktop() : nDepth={0} exceeds real stack depth", nDepth);
+
+                throw new StackMachineException(sb.ToString());
+            }
+
+            return stack[nStackElement];
+        }
+
+
+
     };
 }
