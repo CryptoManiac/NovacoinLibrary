@@ -17,7 +17,7 @@ namespace Novacoin
 		/// <summary>
 		/// Second half of script which contains spending instructions.
 		/// </summary>
-        public byte[] scriptPubKey;
+        public CScript scriptPubKey;
 
         /// <summary>
         /// Initialize new CTxOut instance as a copy of another instance.
@@ -51,7 +51,9 @@ namespace Novacoin
                 // Fill outputs array
                 vout[nIndex] = new CTxOut();
                 vout[nIndex].nValue = BitConverter.ToUInt32(wBytes.GetItems(8), 0);
-                vout[nIndex].scriptPubKey = wBytes.GetItems((int)VarInt.ReadVarInt(ref wBytes));
+
+                int nScriptPKLen = (int)VarInt.ReadVarInt(ref wBytes);
+                vout[nIndex].scriptPubKey = new CScript(wBytes.GetItems(nScriptPKLen));
             }
 
             return vout;
@@ -68,8 +70,11 @@ namespace Novacoin
                 List<byte> resultBytes = new List<byte>();
 
                 resultBytes.AddRange(BitConverter.GetBytes(nValue)); // txout value
-                resultBytes.AddRange(VarInt.EncodeVarInt(scriptPubKey.LongLength)); // scriptPubKey length
-                resultBytes.AddRange(scriptPubKey); // scriptPubKey
+
+                List<byte> s = new List<byte>(scriptPubKey.Bytes);
+
+                resultBytes.AddRange(VarInt.EncodeVarInt(s.Count)); // scriptPubKey length
+                resultBytes.AddRange(s); // scriptPubKey
 
                 return resultBytes;
             }
@@ -78,7 +83,7 @@ namespace Novacoin
 		public override string ToString ()
 		{
 			StringBuilder sb = new StringBuilder ();
-			sb.AppendFormat ("CTxOut(nValue={0}, scriptPubKey={1})", nValue, (new CScript(scriptPubKey)).ToString());
+			sb.AppendFormat ("CTxOut(nValue={0}, scriptPubKey={1})", nValue, scriptPubKey.ToString());
 
 			return sb.ToString ();
 		}

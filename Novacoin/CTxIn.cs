@@ -22,7 +22,7 @@ namespace Novacoin
 		/// <summary>
 		/// First half of script, signatures for the scriptPubKey
 		/// </summary>
-        public byte[] scriptSig;
+        public CScript scriptSig;
 
 		/// <summary>
 		/// Transaction variant number, irrelevant if nLockTime isn't specified. Its value is 0xffffffff by default.
@@ -68,7 +68,7 @@ namespace Novacoin
 
                 vin[nIndex].txID = new Hash256(wBytes.GetItems(32));
                 vin[nIndex].n = BitConverter.ToUInt32(wBytes.GetItems(4), 0);
-                vin[nIndex].scriptSig = wBytes.GetItems((int)VarInt.ReadVarInt(ref wBytes));
+                vin[nIndex].scriptSig = new CScript(wBytes.GetItems((int)VarInt.ReadVarInt(ref wBytes)));
                 vin[nIndex].nSequence = BitConverter.ToUInt32(wBytes.GetItems(4), 0);
             }
 
@@ -88,8 +88,11 @@ namespace Novacoin
 
                 inputBytes.AddRange(txID.hashBytes); // Input transaction id
                 inputBytes.AddRange(BitConverter.GetBytes(n)); // Output number
-                inputBytes.AddRange(VarInt.EncodeVarInt(scriptSig.LongLength)); // scriptSig length
-                inputBytes.AddRange(scriptSig); // scriptSig
+
+                List<byte> s = new List<byte>(scriptSig.Bytes);
+
+                inputBytes.AddRange(VarInt.EncodeVarInt(s.Count)); // scriptSig length
+                inputBytes.AddRange(s); // scriptSig
                 inputBytes.AddRange(BitConverter.GetBytes(nSequence)); // Sequence
 
                 return inputBytes;
@@ -107,11 +110,11 @@ namespace Novacoin
 
             if (IsCoinBase)
             {
-                sb.AppendFormat("CTxIn(txId={0}, coinbase={2}, nSequence={3})", txID.ToString(), n, Interop.ToHex(scriptSig), nSequence);
+                sb.AppendFormat("CTxIn(txId={0}, coinbase={2}, nSequence={3})", txID.ToString(), n, Interop.ToHex(scriptSig.Bytes), nSequence);
             }
             else
             {
-                sb.AppendFormat("CTxIn(txId={0}, n={1}, scriptSig={2}, nSequence={3})", txID.ToString(), n, (new CScript(scriptSig)).ToString(), nSequence);
+                sb.AppendFormat("CTxIn(txId={0}, n={1}, scriptSig={2}, nSequence={3})", txID.ToString(), n, scriptSig.ToString(), nSequence);
             }
 
 			return sb.ToString ();

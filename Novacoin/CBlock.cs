@@ -28,7 +28,7 @@ namespace Novacoin
         /// Parse byte sequence and initialize new block instance
         /// </summary>
         /// <param name="blockBytes"></param>
-		public CBlock (List<byte> blockBytes)
+		public CBlock (IList<byte> blockBytes)
 		{
             header = new CBlockHeader();
 
