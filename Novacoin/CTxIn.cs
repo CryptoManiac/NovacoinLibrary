@@ -12,7 +12,7 @@ namespace Novacoin
 		/// <summary>
 		/// Hash of parent transaction.
 		/// </summary>
-		public Hash256 txID = new Hash256();
+		public Hash256 txID;
 
 		/// <summary>
 		/// Parent input number.
@@ -46,6 +46,8 @@ namespace Novacoin
         /// </summary>
         public CTxIn()
         {
+            txID = new Hash256();
+            scriptSig = new CScript();
         }
 
         /// <summary>

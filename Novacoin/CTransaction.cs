@@ -39,6 +39,11 @@ namespace Novacoin
         /// </summary>
         public CTransaction()
         {
+            vin = new CTxIn[1];
+            vin[0] = new CTxIn();
+
+            vout = new CTxOut[1];
+            vout[0] = new CTxOut();
         }
 
         /// <summary>

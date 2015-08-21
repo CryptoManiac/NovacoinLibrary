@@ -34,6 +34,7 @@ namespace Novacoin
         /// </summary>
         public CTxOut()
         {
+            scriptPubKey = new CScript();
         }
 
         /// <summary>
