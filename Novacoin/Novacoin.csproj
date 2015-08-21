@@ -50,7 +50,6 @@
     <Compile Include="Interop.cs" />
     <Compile Include="ScryptHash256.cs" />
     <Compile Include="VarInt.cs" />
-    <Compile Include="VarStr.cs" />
     <Compile Include="WrappedList.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="CTxIn.cs" />
