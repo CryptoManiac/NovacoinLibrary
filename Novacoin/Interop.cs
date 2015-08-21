@@ -115,11 +115,16 @@ namespace Novacoin
             return BitConverter.ToUInt64(bytes, 0);
         }
 
-        public static IEnumerable<byte> ParseHex(string hex)
+        public static IEnumerable<byte> HexToEnumerable(string hex)
         {
             return Enumerable.Range(0, hex.Length)
                              .Where(x => x % 2 == 0)
                              .Select(x => Convert.ToByte(hex.Substring(x, 2), 16));
+        }
+
+        public static IList<byte> HexToList(string hex)
+        {
+            return HexToEnumerable(hex).ToList();
         }
 
         public static string ToHex(IEnumerable<byte> bytes)

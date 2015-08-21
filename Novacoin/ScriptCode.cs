@@ -180,6 +180,19 @@ namespace Novacoin
 
     public static class ScriptCode
     {
+        public static string GetTxnOutputType(txnouttype t)
+        {
+            switch (t)
+            {
+                case txnouttype.TX_NONSTANDARD: return "nonstandard";
+                case txnouttype.TX_PUBKEY: return "pubkey";
+                case txnouttype.TX_PUBKEYHASH: return "pubkeyhash";
+                case txnouttype.TX_SCRIPTHASH: return "scripthash";
+                case txnouttype.TX_MULTISIG: return "multisig";
+                case txnouttype.TX_NULL_DATA: return "nulldata";
+            }
+            return string.Empty;
+        }
 
         /// <summary>
         /// Get the name of supplied opcode
@@ -623,7 +636,12 @@ namespace Novacoin
             return -1;
         }
 
-
+        /// <summary>
+        /// Is it a standart type of scriptPubKey?
+        /// </summary>
+        /// <param name="scriptPubKey">CScript instance</param>
+        /// <param name="whichType">utut type</param>
+        /// <returns>Checking result</returns>
         public static bool IsStandard(CScript scriptPubKey, out txnouttype whichType)
         {
             IList<IEnumerable<byte>> solutions = new List<IEnumerable<byte>>();
@@ -636,6 +654,7 @@ namespace Novacoin
 
             if (whichType == txnouttype.TX_MULTISIG)
             {
+                // Additional verification of OP_CHECKMULTISIG arguments
                 byte m = solutions.First().First();
                 byte n = solutions.Last().First();
 
@@ -858,7 +877,7 @@ namespace Novacoin
             if ((nHashType & 0x1f) == (int)sigflag.SIGHASH_NONE)
             {
                 // Wildcard payee
-                txTmp.vout = null;
+                txTmp.vout = new CTxOut[0];
 
                 // Let the others update at will
                 for (int i = 0; i < txTmp.vin.Length; i++)
