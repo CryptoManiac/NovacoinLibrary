@@ -84,7 +84,7 @@ namespace Novacoin
             nVersion = BitConverter.ToUInt32(wBytes.Get(4), 0);
             nTime = BitConverter.ToUInt32(wBytes.Get(4), 0);
 
-            int nInputs = (int)VarInt.ReadVarInt(ref wBytes);
+            int nInputs = (int)(int)wBytes.GetVarInt();
             vin = new CTxIn[nInputs];
 
             for (int nCurrentInput = 0; nCurrentInput < nInputs; nCurrentInput++)
@@ -94,13 +94,13 @@ namespace Novacoin
                 
                 vin[nCurrentInput].prevout = new COutPoint(wBytes.Get(36));
 
-                int nScriptSigLen = (int)VarInt.ReadVarInt(ref wBytes);
+                int nScriptSigLen = (int)wBytes.GetVarInt();
                 vin[nCurrentInput].scriptSig = new CScript(wBytes.Get(nScriptSigLen));
 
                 vin[nCurrentInput].nSequence = BitConverter.ToUInt32(wBytes.Get(4), 0);
             }
 
-            int nOutputs = (int)VarInt.ReadVarInt(ref wBytes);
+            int nOutputs = (int)wBytes.GetVarInt();
             vout = new CTxOut[nOutputs];
 
             for (int nCurrentOutput = 0; nCurrentOutput < nOutputs; nCurrentOutput++)
@@ -109,7 +109,7 @@ namespace Novacoin
                 vout[nCurrentOutput] = new CTxOut();
                 vout[nCurrentOutput].nValue = BitConverter.ToInt64(wBytes.Get(8), 0);
 
-                int nScriptPKLen = (int)VarInt.ReadVarInt(ref wBytes);
+                int nScriptPKLen = (int)wBytes.GetVarInt();
                 vout[nCurrentOutput].scriptPubKey = new CScript(wBytes.Get(nScriptPKLen));
             }
 
@@ -126,7 +126,7 @@ namespace Novacoin
             CTransaction[] tx;
 
             // Read amount of transactions
-            int nTransactions = (int)VarInt.ReadVarInt(ref wTxBytes);
+            int nTransactions = (int)wTxBytes.GetVarInt();
             tx = new CTransaction[nTransactions];
 
             for (int nTx = 0; nTx < nTransactions; nTx++)

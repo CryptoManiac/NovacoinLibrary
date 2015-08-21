@@ -54,7 +54,7 @@ namespace Novacoin
             CTxIn[] vin;
 
             // Get amount
-            int nInputs = (int)VarInt.ReadVarInt(ref wBytes);
+            int nInputs = (int)wBytes.GetVarInt();
             vin = new CTxIn[nInputs];
 
             for (int nIndex = 0; nIndex < nInputs; nIndex++)
@@ -62,7 +62,7 @@ namespace Novacoin
                 // Fill inputs array
                 vin[nIndex] = new CTxIn();
                 vin[nIndex].prevout = new COutPoint(wBytes.Get(36));
-                vin[nIndex].scriptSig = new CScript(wBytes.Get((int)VarInt.ReadVarInt(ref wBytes)));
+                vin[nIndex].scriptSig = new CScript(wBytes.Get((int)wBytes.GetVarInt()));
                 vin[nIndex].nSequence = BitConverter.ToUInt32(wBytes.Get(4), 0);
             }
 

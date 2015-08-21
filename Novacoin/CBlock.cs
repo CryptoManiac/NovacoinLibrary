@@ -51,7 +51,7 @@ namespace Novacoin
             vtx = CTransaction.ReadTransactionsList(ref wBytes);
 
             // Read block signature
-            signature = wBytes.Get((int)VarInt.ReadVarInt(ref wBytes));
+            signature = wBytes.Get((int)wBytes.GetVarInt());
 		}
 
         public CBlock()

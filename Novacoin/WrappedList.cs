@@ -92,5 +92,22 @@ namespace Novacoin
 
             return result;
         }
+
+        public ulong GetVarInt()
+        {
+            byte prefix = Get();
+
+            switch (prefix)
+            {
+                case 0xfd: // ushort
+                    return BitConverter.ToUInt16(Get(2), 0);
+                case 0xfe: // uint
+                    return BitConverter.ToUInt32(Get(4), 0);
+                case 0xff: // ulong
+                    return BitConverter.ToUInt64(Get(8), 0);
+                default:
+                    return prefix;
+            }
+        }
     }
 }

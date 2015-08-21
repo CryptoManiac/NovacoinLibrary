@@ -94,30 +94,5 @@ namespace Novacoin
                     return prefix;
             }
         }
-
-        /// <summary>
-        /// Read and decode variable integer from wrapped list object.
-        /// 
-        /// Note: Should be used only if there is some variable integer data at current position. Otherwise you will get undefined behavior, so make sure that you know what you are doing.
-        /// </summary>
-        /// <param name="wBytes"></param>
-        /// <returns></returns>
-        public static ulong ReadVarInt(ref ByteQueue wBytes)
-        {
-            byte prefix = wBytes.Get();
-
-            switch (prefix)
-            {
-                case 0xfd: // ushort
-                    return BitConverter.ToUInt16(wBytes.Get(2), 0);
-                case 0xfe: // uint
-                    return BitConverter.ToUInt32(wBytes.Get(4), 0);
-                case 0xff: // ulong
-                    return BitConverter.ToUInt64(wBytes.Get(8), 0);
-                default:
-                    return prefix;
-            }
-
-        }
     }
 }

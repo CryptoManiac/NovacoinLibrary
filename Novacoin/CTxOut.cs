@@ -44,7 +44,7 @@ namespace Novacoin
         /// <returns>Outputs array</returns>
         public static CTxOut[] ReadTxOutList(ref ByteQueue wBytes)
         {
-            int nOutputs = (int)VarInt.ReadVarInt(ref wBytes);
+            int nOutputs = (int)wBytes.GetVarInt();
             CTxOut[] vout =new CTxOut[nOutputs];
 
             for (int nIndex = 0; nIndex < nOutputs; nIndex++)
@@ -53,7 +53,7 @@ namespace Novacoin
                 vout[nIndex] = new CTxOut();
                 vout[nIndex].nValue = BitConverter.ToUInt32(wBytes.Get(8), 0);
 
-                int nScriptPKLen = (int)VarInt.ReadVarInt(ref wBytes);
+                int nScriptPKLen = (int)wBytes.GetVarInt();
                 vout[nIndex].scriptPubKey = new CScript(wBytes.Get(nScriptPKLen));
             }
 
