@@ -167,6 +167,17 @@ namespace Novacoin
         TX_NULL_DATA,
     };
 
+    /// <summary>
+    /// Signature hash types/flags
+    /// </summary>
+    public enum sigflag
+    {
+        SIGHASH_ALL = 1,
+        SIGHASH_NONE = 2,
+        SIGHASH_SINGLE = 3,
+        SIGHASH_ANYONECANPAY = 0x80,
+    };
+
     public static class ScriptCode
     {
 
@@ -820,5 +831,85 @@ namespace Novacoin
 
             return false;
         }
+
+        public static Hash256 SignatureHash(CScript scriptCode, CTransaction txTo, int nIn, int nHashType)
+        {
+            if (nIn >= txTo.vin.Length)
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.AppendFormat("ERROR: SignatureHash() : nIn={0} out of range\n", nIn);
+                throw new ArgumentOutOfRangeException("nIn", sb.ToString());
+            }
+
+            CTransaction txTmp = new CTransaction(txTo);
+
+            // In case concatenating two scripts ends up with two codeseparators,
+            // or an extra one at the end, this prevents all those possible incompatibilities.
+            scriptCode.RemovePattern(new byte[] { (byte)opcodetype.OP_CODESEPARATOR });
+
+            // Blank out other inputs' signatures
+            for (int i = 0; i < txTmp.vin.Length; i++)
+            {
+                txTmp.vin[i].scriptSig = new CScript();
+            }
+            txTmp.vin[nIn].scriptSig = scriptCode;
+
+            // Blank out some of the outputs
+            if ((nHashType & 0x1f) == (int)sigflag.SIGHASH_NONE)
+            {
+                // Wildcard payee
+                txTmp.vout = null;
+
+                // Let the others update at will
+                for (int i = 0; i < txTmp.vin.Length; i++)
+                {
+                    if (i != nIn)
+                    {
+                        txTmp.vin[i].nSequence = 0;
+                    }
+                }
+            }
+            else if ((nHashType & 0x1f) == (int)sigflag.SIGHASH_SINGLE)
+            {
+                // Only lock-in the txout payee at same index as txin
+                int nOut = nIn;
+                if (nOut >= txTmp.vout.Length)
+                {
+                    StringBuilder sb = new StringBuilder();
+                    sb.AppendFormat("ERROR: SignatureHash() : nOut={0} out of range\n", nOut);
+                    throw new ArgumentOutOfRangeException("nOut", sb.ToString());
+                }
+                Array.Resize(ref txTmp.vout, nOut + 1);
+
+                for (int i = 0; i < nOut; i++)
+                {
+                    txTmp.vout[i] = new CTxOut();
+                }
+
+                // Let the others update at will
+                for (int i = 0; i < txTmp.vin.Length; i++)
+                {
+                    if (i != nIn)
+                    {
+                        txTmp.vin[i].nSequence = 0;
+                    }
+                }
+            }
+
+            // Blank out other inputs completely, not recommended for open transactions
+            if ((nHashType & (int)sigflag.SIGHASH_ANYONECANPAY) != 0)
+            {
+                txTmp.vin[0] = txTmp.vin[nIn];
+                Array.Resize(ref txTmp.vin, 1);
+            }
+
+            // Serialize and hash
+            List<byte> b = new List<byte>();
+            b.AddRange(txTmp.Bytes);
+            b.AddRange(BitConverter.GetBytes(nHashType));
+
+            return Hash256.Compute256(b);
+        }
+
     };
 }
