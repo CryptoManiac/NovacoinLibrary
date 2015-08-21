@@ -91,11 +91,12 @@ namespace Novacoin
             {
                 // Fill inputs array
                 vin[nCurrentInput] = new CTxIn();
-
+                
                 vin[nCurrentInput].prevout = new COutPoint(wBytes.GetItems(36));
 
                 int nScriptSigLen = (int)VarInt.ReadVarInt(ref wBytes);
                 vin[nCurrentInput].scriptSig = new CScript(wBytes.GetItems(nScriptSigLen));
+
                 vin[nCurrentInput].nSequence = BitConverter.ToUInt32(wBytes.GetItems(4), 0);
             }
 
