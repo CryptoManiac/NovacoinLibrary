@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Numerics;
 
 namespace Novacoin
 {
@@ -994,7 +995,43 @@ namespace Novacoin
             return stack[nStackElement];
         }
 
+        /// <summary>
+        /// Cast argument to boolean value
+        /// </summary>
+        /// <param name="value">Some byte sequence</param>
+        /// <returns></returns>
+        private static bool CastToBool(IEnumerable<byte> arg)
+        {
+            byte[] value = arg.ToArray();
 
+            for (var i = 0; i < value.Length; i++)
+            {
+                if (value[i] != 0)
+                {
+                    // Can be negative zero
+                    if (i == value.Length - 1 && value[i] == 0x80)
+                        return false;
 
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Cast argument to integer value
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        private static BigInteger CastToBigInteger(IEnumerable<byte> value)
+        {
+            if (value.Count() > 4)
+            {
+                throw new StackMachineException("CastToBigNum() : overflow");
+            }
+
+            return new BigInteger(value.ToArray());
+        }
     };
 }
