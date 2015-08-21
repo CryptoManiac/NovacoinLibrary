@@ -100,18 +100,6 @@ namespace Novacoin
 		{
 			StringBuilder sb = new StringBuilder ();
 
-            /*
-            if (IsCoinBase)
-            {
-                sb.AppendFormat("CTxIn(txId={0}, coinbase={2}, nSequence={3})", txID.ToString(), n, Interop.ToHex(scriptSig.Bytes), nSequence);
-            }
-            else
-            {
-                sb.AppendFormat("CTxIn(txId={0}, n={1}, scriptSig={2}, nSequence={3})", txID.ToString(), n, scriptSig.ToString(), nSequence);
-            }
-            */
-
-
             sb.AppendFormat("CTxIn(");
             sb.Append(prevout.ToString());
 
