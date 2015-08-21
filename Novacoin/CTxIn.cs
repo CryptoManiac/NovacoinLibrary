@@ -49,7 +49,7 @@ namespace Novacoin
         /// </summary>
         /// <param name="wBytes">Reference to byte sequence</param>
         /// <returns>Inputs array</returns>
-        public static CTxIn[] ReadTxInList(ref WrappedList<byte> wBytes)
+        public static CTxIn[] ReadTxInList(ref ByteQueue wBytes)
         {
             CTxIn[] vin;
 
@@ -61,9 +61,9 @@ namespace Novacoin
             {
                 // Fill inputs array
                 vin[nIndex] = new CTxIn();
-                vin[nIndex].prevout = new COutPoint(wBytes.GetItems(36));
-                vin[nIndex].scriptSig = new CScript(wBytes.GetItems((int)VarInt.ReadVarInt(ref wBytes)));
-                vin[nIndex].nSequence = BitConverter.ToUInt32(wBytes.GetItems(4), 0);
+                vin[nIndex].prevout = new COutPoint(wBytes.Get(36));
+                vin[nIndex].scriptSig = new CScript(wBytes.Get((int)VarInt.ReadVarInt(ref wBytes)));
+                vin[nIndex].nSequence = BitConverter.ToUInt32(wBytes.Get(4), 0);
             }
 
             // Return inputs array

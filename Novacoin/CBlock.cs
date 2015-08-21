@@ -42,16 +42,16 @@ namespace Novacoin
         /// <param name="blockBytes"></param>
 		public CBlock (IList<byte> blockBytes)
 		{
-            WrappedList<byte> wBytes = new WrappedList<byte>(blockBytes);
+            ByteQueue wBytes = new ByteQueue(blockBytes);
 
             // Fill the block header fields
-            header = new CBlockHeader(wBytes.GetItems(80));
+            header = new CBlockHeader(wBytes.Get(80));
 
             // Parse transactions list
             vtx = CTransaction.ReadTransactionsList(ref wBytes);
 
             // Read block signature
-            signature = wBytes.GetItems((int)VarInt.ReadVarInt(ref wBytes));
+            signature = wBytes.Get((int)VarInt.ReadVarInt(ref wBytes));
 		}
 
         public CBlock()

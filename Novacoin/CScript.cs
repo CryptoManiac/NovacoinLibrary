@@ -47,12 +47,12 @@ namespace Novacoin
         }
 
         /// <summary>
-        /// Return a new instance of WrappedList object for current code bytes
+        /// Return a new instance of ByteQueue object for current code bytes
         /// </summary>
         /// <returns></returns>
-        public WrappedList<byte> GetWrappedList()
+        public ByteQueue GetWrappedList()
         {
-             return new WrappedList<byte>(codeBytes);
+             return new ByteQueue(codeBytes);
         }
 
         /// <summary>
@@ -178,7 +178,7 @@ namespace Novacoin
         {
             get
             {
-                WrappedList<byte> wCodeBytes = new WrappedList<byte>(codeBytes);
+                ByteQueue wCodeBytes = new ByteQueue(codeBytes);
 
                 opcodetype opcode; // Current opcode
                 IEnumerable<byte> pushArgs; // OP_PUSHDATAn argument
@@ -204,7 +204,7 @@ namespace Novacoin
         {
             get
             {
-                WrappedList<byte> wCodeBytes = new WrappedList<byte>(codeBytes);
+                ByteQueue wCodeBytes = new ByteQueue(codeBytes);
 
                 opcodetype opcode; // Current opcode
                 IEnumerable<byte> pushArgs; // OP_PUSHDATAn argument
@@ -293,7 +293,7 @@ namespace Novacoin
         /// <returns>Amount of sigops</returns>
         public int GetSigOpCount(bool fAccurate)
         {
-            WrappedList<byte> wCodeBytes = new WrappedList<byte>(codeBytes);
+            ByteQueue wCodeBytes = new ByteQueue(codeBytes);
 
             opcodetype opcode; // Current opcode
             IEnumerable<byte> pushArgs; // OP_PUSHDATAn argument
@@ -340,7 +340,7 @@ namespace Novacoin
             // This is a pay-to-script-hash scriptPubKey;
             // get the last item that the scriptSig
             // pushes onto the stack:
-            WrappedList<byte> wScriptSig = scriptSig.GetWrappedList();
+            ByteQueue wScriptSig = scriptSig.GetWrappedList();
 
             opcodetype opcode; // Current opcode
             IEnumerable<byte> pushArgs; // OP_PUSHDATAn argument
@@ -444,7 +444,7 @@ namespace Novacoin
 		public override string ToString()
 		{
 			StringBuilder sb = new StringBuilder();
-            WrappedList<byte> wCodeBytes = new WrappedList<byte>(codeBytes);
+            ByteQueue wCodeBytes = new ByteQueue(codeBytes);
 
             opcodetype opcode; // Current opcode
             IEnumerable<byte> pushArgs; // OP_PUSHDATAn argument

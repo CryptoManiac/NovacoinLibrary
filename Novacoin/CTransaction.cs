@@ -79,10 +79,10 @@ namespace Novacoin
         /// <param name="txBytes">Byte sequence</param>
 		public CTransaction(IList<byte> txBytes)
         {
-            WrappedList<byte> wBytes = new WrappedList<byte>(txBytes);
+            ByteQueue wBytes = new ByteQueue(txBytes);
 
-            nVersion = BitConverter.ToUInt32(wBytes.GetItems(4), 0);
-            nTime = BitConverter.ToUInt32(wBytes.GetItems(4), 0);
+            nVersion = BitConverter.ToUInt32(wBytes.Get(4), 0);
+            nTime = BitConverter.ToUInt32(wBytes.Get(4), 0);
 
             int nInputs = (int)VarInt.ReadVarInt(ref wBytes);
             vin = new CTxIn[nInputs];
@@ -92,12 +92,12 @@ namespace Novacoin
                 // Fill inputs array
                 vin[nCurrentInput] = new CTxIn();
                 
-                vin[nCurrentInput].prevout = new COutPoint(wBytes.GetItems(36));
+                vin[nCurrentInput].prevout = new COutPoint(wBytes.Get(36));
 
                 int nScriptSigLen = (int)VarInt.ReadVarInt(ref wBytes);
-                vin[nCurrentInput].scriptSig = new CScript(wBytes.GetItems(nScriptSigLen));
+                vin[nCurrentInput].scriptSig = new CScript(wBytes.Get(nScriptSigLen));
 
-                vin[nCurrentInput].nSequence = BitConverter.ToUInt32(wBytes.GetItems(4), 0);
+                vin[nCurrentInput].nSequence = BitConverter.ToUInt32(wBytes.Get(4), 0);
             }
 
             int nOutputs = (int)VarInt.ReadVarInt(ref wBytes);
@@ -107,13 +107,13 @@ namespace Novacoin
             {
                 // Fill outputs array
                 vout[nCurrentOutput] = new CTxOut();
-                vout[nCurrentOutput].nValue = BitConverter.ToInt64(wBytes.GetItems(8), 0);
+                vout[nCurrentOutput].nValue = BitConverter.ToInt64(wBytes.Get(8), 0);
 
                 int nScriptPKLen = (int)VarInt.ReadVarInt(ref wBytes);
-                vout[nCurrentOutput].scriptPubKey = new CScript(wBytes.GetItems(nScriptPKLen));
+                vout[nCurrentOutput].scriptPubKey = new CScript(wBytes.Get(nScriptPKLen));
             }
 
-            nLockTime = BitConverter.ToUInt32(wBytes.GetItems(4), 0);
+            nLockTime = BitConverter.ToUInt32(wBytes.Get(4), 0);
         }
 
         /// <summary>
@@ -121,7 +121,7 @@ namespace Novacoin
         /// </summary>
         /// <param name="wTxBytes">Bytes sequence</param>
         /// <returns>Transactions array</returns>
-        public static CTransaction[] ReadTransactionsList(ref WrappedList<byte> wTxBytes)
+        public static CTransaction[] ReadTransactionsList(ref ByteQueue wTxBytes)
         {
             CTransaction[] tx;
 
@@ -134,8 +134,8 @@ namespace Novacoin
                 // Fill the transactions array
                 tx[nTx] = new CTransaction();
 
-                tx[nTx].nVersion = BitConverter.ToUInt32(wTxBytes.GetItems(4), 0);
-                tx[nTx].nTime = BitConverter.ToUInt32(wTxBytes.GetItems(4), 0);
+                tx[nTx].nVersion = BitConverter.ToUInt32(wTxBytes.Get(4), 0);
+                tx[nTx].nTime = BitConverter.ToUInt32(wTxBytes.Get(4), 0);
 
                 // Inputs array
                 tx[nTx].vin = CTxIn.ReadTxInList(ref wTxBytes);
@@ -143,7 +143,7 @@ namespace Novacoin
                 // outputs array
                 tx[nTx].vout = CTxOut.ReadTxOutList(ref wTxBytes);
 
-                tx[nTx].nLockTime = BitConverter.ToUInt32(wTxBytes.GetItems(4), 0);
+                tx[nTx].nLockTime = BitConverter.ToUInt32(wTxBytes.Get(4), 0);
             }
 
             return tx;

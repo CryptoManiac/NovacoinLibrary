@@ -23,24 +23,24 @@ namespace Novacoin
         }
     }
 
-    public class WrappedList<T>
+    public class ByteQueue
     {
         private int Index;
-        private List<T> Elements;
+        private List<byte> Elements;
 
-        public WrappedList(IList<T> List, int Start)
+        public ByteQueue(IList<byte> List, int Start)
         {
-            Elements = new List<T>(List);
+            Elements = new List<byte>(List);
             Index = Start;
         }
 
-        public WrappedList(IList<T> List)
+        public ByteQueue(IList<byte> List)
         {
-            Elements = new List<T>(List);
+            Elements = new List<byte>(List);
             Index = 0;
         }
 
-        public T GetItem()
+        public byte Get()
         {
             if (Elements.Count <= Index)
             {
@@ -50,44 +50,44 @@ namespace Novacoin
             return Elements[Index++];
         }
 
-        public T GetCurrentItem()
+        public byte GetCurrent()
         {
             return Elements[Index];
         }
 
-        public T[] GetItems(int Count)
+        public byte[] Get(int Count)
         {
             if (Elements.Count - Index < Count)
             {
                 throw new WrappedListException("Unable to read requested amount of data.");
             }
 
-            T[] result = Elements.Skip(Index).Take(Count).ToArray();
+            byte[] result = Elements.Skip(Index).Take(Count).ToArray();
             Index += Count;
 
             return result;
         }
 
-        public T[] GetCurrentItems(int Count)
+        public byte[] GetCurrent(int Count)
         {
             if (Elements.Count - Index < Count)
             {
                 throw new WrappedListException("Unable to read requested amount of data.");
             }
 
-            T[] result = Elements.Skip(Index).Take(Count).ToArray();
+            byte[] result = Elements.Skip(Index).Take(Count).ToArray();
 
             return result;
         }
 
-        public IEnumerable<T> GetEnumerableItems(int Count)
+        public IEnumerable<byte> GetEnumerable(int Count)
         {
             if (Elements.Count - Index < Count)
             {
                 throw new WrappedListException("Unable to read requested amount of data.");
             }
 
-            IEnumerable<T> result = Elements.Skip(Index).Take(Count);
+            IEnumerable<byte> result = Elements.Skip(Index).Take(Count);
             Index += Count;
 
             return result;

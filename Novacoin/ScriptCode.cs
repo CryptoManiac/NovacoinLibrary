@@ -459,11 +459,11 @@ namespace Novacoin
         /// <summary>
         /// Get next opcode from passed list of bytes and extract push arguments if there are some.
         /// </summary>
-        /// <param name="codeBytes">WrappedList reference.</param>
+        /// <param name="codeBytes">ByteQueue reference.</param>
         /// <param name="opcodeRet">Found opcode.</param>
         /// <param name="bytesRet">IEnumerable out param which is used to get the push arguments.</param>
         /// <returns>Result of operation</returns>
-        public static bool GetOp(ref WrappedList<byte> codeBytes, out opcodetype opcodeRet, out IEnumerable<byte> bytesRet)
+        public static bool GetOp(ref ByteQueue codeBytes, out opcodetype opcodeRet, out IEnumerable<byte> bytesRet)
         {
             bytesRet = new List<byte>();
             opcodeRet = opcodetype.OP_INVALIDOPCODE;
@@ -473,7 +473,7 @@ namespace Novacoin
             try
             {
                 // Read instruction
-                opcode = (opcodetype)codeBytes.GetItem();
+                opcode = (opcodetype)codeBytes.Get();
             }
             catch (WrappedListException)
             {
@@ -497,19 +497,19 @@ namespace Novacoin
                     {
                         // The next byte contains the number of bytes to be pushed onto the stack, 
                         //    i.e. you have something like OP_PUSHDATA1 0x01 [0x5a]
-                        szBytes[3] = (byte)codeBytes.GetItem();
+                        szBytes[3] = (byte)codeBytes.Get();
                     }
                     else if (opcode == opcodetype.OP_PUSHDATA2)
                     {
                         // The next two bytes contain the number of bytes to be pushed onto the stack,
                         //    i.e. now your operation will seem like this: OP_PUSHDATA2 0x00 0x01 [0x5a]
-                        codeBytes.GetItems(2).CopyTo(szBytes, 2);
+                        codeBytes.Get(2).CopyTo(szBytes, 2);
                     }
                     else if (opcode == opcodetype.OP_PUSHDATA4)
                     {
                         // The next four bytes contain the number of bytes to be pushed onto the stack,
                         //   OP_PUSHDATA4 0x00 0x00 0x00 0x01 [0x5a]
-                        szBytes = codeBytes.GetItems(4);
+                        szBytes = codeBytes.Get(4);
                     }
                 }
                 catch (WrappedListException)
@@ -526,7 +526,7 @@ namespace Novacoin
                     try
                     {
                         // Read found number of bytes into list of OP_PUSHDATAn arguments.
-                        bytesRet = codeBytes.GetEnumerableItems(nSize);
+                        bytesRet = codeBytes.GetEnumerable(nSize);
                     }
                     catch (WrappedListException)
                     {
@@ -747,8 +747,8 @@ namespace Novacoin
                 opcodetype opcode1, opcode2;
 
                 // Compare
-                WrappedList<byte> wl1 = script1.GetWrappedList();
-                WrappedList<byte> wl2 = script2.GetWrappedList();
+                ByteQueue wl1 = script1.GetWrappedList();
+                ByteQueue wl2 = script2.GetWrappedList();
 
                 IEnumerable<byte> args1, args2;
 
@@ -757,7 +757,7 @@ namespace Novacoin
 
                 while (true)
                 {
-                    if (wl1.GetCurrentItem() == last1 && wl2.GetCurrentItem() == last2)
+                    if (wl1.GetCurrent() == last1 && wl2.GetCurrent() == last2)
                     {
                         // Found a match
                         typeRet = templateTuple.Item1;

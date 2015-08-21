@@ -102,18 +102,18 @@ namespace Novacoin
         /// </summary>
         /// <param name="wBytes"></param>
         /// <returns></returns>
-        public static ulong ReadVarInt(ref WrappedList<byte> wBytes)
+        public static ulong ReadVarInt(ref ByteQueue wBytes)
         {
-            byte prefix = wBytes.GetItem();
+            byte prefix = wBytes.Get();
 
             switch (prefix)
             {
                 case 0xfd: // ushort
-                    return BitConverter.ToUInt16(wBytes.GetItems(2), 0);
+                    return BitConverter.ToUInt16(wBytes.Get(2), 0);
                 case 0xfe: // uint
-                    return BitConverter.ToUInt32(wBytes.GetItems(4), 0);
+                    return BitConverter.ToUInt32(wBytes.Get(4), 0);
                 case 0xff: // ulong
-                    return BitConverter.ToUInt64(wBytes.GetItems(8), 0);
+                    return BitConverter.ToUInt64(wBytes.Get(8), 0);
                 default:
                     return prefix;
             }
