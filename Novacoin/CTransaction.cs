@@ -162,7 +162,17 @@ namespace Novacoin
             }
         }
 
+        /// <summary>
+        /// Transaction hash
+        /// </summary>
+        public Hash256 Hash
+        {
+            get { return Hash256.Compute256(Bytes); }
+        }
 
+        /// <summary>
+        /// A sequence of bytes, which corresponds to the current state of CTransaction.
+        /// </summary>
         public IList<byte> Bytes
         {
             get
