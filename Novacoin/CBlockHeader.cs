@@ -88,6 +88,13 @@ namespace Novacoin
             }
         }
 
+        public ScryptHash256 Hash
+        {
+            get {
+                return ScryptHash256.Compute256(Bytes);
+            }
+        }
+
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder();
