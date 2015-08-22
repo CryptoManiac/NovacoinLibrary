@@ -178,7 +178,16 @@ namespace NovacoinTest
             Console.WriteLine("sigHashAll={0}", sigHashAll.ToString());
             Console.WriteLine("sigHashNone={0}", sigHashNone.ToString());
             Console.WriteLine("sigHashSingle={0}", sigHashSingle.ToString());
-            Console.WriteLine("sigHashAnyone={0}", sigHashAnyone.ToString());
+            Console.WriteLine("sigHashAnyone={0}\n", sigHashAnyone.ToString());
+
+            // Testing some opcode functionality
+
+            for (int i = 0; i < 17; i++)
+            {
+                Console.WriteLine("{0} is encoded as {1}", i, ScriptCode.GetOpName(ScriptCode.EncodeOP_N(i)));
+            }
+
+            Console.WriteLine("In addition, -1 is encoded as {0}", ScriptCode.GetOpName(ScriptCode.EncodeOP_N(-1, true)));
 
             Console.ReadLine();
         }

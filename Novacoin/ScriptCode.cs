@@ -12,7 +12,7 @@ namespace Novacoin
     /// <summary>
     /// Script opcodes
     /// </summary>
-    public enum opcodetype
+    public enum instruction
     {
         // push value
         OP_0 = 0x00,
@@ -214,257 +214,257 @@ namespace Novacoin
         /// </summary>
         /// <param name="opcode">Opcode</param>
         /// <returns>Opcode name</returns>
-        public static string GetOpName(opcodetype opcode)
+        public static string GetOpName(instruction opcode)
         {
             switch (opcode)
             {
                 // push value
-                case opcodetype.OP_0:
-                    return "0";
-                case opcodetype.OP_PUSHDATA1:
+                case instruction.OP_0:
+                    return "OP_0";
+                case instruction.OP_PUSHDATA1:
                     return "OP_PUSHDATA1";
-                case opcodetype.OP_PUSHDATA2:
+                case instruction.OP_PUSHDATA2:
                     return "OP_PUSHDATA2";
-                case opcodetype.OP_PUSHDATA4:
+                case instruction.OP_PUSHDATA4:
                     return "OP_PUSHDATA4";
-                case opcodetype.OP_1NEGATE:
-                    return "-1";
-                case opcodetype.OP_RESERVED:
+                case instruction.OP_1NEGATE:
+                    return "OP_1NEGATE";
+                case instruction.OP_RESERVED:
                     return "OP_RESERVED";
-                case opcodetype.OP_1:
-                    return "1";
-                case opcodetype.OP_2:
-                    return "2";
-                case opcodetype.OP_3:
-                    return "3";
-                case opcodetype.OP_4:
-                    return "4";
-                case opcodetype.OP_5:
-                    return "5";
-                case opcodetype.OP_6:
-                    return "6";
-                case opcodetype.OP_7:
-                    return "7";
-                case opcodetype.OP_8:
-                    return "8";
-                case opcodetype.OP_9:
-                    return "9";
-                case opcodetype.OP_10:
-                    return "10";
-                case opcodetype.OP_11:
-                    return "11";
-                case opcodetype.OP_12:
-                    return "12";
-                case opcodetype.OP_13:
-                    return "13";
-                case opcodetype.OP_14:
-                    return "14";
-                case opcodetype.OP_15:
-                    return "15";
-                case opcodetype.OP_16:
-                    return "16";
+                case instruction.OP_1:
+                    return "OP_1";
+                case instruction.OP_2:
+                    return "OP_2";
+                case instruction.OP_3:
+                    return "OP_3";
+                case instruction.OP_4:
+                    return "OP_4";
+                case instruction.OP_5:
+                    return "OP_5";
+                case instruction.OP_6:
+                    return "OP_6";
+                case instruction.OP_7:
+                    return "OP_7";
+                case instruction.OP_8:
+                    return "OP_8";
+                case instruction.OP_9:
+                    return "OP_9";
+                case instruction.OP_10:
+                    return "OP_10";
+                case instruction.OP_11:
+                    return "OP_11";
+                case instruction.OP_12:
+                    return "OP_12";
+                case instruction.OP_13:
+                    return "OP_13";
+                case instruction.OP_14:
+                    return "OP_14";
+                case instruction.OP_15:
+                    return "OP_15";
+                case instruction.OP_16:
+                    return "OP_16";
 
                 // control
-                case opcodetype.OP_NOP:
+                case instruction.OP_NOP:
                     return "OP_NOP";
-                case opcodetype.OP_VER:
+                case instruction.OP_VER:
                     return "OP_VER";
-                case opcodetype.OP_IF:
+                case instruction.OP_IF:
                     return "OP_IF";
-                case opcodetype.OP_NOTIF:
+                case instruction.OP_NOTIF:
                     return "OP_NOTIF";
-                case opcodetype.OP_VERIF:
+                case instruction.OP_VERIF:
                     return "OP_VERIF";
-                case opcodetype.OP_VERNOTIF:
+                case instruction.OP_VERNOTIF:
                     return "OP_VERNOTIF";
-                case opcodetype.OP_ELSE:
+                case instruction.OP_ELSE:
                     return "OP_ELSE";
-                case opcodetype.OP_ENDIF:
+                case instruction.OP_ENDIF:
                     return "OP_ENDIF";
-                case opcodetype.OP_VERIFY:
+                case instruction.OP_VERIFY:
                     return "OP_VERIFY";
-                case opcodetype.OP_RETURN:
+                case instruction.OP_RETURN:
                     return "OP_RETURN";
 
                 // stack ops
-                case opcodetype.OP_TOALTSTACK:
+                case instruction.OP_TOALTSTACK:
                     return "OP_TOALTSTACK";
-                case opcodetype.OP_FROMALTSTACK:
+                case instruction.OP_FROMALTSTACK:
                     return "OP_FROMALTSTACK";
-                case opcodetype.OP_2DROP:
+                case instruction.OP_2DROP:
                     return "OP_2DROP";
-                case opcodetype.OP_2DUP:
+                case instruction.OP_2DUP:
                     return "OP_2DUP";
-                case opcodetype.OP_3DUP:
+                case instruction.OP_3DUP:
                     return "OP_3DUP";
-                case opcodetype.OP_2OVER:
+                case instruction.OP_2OVER:
                     return "OP_2OVER";
-                case opcodetype.OP_2ROT:
+                case instruction.OP_2ROT:
                     return "OP_2ROT";
-                case opcodetype.OP_2SWAP:
+                case instruction.OP_2SWAP:
                     return "OP_2SWAP";
-                case opcodetype.OP_IFDUP:
+                case instruction.OP_IFDUP:
                     return "OP_IFDUP";
-                case opcodetype.OP_DEPTH:
+                case instruction.OP_DEPTH:
                     return "OP_DEPTH";
-                case opcodetype.OP_DROP:
+                case instruction.OP_DROP:
                     return "OP_DROP";
-                case opcodetype.OP_DUP:
+                case instruction.OP_DUP:
                     return "OP_DUP";
-                case opcodetype.OP_NIP:
+                case instruction.OP_NIP:
                     return "OP_NIP";
-                case opcodetype.OP_OVER:
+                case instruction.OP_OVER:
                     return "OP_OVER";
-                case opcodetype.OP_PICK:
+                case instruction.OP_PICK:
                     return "OP_PICK";
-                case opcodetype.OP_ROLL:
+                case instruction.OP_ROLL:
                     return "OP_ROLL";
-                case opcodetype.OP_ROT:
+                case instruction.OP_ROT:
                     return "OP_ROT";
-                case opcodetype.OP_SWAP:
+                case instruction.OP_SWAP:
                     return "OP_SWAP";
-                case opcodetype.OP_TUCK:
+                case instruction.OP_TUCK:
                     return "OP_TUCK";
 
                 // splice ops
-                case opcodetype.OP_CAT:
+                case instruction.OP_CAT:
                     return "OP_CAT";
-                case opcodetype.OP_SUBSTR:
+                case instruction.OP_SUBSTR:
                     return "OP_SUBSTR";
-                case opcodetype.OP_LEFT:
+                case instruction.OP_LEFT:
                     return "OP_LEFT";
-                case opcodetype.OP_RIGHT:
+                case instruction.OP_RIGHT:
                     return "OP_RIGHT";
-                case opcodetype.OP_SIZE:
+                case instruction.OP_SIZE:
                     return "OP_SIZE";
 
                 // bit logic
-                case opcodetype.OP_INVERT:
+                case instruction.OP_INVERT:
                     return "OP_INVERT";
-                case opcodetype.OP_AND:
+                case instruction.OP_AND:
                     return "OP_AND";
-                case opcodetype.OP_OR:
+                case instruction.OP_OR:
                     return "OP_OR";
-                case opcodetype.OP_XOR:
+                case instruction.OP_XOR:
                     return "OP_XOR";
-                case opcodetype.OP_EQUAL:
+                case instruction.OP_EQUAL:
                     return "OP_EQUAL";
-                case opcodetype.OP_EQUALVERIFY:
+                case instruction.OP_EQUALVERIFY:
                     return "OP_EQUALVERIFY";
-                case opcodetype.OP_RESERVED1:
+                case instruction.OP_RESERVED1:
                     return "OP_RESERVED1";
-                case opcodetype.OP_RESERVED2:
+                case instruction.OP_RESERVED2:
                     return "OP_RESERVED2";
 
                 // numeric
-                case opcodetype.OP_1ADD:
+                case instruction.OP_1ADD:
                     return "OP_1ADD";
-                case opcodetype.OP_1SUB:
+                case instruction.OP_1SUB:
                     return "OP_1SUB";
-                case opcodetype.OP_2MUL:
+                case instruction.OP_2MUL:
                     return "OP_2MUL";
-                case opcodetype.OP_2DIV:
+                case instruction.OP_2DIV:
                     return "OP_2DIV";
-                case opcodetype.OP_NEGATE:
+                case instruction.OP_NEGATE:
                     return "OP_NEGATE";
-                case opcodetype.OP_ABS:
+                case instruction.OP_ABS:
                     return "OP_ABS";
-                case opcodetype.OP_NOT:
+                case instruction.OP_NOT:
                     return "OP_NOT";
-                case opcodetype.OP_0NOTEQUAL:
+                case instruction.OP_0NOTEQUAL:
                     return "OP_0NOTEQUAL";
-                case opcodetype.OP_ADD:
+                case instruction.OP_ADD:
                     return "OP_ADD";
-                case opcodetype.OP_SUB:
+                case instruction.OP_SUB:
                     return "OP_SUB";
-                case opcodetype.OP_MUL:
+                case instruction.OP_MUL:
                     return "OP_MUL";
-                case opcodetype.OP_DIV:
+                case instruction.OP_DIV:
                     return "OP_DIV";
-                case opcodetype.OP_MOD:
+                case instruction.OP_MOD:
                     return "OP_MOD";
-                case opcodetype.OP_LSHIFT:
+                case instruction.OP_LSHIFT:
                     return "OP_LSHIFT";
-                case opcodetype.OP_RSHIFT:
+                case instruction.OP_RSHIFT:
                     return "OP_RSHIFT";
-                case opcodetype.OP_BOOLAND:
+                case instruction.OP_BOOLAND:
                     return "OP_BOOLAND";
-                case opcodetype.OP_BOOLOR:
+                case instruction.OP_BOOLOR:
                     return "OP_BOOLOR";
-                case opcodetype.OP_NUMEQUAL:
+                case instruction.OP_NUMEQUAL:
                     return "OP_NUMEQUAL";
-                case opcodetype.OP_NUMEQUALVERIFY:
+                case instruction.OP_NUMEQUALVERIFY:
                     return "OP_NUMEQUALVERIFY";
-                case opcodetype.OP_NUMNOTEQUAL:
+                case instruction.OP_NUMNOTEQUAL:
                     return "OP_NUMNOTEQUAL";
-                case opcodetype.OP_LESSTHAN:
+                case instruction.OP_LESSTHAN:
                     return "OP_LESSTHAN";
-                case opcodetype.OP_GREATERTHAN:
+                case instruction.OP_GREATERTHAN:
                     return "OP_GREATERTHAN";
-                case opcodetype.OP_LESSTHANOREQUAL:
+                case instruction.OP_LESSTHANOREQUAL:
                     return "OP_LESSTHANOREQUAL";
-                case opcodetype.OP_GREATERTHANOREQUAL:
+                case instruction.OP_GREATERTHANOREQUAL:
                     return "OP_GREATERTHANOREQUAL";
-                case opcodetype.OP_MIN:
+                case instruction.OP_MIN:
                     return "OP_MIN";
-                case opcodetype.OP_MAX:
+                case instruction.OP_MAX:
                     return "OP_MAX";
-                case opcodetype.OP_WITHIN:
+                case instruction.OP_WITHIN:
                     return "OP_WITHIN";
 
                 // crypto
-                case opcodetype.OP_RIPEMD160:
+                case instruction.OP_RIPEMD160:
                     return "OP_RIPEMD160";
-                case opcodetype.OP_SHA1:
+                case instruction.OP_SHA1:
                     return "OP_SHA1";
-                case opcodetype.OP_SHA256:
+                case instruction.OP_SHA256:
                     return "OP_SHA256";
-                case opcodetype.OP_HASH160:
+                case instruction.OP_HASH160:
                     return "OP_HASH160";
-                case opcodetype.OP_HASH256:
+                case instruction.OP_HASH256:
                     return "OP_HASH256";
-                case opcodetype.OP_CODESEPARATOR:
+                case instruction.OP_CODESEPARATOR:
                     return "OP_CODESEPARATOR";
-                case opcodetype.OP_CHECKSIG:
+                case instruction.OP_CHECKSIG:
                     return "OP_CHECKSIG";
-                case opcodetype.OP_CHECKSIGVERIFY:
+                case instruction.OP_CHECKSIGVERIFY:
                     return "OP_CHECKSIGVERIFY";
-                case opcodetype.OP_CHECKMULTISIG:
+                case instruction.OP_CHECKMULTISIG:
                     return "OP_CHECKMULTISIG";
-                case opcodetype.OP_CHECKMULTISIGVERIFY:
+                case instruction.OP_CHECKMULTISIGVERIFY:
                     return "OP_CHECKMULTISIGVERIFY";
 
                 // expansion
-                case opcodetype.OP_NOP1:
+                case instruction.OP_NOP1:
                     return "OP_NOP1";
-                case opcodetype.OP_NOP2:
+                case instruction.OP_NOP2:
                     return "OP_NOP2";
-                case opcodetype.OP_NOP3:
+                case instruction.OP_NOP3:
                     return "OP_NOP3";
-                case opcodetype.OP_NOP4:
+                case instruction.OP_NOP4:
                     return "OP_NOP4";
-                case opcodetype.OP_NOP5:
+                case instruction.OP_NOP5:
                     return "OP_NOP5";
-                case opcodetype.OP_NOP6:
+                case instruction.OP_NOP6:
                     return "OP_NOP6";
-                case opcodetype.OP_NOP7:
+                case instruction.OP_NOP7:
                     return "OP_NOP7";
-                case opcodetype.OP_NOP8:
+                case instruction.OP_NOP8:
                     return "OP_NOP8";
-                case opcodetype.OP_NOP9:
+                case instruction.OP_NOP9:
                     return "OP_NOP9";
-                case opcodetype.OP_NOP10:
+                case instruction.OP_NOP10:
                     return "OP_NOP10";
 
                 // template matching params
-                case opcodetype.OP_PUBKEYHASH:
+                case instruction.OP_PUBKEYHASH:
                     return "OP_PUBKEYHASH";
-                case opcodetype.OP_PUBKEY:
+                case instruction.OP_PUBKEY:
                     return "OP_PUBKEY";
-                case opcodetype.OP_SMALLDATA:
+                case instruction.OP_SMALLDATA:
                     return "OP_SMALLDATA";
 
-                case opcodetype.OP_INVALIDOPCODE:
+                case instruction.OP_INVALIDOPCODE:
                     return "OP_INVALIDOPCODE";
                 default:
                     return "OP_UNKNOWN";
@@ -478,17 +478,17 @@ namespace Novacoin
         /// <param name="opcodeRet">Found opcode.</param>
         /// <param name="bytesRet">IEnumerable out param which is used to get the push arguments.</param>
         /// <returns>Result of operation</returns>
-        public static bool GetOp(ref ByteQueue codeBytes, out opcodetype opcodeRet, out IEnumerable<byte> bytesRet)
+        public static bool GetOp(ref ByteQueue codeBytes, out instruction opcodeRet, out IEnumerable<byte> bytesRet)
         {
             bytesRet = new List<byte>();
-            opcodeRet = opcodetype.OP_INVALIDOPCODE;
+            opcodeRet = instruction.OP_INVALIDOPCODE;
 
-            opcodetype opcode;
+            instruction opcode;
 
             try
             {
                 // Read instruction
-                opcode = (opcodetype)codeBytes.Get();
+                opcode = (instruction)codeBytes.Get();
             }
             catch (ByteQueueException)
             {
@@ -497,30 +497,30 @@ namespace Novacoin
             }
 
             // Immediate operand
-            if (opcode <= opcodetype.OP_PUSHDATA4)
+            if (opcode <= instruction.OP_PUSHDATA4)
             {
                 byte[] szBytes = new byte[4] { 0, 0, 0, 0 }; // Zero length
 
                 try
                 {
-                    if (opcode < opcodetype.OP_PUSHDATA1)
+                    if (opcode < instruction.OP_PUSHDATA1)
                     {
                         // Zero value opcodes (OP_0, OP_FALSE)
                         szBytes[3] = (byte)opcode;
                     }
-                    else if (opcode == opcodetype.OP_PUSHDATA1)
+                    else if (opcode == instruction.OP_PUSHDATA1)
                     {
                         // The next byte contains the number of bytes to be pushed onto the stack, 
                         //    i.e. you have something like OP_PUSHDATA1 0x01 [0x5a]
                         szBytes[3] = (byte)codeBytes.Get();
                     }
-                    else if (opcode == opcodetype.OP_PUSHDATA2)
+                    else if (opcode == instruction.OP_PUSHDATA2)
                     {
                         // The next two bytes contain the number of bytes to be pushed onto the stack,
                         //    i.e. now your operation will seem like this: OP_PUSHDATA2 0x00 0x01 [0x5a]
                         codeBytes.Get(2).CopyTo(szBytes, 2);
                     }
-                    else if (opcode == opcodetype.OP_PUSHDATA4)
+                    else if (opcode == instruction.OP_PUSHDATA4)
                     {
                         // The next four bytes contain the number of bytes to be pushed onto the stack,
                         //   OP_PUSHDATA4 0x00 0x00 0x00 0x01 [0x5a]
@@ -599,34 +599,52 @@ namespace Novacoin
         }
 
         /// <summary>
-        /// Decode small integer
+        /// Decode instruction to integer value
         /// </summary>
-        /// <param name="opcode">Small integer opcode (OP_0 - OP_16)</param>
+        /// <param name="opcode">Small integer opcode (OP_1_NEGATE and OP_0 - OP_16)</param>
         /// <returns>Small integer</returns>
-        public static int DecodeOP_N(opcodetype opcode)
+        public static int DecodeOP_N(instruction opcode, bool AllowNegate=false)
         {
-            if (opcode == opcodetype.OP_0)
+            if (AllowNegate && opcode == instruction.OP_1NEGATE)
+            {
+                return -1;
+            }
+
+            if (opcode == instruction.OP_0)
+            {
                 return 0;
+            }
 
             // Only OP_n opcodes are supported, throw exception otherwise.
-            if (opcode < opcodetype.OP_1 || opcode > opcodetype.OP_16)
-                throw new Exception("Invalid small integer opcode.");
-            return (int)opcode - (int)(opcodetype.OP_1 - 1);
+            if (opcode < instruction.OP_1 || opcode > instruction.OP_16)
+            {
+                throw new Exception("Invalid integer instruction.");
+            }
+
+            return (int)opcode - (int)(instruction.OP_1 - 1);
         }
 
         /// <summary>
-        /// Converts small integer into opcode
+        /// Converts integer into instruction
         /// </summary>
-        /// <param name="n">Small integer from the range of 0 up to 16.</param>
+        /// <param name="n">Small integer from the range of -1 up to 16.</param>
         /// <returns>Corresponding opcode.</returns>
-        public static opcodetype EncodeOP_N(int n)
+        public static instruction EncodeOP_N(int n, bool allowNegate=false)
         {
+            if (allowNegate && n == -1)
+            {
+                return instruction.OP_1NEGATE;
+            }
+
+            if (n == 0)
+            {
+                return instruction.OP_0;
+            }
+
             // The n value must be in the range of 0 to 16.
             if (n < 0 || n > 16)
-                throw new Exception("Invalid small integer value.");
-            if (n == 0)
-                return opcodetype.OP_0;
-            return (opcodetype)(opcodetype.OP_1 + n - 1);
+                throw new Exception("Invalid integer value.");
+            return (instruction.OP_1 + n - 1);
         }
 
         public static int ScriptSigArgsExpected(txnouttype t, IList<IEnumerable<byte>> solutions)
@@ -698,7 +716,7 @@ namespace Novacoin
         {
             solutions = new List<IEnumerable<byte>>();
 
-            // There are shortcuts for pay-to-script-hash and pay-to-pubkey-hash, which are more constrained than the other types:
+            // There are shortcuts for pay-to-script-hash and pay-to-pubkey-hash, which are more constrained than the other types.
 
             // It is always OP_HASH160 20 [20 byte hash] OP_EQUAL
             if (scriptPubKey.IsPayToScriptHash)
@@ -731,7 +749,10 @@ namespace Novacoin
             templateTuples.Add(
                 new Tuple<txnouttype, IEnumerable<byte>>(
                     txnouttype.TX_PUBKEY,
-                    new byte[] { (byte)opcodetype.OP_PUBKEY, (byte)opcodetype.OP_CHECKSIG })
+                    new byte[] {
+                        (byte)instruction.OP_PUBKEY,
+                        (byte)instruction.OP_CHECKSIG
+                    })
             );
 
             // Sender provides N pubkeys, receivers provides M signatures
@@ -740,7 +761,12 @@ namespace Novacoin
             templateTuples.Add(
                 new Tuple<txnouttype, IEnumerable<byte>>(
                     txnouttype.TX_MULTISIG,
-                    new byte[] { (byte)opcodetype.OP_SMALLINTEGER, (byte)opcodetype.OP_PUBKEYS, (byte)opcodetype.OP_SMALLINTEGER, (byte)opcodetype.OP_CHECKMULTISIG })
+                    new byte[] {
+                        (byte)instruction.OP_SMALLINTEGER,
+                        (byte)instruction.OP_PUBKEYS,
+                        (byte)instruction.OP_SMALLINTEGER,
+                        (byte)instruction.OP_CHECKMULTISIG
+                    })
             );
 
             // Data-carrying output
@@ -748,7 +774,10 @@ namespace Novacoin
             templateTuples.Add(
                 new Tuple<txnouttype, IEnumerable<byte>>(
                     txnouttype.TX_NULL_DATA,
-                    new byte[] { (byte)opcodetype.OP_RETURN, (byte)opcodetype.OP_SMALLDATA })
+                    new byte[] {
+                        (byte)instruction.OP_RETURN,
+                        (byte)instruction.OP_SMALLDATA
+                    })
             );
 
             // Nonstandard tx output
@@ -759,11 +788,11 @@ namespace Novacoin
                 CScript script1 = scriptPubKey;
                 CScript script2 = new CScript(templateTuple.Item2);
 
-                opcodetype opcode1, opcode2;
+                instruction opcode1, opcode2;
 
                 // Compare
-                ByteQueue wl1 = script1.GetByteQUeue();
-                ByteQueue wl2 = script2.GetByteQUeue();
+                ByteQueue bq1 = script1.GetByteQUeue();
+                ByteQueue bq2 = script2.GetByteQUeue();
 
                 IEnumerable<byte> args1, args2;
 
@@ -772,7 +801,7 @@ namespace Novacoin
 
                 while (true)
                 {
-                    if (wl1.GetCurrent() == last1 && wl2.GetCurrent() == last2)
+                    if (bq1.GetCurrent() == last1 && bq2.GetCurrent() == last2)
                     {
                         // Found a match
                         typeRet = templateTuple.Item1;
@@ -790,32 +819,32 @@ namespace Novacoin
                         return true;
                     }
 
-                    if (!GetOp(ref wl1, out opcode1, out args1))
+                    if (!GetOp(ref bq1, out opcode1, out args1))
                     {
                         break;
                     }
-                    if (!GetOp(ref wl2, out opcode2, out args2))
+                    if (!GetOp(ref bq2, out opcode2, out args2))
                     {
                         break;
                     }
 
                     // Template matching opcodes:
-                    if (opcode2 == opcodetype.OP_PUBKEYS)
+                    if (opcode2 == instruction.OP_PUBKEYS)
                     {
                         while (args1.Count() >= 33 && args1.Count() <= 120)
                         {
                             solutions.Add(args1);
-                            if (!GetOp(ref wl1, out opcode1, out args1))
+                            if (!GetOp(ref bq1, out opcode1, out args1))
                             {
                                 break;
                             }
                         }
-                        if (!GetOp(ref wl2, out opcode2, out args2))
+                        if (!GetOp(ref bq2, out opcode2, out args2))
                             break;
                         // Normal situation is to fall through
                         // to other if/else statements
                     }
-                    if (opcode2 == opcodetype.OP_PUBKEY)
+                    if (opcode2 == instruction.OP_PUBKEY)
                     {
                         if (args1.Count() < 33 || args1.Count() > 120)
                         {
@@ -823,7 +852,7 @@ namespace Novacoin
                         }
                         solutions.Add(args1);
                     }
-                    else if (opcode2 == opcodetype.OP_PUBKEYHASH)
+                    else if (opcode2 == instruction.OP_PUBKEYHASH)
                     {
                         if (args1.Count() != 20) // hash160 size
                         {
@@ -831,10 +860,10 @@ namespace Novacoin
                         }
                         solutions.Add(args1);
                     }
-                    else if (opcode2 == opcodetype.OP_SMALLINTEGER)
+                    else if (opcode2 == instruction.OP_SMALLINTEGER)
                     {
                         // Single-byte small integer pushed onto solutions
-                        if (opcode1 == opcodetype.OP_0 || (opcode1 >= opcodetype.OP_1 && opcode1 <= opcodetype.OP_16))
+                        if (opcode1 == instruction.OP_0 || (opcode1 >= instruction.OP_1 && opcode1 <= instruction.OP_16))
                         {
                             byte n = (byte)DecodeOP_N(opcode1);
                             solutions.Add(new byte[] { n });
@@ -844,7 +873,7 @@ namespace Novacoin
                             break;
                         }
                     }
-                    else if (opcode2 == opcodetype.OP_SMALLDATA)
+                    else if (opcode2 == instruction.OP_SMALLDATA)
                     {
                         // small pushdata, <= 80 bytes
                         if (args1.Count() > 80)
@@ -879,7 +908,7 @@ namespace Novacoin
 
             // In case concatenating two scripts ends up with two codeseparators,
             // or an extra one at the end, this prevents all those possible incompatibilities.
-            scriptCode.RemovePattern(new byte[] { (byte)opcodetype.OP_CODESEPARATOR });
+            scriptCode.RemovePattern(new byte[] { (byte)instruction.OP_CODESEPARATOR });
 
             // Blank out other inputs' signatures
             for (int i = 0; i < txTmp.vin.Length; i++)
@@ -1052,130 +1081,125 @@ namespace Novacoin
 
         static bool EvalScript(ref List<IEnumerable<byte>> stack, CScript script, CTransaction txTo, int nIn, int flags, int nHashType)
         {
-            ByteQueue pc = script.GetByteQUeue();
+            instruction opcode;
 
-            ByteQueue pbegincodehash = script.GetByteQUeue();
-
-            opcodetype opcode;
+            ByteQueue CodeQueue = script.GetByteQUeue();
 
             List<bool> vfExec = new List<bool>();
-            List<IEnumerable<byte>> altstack = new List<IEnumerable<byte>>();
+            List<IEnumerable<byte>> altStack = new List<IEnumerable<byte>>();
 
-            byte[] vchFalse = new byte[0];
-            byte[] vchTrue = new byte[] { 0x01 };
+            byte[] falseBytes = new byte[0];
+            byte[] trueBytes = new byte[] { 0x01 };
 
             if (script.Bytes.Count() > 10000)
             {
-                return false;
+                return false; // Size limit failed
             }
 
             int nOpCount = 0;
+            int nCodeHashBegin = 0;
 
             while (true)
             {
-                bool fExec = false;
-                foreach (bool fValue in vfExec)
-                {
-                    if (!fValue)
-                    {
-                        fExec = true;
-                        break;
-                    }
-                }
+                bool fExec = vfExec.IndexOf(false) != -1;
 
                 //
                 // Read instruction
                 //
                 IEnumerable<byte> pushArg;
-                if (!GetOp(ref pc, out opcode, out pushArg))
+                if (!GetOp(ref CodeQueue, out opcode, out pushArg))
+                {
+                    return false; // No instructions left
+                }
+
+                if (pushArg.Count() > 520)
+                {
+                    return false; // Script element size limit failed
+                }
+
+                if (opcode > instruction.OP_16 && ++nOpCount > 201)
                 {
                     return false;
                 }
 
-                if (pushArg.Count() > 520) // Check against MAX_SCRIPT_ELEMENT_SIZE
+                if (fExec && 0 <= opcode && opcode <= instruction.OP_PUSHDATA4)
                 {
-                    return false;
+                    stack.Add(pushArg); // Push argument to stack
                 }
-
-                if (opcode > opcodetype.OP_16 && ++nOpCount > 201)
-                {
-                    return false;
-                }
-
-                if (fExec && 0 <= opcode && opcode <= opcodetype.OP_PUSHDATA4)
-                {
-                    // Push argument to stack
-                    stack.Add(pushArg);
-                }
-                else if (fExec || (opcodetype.OP_IF <= opcode && opcode <= opcodetype.OP_ENDIF))
+                else if (fExec || (instruction.OP_IF <= opcode && opcode <= instruction.OP_ENDIF))
                     switch (opcode)
                     {
                         //
                         // Disabled opcodes
                         //
-                        case opcodetype.OP_CAT:
-                        case opcodetype.OP_SUBSTR:
-                        case opcodetype.OP_LEFT:
-                        case opcodetype.OP_RIGHT:
-                        case opcodetype.OP_INVERT:
-                        case opcodetype.OP_AND:
-                        case opcodetype.OP_OR:
-                        case opcodetype.OP_XOR:
-                        case opcodetype.OP_2MUL:
-                        case opcodetype.OP_2DIV:
-                        case opcodetype.OP_MUL:
-                        case opcodetype.OP_DIV:
-                        case opcodetype.OP_MOD:
-                        case opcodetype.OP_LSHIFT:
-                        case opcodetype.OP_RSHIFT:
+                        case instruction.OP_CAT:
+                        case instruction.OP_SUBSTR:
+                        case instruction.OP_LEFT:
+                        case instruction.OP_RIGHT:
+                        case instruction.OP_INVERT:
+                        case instruction.OP_AND:
+                        case instruction.OP_OR:
+                        case instruction.OP_XOR:
+                        case instruction.OP_2MUL:
+                        case instruction.OP_2DIV:
+                        case instruction.OP_MUL:
+                        case instruction.OP_DIV:
+                        case instruction.OP_MOD:
+                        case instruction.OP_LSHIFT:
+                        case instruction.OP_RSHIFT:
                             return false;
 
                         //
-                        // Push value
+                        // Push integer instructions
                         //
-                        case opcodetype.OP_1NEGATE:
-                        case opcodetype.OP_1:
-                        case opcodetype.OP_2:
-                        case opcodetype.OP_3:
-                        case opcodetype.OP_4:
-                        case opcodetype.OP_5:
-                        case opcodetype.OP_6:
-                        case opcodetype.OP_7:
-                        case opcodetype.OP_8:
-                        case opcodetype.OP_9:
-                        case opcodetype.OP_10:
-                        case opcodetype.OP_11:
-                        case opcodetype.OP_12:
-                        case opcodetype.OP_13:
-                        case opcodetype.OP_14:
-                        case opcodetype.OP_15:
-                        case opcodetype.OP_16:
+                        case instruction.OP_1NEGATE:
+                        case instruction.OP_1:
+                        case instruction.OP_2:
+                        case instruction.OP_3:
+                        case instruction.OP_4:
+                        case instruction.OP_5:
+                        case instruction.OP_6:
+                        case instruction.OP_7:
+                        case instruction.OP_8:
+                        case instruction.OP_9:
+                        case instruction.OP_10:
+                        case instruction.OP_11:
+                        case instruction.OP_12:
+                        case instruction.OP_13:
+                        case instruction.OP_14:
+                        case instruction.OP_15:
+                        case instruction.OP_16:
                             {
                                 // ( -- value)
-                                BigInteger bn = new BigInteger((int)opcode - (int)(opcodetype.OP_1 - 1));
+                                BigInteger bn = DecodeOP_N(opcode);
                                 stack.Add(bn.ToByteArray());
                             }
                             break;
 
+                        //
+                        // Extension
+                        //
+                        case instruction.OP_NOP:
+                        case instruction.OP_NOP1:
+                        case instruction.OP_NOP2:
+                        case instruction.OP_NOP3:
+                        case instruction.OP_NOP4:
+                        case instruction.OP_NOP5:
+                        case instruction.OP_NOP6:
+                        case instruction.OP_NOP7:
+                        case instruction.OP_NOP8:
+                        case instruction.OP_NOP9:
+                        case instruction.OP_NOP10:
+                            {
+                                // Just do nothing
+                                break;
+                            }
 
                         //
                         // Control
                         //
-                        case opcodetype.OP_NOP:
-                        case opcodetype.OP_NOP1:
-                        case opcodetype.OP_NOP2:
-                        case opcodetype.OP_NOP3:
-                        case opcodetype.OP_NOP4:
-                        case opcodetype.OP_NOP5:
-                        case opcodetype.OP_NOP6:
-                        case opcodetype.OP_NOP7:
-                        case opcodetype.OP_NOP8:
-                        case opcodetype.OP_NOP9:
-                        case opcodetype.OP_NOP10:
-                            break;
-
-                        case opcodetype.OP_IF:
-                        case opcodetype.OP_NOTIF:
+                        case instruction.OP_IF:
+                        case instruction.OP_NOTIF:
                             {
                                 // <expression> if [statements] [else [statements]] endif
                                 bool fValue = false;
@@ -1187,7 +1211,7 @@ namespace Novacoin
                                     }
                                     IEnumerable<byte> vch = stacktop(ref stack, -1);
                                     fValue = CastToBool(vch);
-                                    if (opcode == opcodetype.OP_NOTIF)
+                                    if (opcode == instruction.OP_NOTIF)
                                     {
                                         fValue = !fValue;
                                     }
@@ -1197,7 +1221,7 @@ namespace Novacoin
                             }
                             break;
 
-                        case opcodetype.OP_ELSE:
+                        case instruction.OP_ELSE:
                             {
                                 int nExecCount = vfExec.Count();
                                 if (nExecCount == 0)
@@ -1208,7 +1232,7 @@ namespace Novacoin
                             }
                             break;
 
-                        case opcodetype.OP_ENDIF:
+                        case instruction.OP_ENDIF:
                             {
                                 int nExecCount = vfExec.Count();
                                 if (nExecCount == 0)
@@ -1219,7 +1243,7 @@ namespace Novacoin
                             }
                             break;
 
-                        case opcodetype.OP_VERIFY:
+                        case instruction.OP_VERIFY:
                             {
                                 // (true -- ) or
                                 // (false -- false) and return
@@ -1240,34 +1264,37 @@ namespace Novacoin
                             }
                             break;
 
-                        case opcodetype.OP_RETURN:
-                            return false;
+                        case instruction.OP_RETURN:
+                            {
+                                return false;
+                            }
+
                         //
                         // Stack ops
                         //
-                        case opcodetype.OP_TOALTSTACK:
+                        case instruction.OP_TOALTSTACK:
                             {
                                 if (stack.Count() < 1)
                                 {
                                     return false;
                                 }
-                                altstack.Add(stacktop(ref stack, -1));
+                                altStack.Add(stacktop(ref stack, -1));
                                 popstack(ref stack);
                             }
                             break;
 
-                        case opcodetype.OP_FROMALTSTACK:
+                        case instruction.OP_FROMALTSTACK:
                             {
-                                if (altstack.Count() < 1)
+                                if (altStack.Count() < 1)
                                 {
                                     return false;
                                 }
                                 stack.Add(stacktop(ref stack, -1));
-                                popstack(ref altstack);
+                                popstack(ref altStack);
                             }
                             break;
 
-                        case opcodetype.OP_2DROP:
+                        case instruction.OP_2DROP:
                             {
                                 // (x1 x2 -- )
                                 if (stack.Count() < 2)
@@ -1279,7 +1306,7 @@ namespace Novacoin
                             }
                             break;
 
-                        case opcodetype.OP_2DUP:
+                        case instruction.OP_2DUP:
                             {
                                 // (x1 x2 -- x1 x2 x1 x2)
                                 if (stack.Count() < 2)
@@ -1293,7 +1320,7 @@ namespace Novacoin
                             }
                             break;
 
-                        case opcodetype.OP_3DUP:
+                        case instruction.OP_3DUP:
                             {
                                 // (x1 x2 x3 -- x1 x2 x3 x1 x2 x3)
                                 if (stack.Count() < 3)
@@ -1309,7 +1336,7 @@ namespace Novacoin
                             }
                             break;
 
-                        case opcodetype.OP_2OVER:
+                        case instruction.OP_2OVER:
                             {
                                 // (x1 x2 x3 x4 -- x1 x2 x3 x4 x1 x2)
                                 if (stack.Count() < 4)
@@ -1323,7 +1350,7 @@ namespace Novacoin
                             }
                             break;
 
-                        case opcodetype.OP_2ROT:
+                        case instruction.OP_2ROT:
                             {
                                 int nStackDepth = stack.Count();
                                 // (x1 x2 x3 x4 x5 x6 -- x3 x4 x5 x6 x1 x2)
@@ -1339,7 +1366,7 @@ namespace Novacoin
                             }
                             break;
 
-                        case opcodetype.OP_2SWAP:
+                        case instruction.OP_2SWAP:
                             {
                                 // (x1 x2 x3 x4 -- x3 x4 x1 x2)
                                 int nStackDepth = stack.Count();
@@ -1352,7 +1379,7 @@ namespace Novacoin
                             }
                             break;
 
-                        case opcodetype.OP_IFDUP:
+                        case instruction.OP_IFDUP:
                             {
                                 // (x - 0 | x x)
                                 if (stack.Count() < 1)
@@ -1369,7 +1396,7 @@ namespace Novacoin
                             }
                             break;
 
-                        case opcodetype.OP_DEPTH:
+                        case instruction.OP_DEPTH:
                             {
                                 // -- stacksize
                                 BigInteger bn = new BigInteger((ushort)stack.Count());
@@ -1377,7 +1404,7 @@ namespace Novacoin
                             }
                             break;
 
-                        case opcodetype.OP_DROP:
+                        case instruction.OP_DROP:
                             {
                                 // (x -- )
                                 if (stack.Count() < 1)
@@ -1389,7 +1416,7 @@ namespace Novacoin
                             }
                             break;
 
-                        case opcodetype.OP_DUP:
+                        case instruction.OP_DUP:
                             {
                                 // (x -- x x)
                                 if (stack.Count() < 1)
@@ -1402,7 +1429,7 @@ namespace Novacoin
                             }
                             break;
 
-                        case opcodetype.OP_NIP:
+                        case instruction.OP_NIP:
                             {
                                 // (x1 x2 -- x2)
                                 int nStackDepth = stack.Count();
@@ -1415,7 +1442,7 @@ namespace Novacoin
                             }
                             break;
 
-                        case opcodetype.OP_OVER:
+                        case instruction.OP_OVER:
                             {
                                 // (x1 x2 -- x1 x2 x1)
                                 if (stack.Count() < 2)
@@ -1428,8 +1455,8 @@ namespace Novacoin
                             }
                             break;
 
-                        case opcodetype.OP_PICK:
-                        case opcodetype.OP_ROLL:
+                        case instruction.OP_PICK:
+                        case instruction.OP_ROLL:
                             {
                                 // (xn ... x2 x1 x0 n - xn ... x2 x1 x0 xn)
                                 // (xn ... x2 x1 x0 n - ... x2 x1 x0 xn)
@@ -1449,7 +1476,7 @@ namespace Novacoin
                                 }
 
                                 IEnumerable<byte> vch = stacktop(ref stack, -n - 1);
-                                if (opcode == opcodetype.OP_ROLL)
+                                if (opcode == instruction.OP_ROLL)
                                 {
                                     stack.RemoveAt(nStackDepth - n - 1);
                                 }
@@ -1458,7 +1485,7 @@ namespace Novacoin
                             }
                             break;
 
-                        case opcodetype.OP_ROT:
+                        case instruction.OP_ROT:
                             {
                                 // (x1 x2 x3 -- x2 x3 x1)
                                 //  x2 x1 x3  after first swap
@@ -1474,7 +1501,7 @@ namespace Novacoin
                             }
                             break;
 
-                        case opcodetype.OP_SWAP:
+                        case instruction.OP_SWAP:
                             {
                                 // (x1 x2 -- x2 x1)
                                 int nStackDepth = stack.Count();
@@ -1486,7 +1513,7 @@ namespace Novacoin
                             }
                             break;
 
-                        case opcodetype.OP_TUCK:
+                        case instruction.OP_TUCK:
                             {
                                 // (x1 x2 -- x2 x1 x2)
                                 int nStackDepth = stack.Count();
@@ -1500,7 +1527,7 @@ namespace Novacoin
                             break;
 
 
-                        case opcodetype.OP_SIZE:
+                        case instruction.OP_SIZE:
                             {
                                 // (in -- in size)
                                 if (stack.Count() < 1)
@@ -1517,9 +1544,9 @@ namespace Novacoin
                         //
                         // Bitwise logic
                         //
-                        case opcodetype.OP_EQUAL:
-                        case opcodetype.OP_EQUALVERIFY:
-                            //case opcodetype.OP_NOTEQUAL: // use OP_NUMNOTEQUAL
+                        case instruction.OP_EQUAL:
+                        case instruction.OP_EQUALVERIFY:
+                            //case instruction.OP_NOTEQUAL: // use OP_NUMNOTEQUAL
                             {
                                 // (x1 x2 - bool)
                                 if (stack.Count() < 2)
@@ -1533,13 +1560,13 @@ namespace Novacoin
                                 // OP_NOTEQUAL is disabled because it would be too easy to say
                                 // something like n != 1 and have some wiseguy pass in 1 with extra
                                 // zero bytes after it (numerically, 0x01 == 0x0001 == 0x000001)
-                                //if (opcode == opcodetype.OP_NOTEQUAL)
+                                //if (opcode == instruction.OP_NOTEQUAL)
                                 //    fEqual = !fEqual;
                                 popstack(ref stack);
                                 popstack(ref stack);
-                                stack.Add(fEqual ? vchTrue : vchFalse);
+                                stack.Add(fEqual ? trueBytes : falseBytes);
 
-                                if (opcode == opcodetype.OP_EQUALVERIFY)
+                                if (opcode == instruction.OP_EQUALVERIFY)
                                 {
                                     if (fEqual)
                                     {
@@ -1557,12 +1584,12 @@ namespace Novacoin
                         //
                         // Numeric
                         //
-                        case opcodetype.OP_1ADD:
-                        case opcodetype.OP_1SUB:
-                        case opcodetype.OP_NEGATE:
-                        case opcodetype.OP_ABS:
-                        case opcodetype.OP_NOT:
-                        case opcodetype.OP_0NOTEQUAL:
+                        case instruction.OP_1ADD:
+                        case instruction.OP_1SUB:
+                        case instruction.OP_NEGATE:
+                        case instruction.OP_ABS:
+                        case instruction.OP_NOT:
+                        case instruction.OP_0NOTEQUAL:
                             {
                                 // (in -- out)
                                 if (stack.Count() < 1)
@@ -1573,22 +1600,22 @@ namespace Novacoin
                                 BigInteger bn = CastToBigInteger(stacktop(ref stack, -1));
                                 switch (opcode)
                                 {
-                                    case opcodetype.OP_1ADD:
+                                    case instruction.OP_1ADD:
                                         bn = bn + 1;
                                         break;
-                                    case opcodetype.OP_1SUB:
+                                    case instruction.OP_1SUB:
                                         bn = bn - 1;
                                         break;
-                                    case opcodetype.OP_NEGATE:
+                                    case instruction.OP_NEGATE:
                                         bn = -bn;
                                         break;
-                                    case opcodetype.OP_ABS:
+                                    case instruction.OP_ABS:
                                         bn = BigInteger.Abs(bn);
                                         break;
-                                    case opcodetype.OP_NOT:
+                                    case instruction.OP_NOT:
                                         bn = bn == 0 ? 1 : 0;
                                         break;
-                                    case opcodetype.OP_0NOTEQUAL:
+                                    case instruction.OP_0NOTEQUAL:
                                         bn = bn != 0 ? 1 : 0;
                                         break;
 
@@ -1602,19 +1629,19 @@ namespace Novacoin
                             }
                             break;
 
-                        case opcodetype.OP_ADD:
-                        case opcodetype.OP_SUB:
-                        case opcodetype.OP_BOOLAND:
-                        case opcodetype.OP_BOOLOR:
-                        case opcodetype.OP_NUMEQUAL:
-                        case opcodetype.OP_NUMEQUALVERIFY:
-                        case opcodetype.OP_NUMNOTEQUAL:
-                        case opcodetype.OP_LESSTHAN:
-                        case opcodetype.OP_GREATERTHAN:
-                        case opcodetype.OP_LESSTHANOREQUAL:
-                        case opcodetype.OP_GREATERTHANOREQUAL:
-                        case opcodetype.OP_MIN:
-                        case opcodetype.OP_MAX:
+                        case instruction.OP_ADD:
+                        case instruction.OP_SUB:
+                        case instruction.OP_BOOLAND:
+                        case instruction.OP_BOOLOR:
+                        case instruction.OP_NUMEQUAL:
+                        case instruction.OP_NUMEQUALVERIFY:
+                        case instruction.OP_NUMNOTEQUAL:
+                        case instruction.OP_LESSTHAN:
+                        case instruction.OP_GREATERTHAN:
+                        case instruction.OP_LESSTHANOREQUAL:
+                        case instruction.OP_GREATERTHANOREQUAL:
+                        case instruction.OP_MIN:
+                        case instruction.OP_MAX:
                             {
                                 // (x1 x2 -- out)
                                 if (stack.Count() < 2)
@@ -1628,43 +1655,43 @@ namespace Novacoin
 
                                 switch (opcode)
                                 {
-                                    case opcodetype.OP_ADD:
+                                    case instruction.OP_ADD:
                                         bn = bn1 + bn2;
                                         break;
-                                    case opcodetype.OP_SUB:
+                                    case instruction.OP_SUB:
                                         bn = bn1 - bn2;
                                         break;
-                                    case opcodetype.OP_BOOLAND:
+                                    case instruction.OP_BOOLAND:
                                         bn = (bn1 != 0 && bn2 != 0) ? 1 : 0;
                                         break;
-                                    case opcodetype.OP_BOOLOR:
+                                    case instruction.OP_BOOLOR:
                                         bn = (bn1 != 0 || bn2 != 0) ? 1 : 0;
                                         break;
-                                    case opcodetype.OP_NUMEQUAL:
+                                    case instruction.OP_NUMEQUAL:
                                         bn = (bn1 == bn2) ? 1 : 0;
                                         break;
-                                    case opcodetype.OP_NUMEQUALVERIFY:
+                                    case instruction.OP_NUMEQUALVERIFY:
                                         bn = (bn1 == bn2) ? 1 : 0;
                                         break;
-                                    case opcodetype.OP_NUMNOTEQUAL:
+                                    case instruction.OP_NUMNOTEQUAL:
                                         bn = (bn1 != bn2) ? 1 : 0;
                                         break;
-                                    case opcodetype.OP_LESSTHAN:
+                                    case instruction.OP_LESSTHAN:
                                         bn = (bn1 < bn2) ? 1 : 0;
                                         break;
-                                    case opcodetype.OP_GREATERTHAN:
+                                    case instruction.OP_GREATERTHAN:
                                         bn = (bn1 > bn2) ? 1 : 0;
                                         break;
-                                    case opcodetype.OP_LESSTHANOREQUAL:
+                                    case instruction.OP_LESSTHANOREQUAL:
                                         bn = (bn1 <= bn2) ? 1 : 0;
                                         break;
-                                    case opcodetype.OP_GREATERTHANOREQUAL:
+                                    case instruction.OP_GREATERTHANOREQUAL:
                                         bn = (bn1 >= bn2) ? 1 : 0;
                                         break;
-                                    case opcodetype.OP_MIN:
+                                    case instruction.OP_MIN:
                                         bn = (bn1 < bn2 ? bn1 : bn2);
                                         break;
-                                    case opcodetype.OP_MAX:
+                                    case instruction.OP_MAX:
                                         bn = (bn1 > bn2 ? bn1 : bn2);
                                         break;
 
@@ -1677,7 +1704,7 @@ namespace Novacoin
                                 popstack(ref stack);
                                 stack.Add(bn.ToByteArray());
 
-                                if (opcode == opcodetype.OP_NUMEQUALVERIFY)
+                                if (opcode == instruction.OP_NUMEQUALVERIFY)
                                 {
                                     if (CastToBool(stacktop(ref stack, -1)))
                                     {
@@ -1691,7 +1718,7 @@ namespace Novacoin
                             }
                             break;
 
-                        case opcodetype.OP_WITHIN:
+                        case instruction.OP_WITHIN:
                             {
                                 // (x min max -- out)
                                 if (stack.Count() < 3)
@@ -1703,7 +1730,7 @@ namespace Novacoin
                                 popstack(ref stack);
                                 popstack(ref stack);
                                 popstack(ref stack);
-                                stack.Add(fValue ? vchTrue : vchFalse);
+                                stack.Add(fValue ? trueBytes : falseBytes);
                             }
                             break;
 
@@ -1711,38 +1738,38 @@ namespace Novacoin
                         //
                         // Crypto
                         //
-                        case opcodetype.OP_RIPEMD160:
-                        case opcodetype.OP_SHA1:
-                        case opcodetype.OP_SHA256:
-                        case opcodetype.OP_HASH160:
-                        case opcodetype.OP_HASH256:
+                        case instruction.OP_RIPEMD160:
+                        case instruction.OP_SHA1:
+                        case instruction.OP_SHA256:
+                        case instruction.OP_HASH160:
+                        case instruction.OP_HASH256:
                             {
                                 // (in -- hash)
                                 if (stack.Count() < 1)
                                     return false;
                                 IEnumerable<byte> vch = stacktop(ref stack, -1);
                                 IEnumerable<byte> vchHash = null;
-                                if (opcode == opcodetype.OP_RIPEMD160)
+                                if (opcode == instruction.OP_RIPEMD160)
                                 {
                                     RIPEMD160 hash = RIPEMD160.Compute160(vch);
                                     vchHash = hash.hashBytes;
                                 }
-                                else if (opcode == opcodetype.OP_SHA1)
+                                else if (opcode == instruction.OP_SHA1)
                                 {
                                     SHA1 hash = SHA1.Compute1(vch);
                                     vchHash = hash.hashBytes;
                                 }
-                                else if (opcode == opcodetype.OP_SHA256)
+                                else if (opcode == instruction.OP_SHA256)
                                 {
                                     SHA256 hash = SHA256.Compute256(vch);
                                     vchHash = hash.hashBytes;
                                 }
-                                else if (opcode == opcodetype.OP_HASH160)
+                                else if (opcode == instruction.OP_HASH160)
                                 {
                                     Hash160 hash = Hash160.Compute160(vch);
                                     vchHash = hash.hashBytes;
                                 }
-                                else if (opcode == opcodetype.OP_HASH256)
+                                else if (opcode == instruction.OP_HASH256)
                                 {
                                     Hash256 hash = Hash256.Compute256(vch);
                                     vchHash = hash.hashBytes;
@@ -1752,15 +1779,15 @@ namespace Novacoin
                             }
                             break;
 
-                        case opcodetype.OP_CODESEPARATOR:
+                        case instruction.OP_CODESEPARATOR:
                             {
                                 // Hash starts after the code separator
-                                pbegincodehash = pc;
+                                nCodeHashBegin = CodeQueue.CurrentIndex;
                             }
                             break;
 
-                        case opcodetype.OP_CHECKSIG:
-                        case opcodetype.OP_CHECKSIGVERIFY:
+                        case instruction.OP_CHECKSIG:
+                        case instruction.OP_CHECKSIGVERIFY:
                             {
                                 // (sig pubkey -- bool)
                                 if (stack.Count() < 2)
@@ -1772,7 +1799,7 @@ namespace Novacoin
                                 IList<byte> pubkeyBytes = stacktop(ref stack, -1).ToList();
 
                                 // Subset of script starting at the most recent codeseparator
-                                CScript scriptCode = new CScript(script.Bytes.Skip(pbegincodehash.CurrentIndex));
+                                CScript scriptCode = new CScript(script.Bytes.Skip(nCodeHashBegin));
 
                                 // There's no way for a signature to sign itself
                                 scriptCode.RemovePattern(sigBytes);
@@ -1781,8 +1808,8 @@ namespace Novacoin
 
                                 popstack(ref stack);
                                 popstack(ref stack);
-                                stack.Add(fSuccess ? vchTrue : vchFalse);
-                                if (opcode == opcodetype.OP_CHECKSIGVERIFY)
+                                stack.Add(fSuccess ? trueBytes : falseBytes);
+                                if (opcode == instruction.OP_CHECKSIGVERIFY)
                                 {
                                     if (fSuccess)
                                     {
@@ -1796,8 +1823,8 @@ namespace Novacoin
                             }
                             break;
 
-                        case opcodetype.OP_CHECKMULTISIG:
-                        case opcodetype.OP_CHECKMULTISIGVERIFY:
+                        case instruction.OP_CHECKMULTISIG:
+                        case instruction.OP_CHECKMULTISIGVERIFY:
                             {
                                 // ([sig ...] num_of_signatures [pubkey ...] num_of_pubkeys -- bool)
 
@@ -1837,7 +1864,7 @@ namespace Novacoin
                                 }
 
                                 // Subset of script starting at the most recent codeseparator
-                                CScript scriptCode = new CScript(script.Bytes.Skip(pbegincodehash.CurrentIndex));
+                                CScript scriptCode = new CScript(script.Bytes.Skip(nCodeHashBegin));
 
                                 // There is no way for a signature to sign itself, so we need to drop the signatures
                                 for (int k = 0; k < nSigsCount; k++)
@@ -1892,9 +1919,9 @@ namespace Novacoin
                                 }
                                 popstack(ref stack);
 
-                                stack.Add(fSuccess ? vchTrue : vchFalse);
+                                stack.Add(fSuccess ? trueBytes : falseBytes);
 
-                                if (opcode == opcodetype.OP_CHECKMULTISIGVERIFY)
+                                if (opcode == instruction.OP_CHECKMULTISIGVERIFY)
                                 {
                                     if (fSuccess)
                                     {
@@ -1913,7 +1940,7 @@ namespace Novacoin
                     }
 
                 // Size limits
-                if (stack.Count() + altstack.Count() > 1000)
+                if (stack.Count() + altStack.Count() > 1000)
                 {
                     return false;
                 }

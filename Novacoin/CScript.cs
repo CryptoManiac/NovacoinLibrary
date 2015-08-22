@@ -59,9 +59,9 @@ namespace Novacoin
         /// Adds specified operation to opcode bytes list
         /// </summary>
         /// <param name="opcode"></param>
-        public void AddOp(opcodetype opcode)
+        public void AddOp(instruction opcode)
         {
-            if (opcode < opcodetype.OP_0 || opcode > opcodetype.OP_INVALIDOPCODE)
+            if (opcode < instruction.OP_0 || opcode > instruction.OP_INVALIDOPCODE)
             {
                 throw new CScriptException("CScript::AddOp() : invalid opcode");
             }
@@ -101,7 +101,7 @@ namespace Novacoin
         {
             long nCount = dataBytes.LongCount();
 
-            if (nCount < (int)opcodetype.OP_PUSHDATA1)
+            if (nCount < (int)instruction.OP_PUSHDATA1)
             {
                 // OP_0 and OP_FALSE
                 codeBytes.Add((byte)nCount);
@@ -109,13 +109,13 @@ namespace Novacoin
             else if (nCount < 0xff)
             {
                 // OP_PUSHDATA1 0x01 [0x5a]
-                codeBytes.Add((byte)opcodetype.OP_PUSHDATA1);
+                codeBytes.Add((byte)instruction.OP_PUSHDATA1);
                 codeBytes.Add((byte)nCount);
             }
             else if (nCount < 0xffff)
             {
                 // OP_PUSHDATA1 0x00 0x01 [0x5a]
-                codeBytes.Add((byte)opcodetype.OP_PUSHDATA2);
+                codeBytes.Add((byte)instruction.OP_PUSHDATA2);
 
                 byte[] szBytes = Interop.BEBytes((ushort)nCount);
                 codeBytes.AddRange(szBytes);
@@ -123,7 +123,7 @@ namespace Novacoin
             else if (nCount < 0xffffffff)
             {
                 // OP_PUSHDATA1 0x00 0x00 0x00 0x01 [0x5a]
-                codeBytes.Add((byte)opcodetype.OP_PUSHDATA4);
+                codeBytes.Add((byte)instruction.OP_PUSHDATA4);
 
                 byte[] szBytes = Interop.BEBytes((uint)nCount);
                 codeBytes.AddRange(szBytes);
@@ -180,13 +180,13 @@ namespace Novacoin
             {
                 ByteQueue wCodeBytes = new ByteQueue(codeBytes);
 
-                opcodetype opcode; // Current opcode
+                instruction opcode; // Current opcode
                 IEnumerable<byte> pushArgs; // OP_PUSHDATAn argument
 
                 // Scan opcodes sequence
                 while (ScriptCode.GetOp(ref wCodeBytes, out opcode, out pushArgs))
                 {
-                    if (opcode > opcodetype.OP_16)
+                    if (opcode > instruction.OP_16)
                     {
                         // We don't allow control opcodes here
                         return false;
@@ -206,7 +206,7 @@ namespace Novacoin
             {
                 ByteQueue wCodeBytes = new ByteQueue(codeBytes);
 
-                opcodetype opcode; // Current opcode
+                instruction opcode; // Current opcode
                 IEnumerable<byte> pushArgs; // OP_PUSHDATAn argument
 
                 // Scan opcodes sequence
@@ -214,22 +214,22 @@ namespace Novacoin
                 {
                     byte[] data = pushArgs.ToArray();
 
-                    if (opcode < opcodetype.OP_PUSHDATA1 && opcode > opcodetype.OP_0 && (data.Length == 1 && data[0] <= 16))
+                    if (opcode < instruction.OP_PUSHDATA1 && opcode > instruction.OP_0 && (data.Length == 1 && data[0] <= 16))
                     {
                         // Could have used an OP_n code, rather than a 1-byte push.
                         return false;
                     }
-                    if (opcode == opcodetype.OP_PUSHDATA1 && data.Length < (int)opcodetype.OP_PUSHDATA1)
+                    if (opcode == instruction.OP_PUSHDATA1 && data.Length < (int)instruction.OP_PUSHDATA1)
                     {
                         // Could have used a normal n-byte push, rather than OP_PUSHDATA1.
                         return false;
                     }
-                    if (opcode == opcodetype.OP_PUSHDATA2 && data.Length <= 0xFF)
+                    if (opcode == instruction.OP_PUSHDATA2 && data.Length <= 0xFF)
                     {
                         // Could have used an OP_PUSHDATA1.
                         return false;
                     }
-                    if (opcode == opcodetype.OP_PUSHDATA4 && data.LongLength <= 0xFFFF)
+                    if (opcode == instruction.OP_PUSHDATA4 && data.LongLength <= 0xFFFF)
                     {
                         // Could have used an OP_PUSHDATA2.
                         return false;
@@ -250,9 +250,9 @@ namespace Novacoin
                 // Sender provides redeem script hash, receiver provides signature list and redeem script
                 // OP_HASH160 20 [20 byte hash] OP_EQUAL
                 return (codeBytes.Count() == 23 &&
-                        codeBytes[0] == (byte)opcodetype.OP_HASH160 &&
+                        codeBytes[0] == (byte)instruction.OP_HASH160 &&
                         codeBytes[1] == 0x14 && // 20 bytes hash length prefix
-                        codeBytes[22] == (byte)opcodetype.OP_EQUAL);
+                        codeBytes[22] == (byte)instruction.OP_EQUAL);
             }
         }
 
@@ -266,11 +266,11 @@ namespace Novacoin
                 // Sender provides hash of pubkey, receiver provides signature and pubkey
                 // OP_DUP OP_HASH160 20 [20 byte hash] OP_EQUALVERIFY OP_CHECKSIG
                 return (codeBytes.Count == 25 &&
-                        codeBytes[0] == (byte)opcodetype.OP_DUP &&
-                        codeBytes[1] == (byte)opcodetype.OP_HASH160 &&
+                        codeBytes[0] == (byte)instruction.OP_DUP &&
+                        codeBytes[1] == (byte)instruction.OP_HASH160 &&
                         codeBytes[2] == 0x14 && // 20 bytes hash length prefix
-                        codeBytes[23] == (byte)opcodetype.OP_EQUALVERIFY &&
-                        codeBytes[24] == (byte)opcodetype.OP_CHECKSIG);
+                        codeBytes[23] == (byte)instruction.OP_EQUALVERIFY &&
+                        codeBytes[24] == (byte)instruction.OP_CHECKSIG);
             }
         }
 
@@ -295,22 +295,22 @@ namespace Novacoin
         {
             ByteQueue wCodeBytes = new ByteQueue(codeBytes);
 
-            opcodetype opcode; // Current opcode
+            instruction opcode; // Current opcode
             IEnumerable<byte> pushArgs; // OP_PUSHDATAn argument
 
             int nCount = 0;
-            opcodetype lastOpcode = opcodetype.OP_INVALIDOPCODE;
+            instruction lastOpcode = instruction.OP_INVALIDOPCODE;
 
             // Scan opcodes sequence
             while (ScriptCode.GetOp(ref wCodeBytes, out opcode, out pushArgs))
             {
-                if (opcode == opcodetype.OP_CHECKSIG || opcode == opcodetype.OP_CHECKSIGVERIFY)
+                if (opcode == instruction.OP_CHECKSIG || opcode == instruction.OP_CHECKSIGVERIFY)
                 {
                     nCount++;
                 }
-                else if (opcode == opcodetype.OP_CHECKMULTISIG || opcode == opcodetype.OP_CHECKMULTISIGVERIFY)
+                else if (opcode == instruction.OP_CHECKMULTISIG || opcode == instruction.OP_CHECKMULTISIGVERIFY)
                 {
-                    if (fAccurate && lastOpcode >= opcodetype.OP_1 && lastOpcode <= opcodetype.OP_16)
+                    if (fAccurate && lastOpcode >= instruction.OP_1 && lastOpcode <= instruction.OP_16)
                     {
                         nCount += ScriptCode.DecodeOP_N(lastOpcode);
                     }
@@ -342,12 +342,12 @@ namespace Novacoin
             // pushes onto the stack:
             ByteQueue wScriptSig = scriptSig.GetByteQUeue();
 
-            opcodetype opcode; // Current opcode
+            instruction opcode; // Current opcode
             IEnumerable<byte> pushArgs; // OP_PUSHDATAn argument
 
             while (ScriptCode.GetOp(ref wScriptSig, out opcode, out pushArgs))
             {
-                if (opcode > opcodetype.OP_16)
+                if (opcode > instruction.OP_16)
                 {
                     return 0;
                 }
@@ -368,7 +368,7 @@ namespace Novacoin
         {
             codeBytes.Clear();
             PushData(pubKey.PublicBytes);
-            AddOp(opcodetype.OP_CHECKSIG);
+            AddOp(instruction.OP_CHECKSIG);
         }
 
         /// <summary>
@@ -378,11 +378,11 @@ namespace Novacoin
         public void SetDestination(CKeyID ID)
         {
             codeBytes.Clear();
-            AddOp(opcodetype.OP_DUP);
-            AddOp(opcodetype.OP_HASH160);
+            AddOp(instruction.OP_DUP);
+            AddOp(instruction.OP_HASH160);
             AddHash(ID);
-            AddOp(opcodetype.OP_EQUALVERIFY);
-            AddOp(opcodetype.OP_CHECKSIG);
+            AddOp(instruction.OP_EQUALVERIFY);
+            AddOp(instruction.OP_CHECKSIG);
         }
 
         /// <summary>
@@ -392,9 +392,9 @@ namespace Novacoin
         public void SetDestination(CScriptID ID)
         {
             codeBytes.Clear();
-            AddOp(opcodetype.OP_HASH160);
+            AddOp(instruction.OP_HASH160);
             AddHash(ID);
-            AddOp(opcodetype.OP_EQUAL);
+            AddOp(instruction.OP_EQUAL);
         }
 
         /// <summary>
@@ -421,7 +421,7 @@ namespace Novacoin
             }
 
             AddOp(ScriptCode.EncodeOP_N(keys.Count()));
-            AddOp(opcodetype.OP_CHECKMULTISIG);
+            AddOp(instruction.OP_CHECKMULTISIG);
         }
 
         /// <summary>
@@ -446,7 +446,7 @@ namespace Novacoin
 			StringBuilder sb = new StringBuilder();
             ByteQueue wCodeBytes = new ByteQueue(codeBytes);
 
-            opcodetype opcode; // Current opcode
+            instruction opcode; // Current opcode
             IEnumerable<byte> pushArgs; // OP_PUSHDATAn argument
             while (ScriptCode.GetOp(ref wCodeBytes, out opcode, out pushArgs))
             {
@@ -455,7 +455,7 @@ namespace Novacoin
                     sb.Append(" ");
                 }
 
-                if (0 <= opcode && opcode <= opcodetype.OP_PUSHDATA4)
+                if (0 <= opcode && opcode <= instruction.OP_PUSHDATA4)
                 {
                     sb.Append(ScriptCode.ValueString(pushArgs));
                 }
