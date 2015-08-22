@@ -50,7 +50,7 @@ namespace Novacoin
         /// Return a new instance of ByteQueue object for current code bytes
         /// </summary>
         /// <returns></returns>
-        public ByteQueue GetWrappedList()
+        public ByteQueue GetByteQUeue()
         {
              return new ByteQueue(codeBytes);
         }
@@ -340,7 +340,7 @@ namespace Novacoin
             // This is a pay-to-script-hash scriptPubKey;
             // get the last item that the scriptSig
             // pushes onto the stack:
-            ByteQueue wScriptSig = scriptSig.GetWrappedList();
+            ByteQueue wScriptSig = scriptSig.GetByteQUeue();
 
             opcodetype opcode; // Current opcode
             IEnumerable<byte> pushArgs; // OP_PUSHDATAn argument

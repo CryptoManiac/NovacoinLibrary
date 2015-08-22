@@ -41,6 +41,7 @@
     <Compile Include="CKey.cs" />
     <Compile Include="CKeyID.cs" />
     <Compile Include="CKeyPair.cs" />
+    <Compile Include="IListExtensions.cs" />
     <Compile Include="CNovacoinAddress.cs" />
     <Compile Include="COutPoint.cs" />
     <Compile Include="CPubKey.cs" />
@@ -48,9 +49,12 @@
     <Compile Include="CScriptID.cs" />
     <Compile Include="Hash.cs" />
     <Compile Include="Interop.cs" />
+    <Compile Include="RIPEMD160.cs" />
     <Compile Include="ScryptHash256.cs" />
+    <Compile Include="SHA1.cs" />
+    <Compile Include="SHA256.cs" />
     <Compile Include="VarInt.cs" />
-    <Compile Include="WrappedList.cs" />
+    <Compile Include="ByteQueue.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="CTxIn.cs" />
     <Compile Include="CTransaction.cs" />

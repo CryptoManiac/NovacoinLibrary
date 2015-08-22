@@ -2,7 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+
 using System.Numerics;
+
+// using Org.BouncyCastle.Math;
 
 namespace Novacoin
 {
@@ -177,6 +180,17 @@ namespace Novacoin
         SIGHASH_NONE = 2,
         SIGHASH_SINGLE = 3,
         SIGHASH_ANYONECANPAY = 0x80,
+    };
+
+    /** Script verification flags */
+    public enum scriptflag
+    {
+        SCRIPT_VERIFY_NONE = 0,
+        SCRIPT_VERIFY_P2SH = (1 << 0), // evaluate P2SH (BIP16) subscripts
+        SCRIPT_VERIFY_STRICTENC = (1 << 1), // enforce strict conformance to DER and SEC2 for signatures and pubkeys
+        SCRIPT_VERIFY_LOW_S = (1 << 2), // enforce low S values in signatures (depends on STRICTENC)
+        SCRIPT_VERIFY_NOCACHE = (1 << 3), // do not store results in signature cache (but do query it)
+        SCRIPT_VERIFY_NULLDUMMY = (1 << 4), // verify dummy stack item consumed by CHECKMULTISIG is of zero-length
     };
 
     public static class ScriptCode
@@ -476,7 +490,7 @@ namespace Novacoin
                 // Read instruction
                 opcode = (opcodetype)codeBytes.Get();
             }
-            catch (WrappedListException)
+            catch (ByteQueueException)
             {
                 // No instruction found there
                 return false;
@@ -513,7 +527,7 @@ namespace Novacoin
                         szBytes = codeBytes.Get(4);
                     }
                 }
-                catch (WrappedListException)
+                catch (ByteQueueException)
                 {
                     // Unable to read operand length
                     return false;
@@ -529,7 +543,7 @@ namespace Novacoin
                         // Read found number of bytes into list of OP_PUSHDATAn arguments.
                         bytesRet = codeBytes.GetEnumerable(nSize);
                     }
-                    catch (WrappedListException)
+                    catch (ByteQueueException)
                     {
                         // Unable to read data
                         return false;
@@ -748,8 +762,8 @@ namespace Novacoin
                 opcodetype opcode1, opcode2;
 
                 // Compare
-                ByteQueue wl1 = script1.GetWrappedList();
-                ByteQueue wl2 = script2.GetWrappedList();
+                ByteQueue wl1 = script1.GetByteQUeue();
+                ByteQueue wl2 = script2.GetByteQUeue();
 
                 IEnumerable<byte> args1, args2;
 
@@ -1028,10 +1042,916 @@ namespace Novacoin
         {
             if (value.Count() > 4)
             {
-                throw new StackMachineException("CastToBigNum() : overflow");
+                throw new StackMachineException("CastToBigInteger() : overflow");
             }
 
             return new BigInteger(value.ToArray());
         }
-    };
+
+        static bool EvalScript(ref List<IEnumerable<byte>> stack, CScript script, CTransaction txTo, int nIn, int flags, int nHashType)
+        {
+            ByteQueue pc = script.GetByteQUeue();
+
+            ByteQueue pbegincodehash = script.GetByteQUeue();
+
+            opcodetype opcode;
+            IEnumerable<byte> vchPushValue;
+
+            List<bool> vfExec = new List<bool>();
+            List<IEnumerable<byte>> altstack = new List<IEnumerable<byte>>();
+
+            byte[] vchFalse = new byte[0];
+            byte[] vchTrue = new byte[] { 0x01 };
+
+            if (script.Bytes.Count() > 10000)
+            {
+                return false;
+            }
+
+            int nOpCount = 0;
+
+            while (true)
+            {
+                bool fExec = false;
+                foreach (bool fValue in vfExec)
+                {
+                    if (!fValue)
+                    {
+                        fExec = true;
+                        break;
+                    }
+                }
+
+                //
+                // Read instruction
+                //
+                if (!GetOp(ref pc, out opcode, out vchPushValue))
+                    return false;
+                if (vchPushValue.Count() > 520) // Check against MAX_SCRIPT_ELEMENT_SIZE
+                    return false;
+                if (opcode > opcodetype.OP_16 && ++nOpCount > 201)
+                    return false;
+
+                if (opcode == opcodetype.OP_CAT ||
+                    opcode == opcodetype.OP_SUBSTR ||
+                    opcode == opcodetype.OP_LEFT ||
+                    opcode == opcodetype.OP_RIGHT ||
+                    opcode == opcodetype.OP_INVERT ||
+                    opcode == opcodetype.OP_AND ||
+                    opcode == opcodetype.OP_OR ||
+                    opcode == opcodetype.OP_XOR ||
+                    opcode == opcodetype.OP_2MUL ||
+                    opcode == opcodetype.OP_2DIV ||
+                    opcode == opcodetype.OP_MUL ||
+                    opcode == opcodetype.OP_DIV ||
+                    opcode == opcodetype.OP_MOD ||
+                    opcode == opcodetype.OP_LSHIFT ||
+                    opcode == opcodetype.OP_RSHIFT)
+                    return false; // Disabled opcodes.
+
+                if (fExec && 0 <= opcode && opcode <= opcodetype.OP_PUSHDATA4)
+                {
+                    stack.Add(vchPushValue);
+                }
+                else if (fExec || (opcodetype.OP_IF <= opcode && opcode <= opcodetype.OP_ENDIF))
+                    switch (opcode)
+                    {
+                        //
+                        // Push value
+                        //
+                        case opcodetype.OP_1NEGATE:
+                        case opcodetype.OP_1:
+                        case opcodetype.OP_2:
+                        case opcodetype.OP_3:
+                        case opcodetype.OP_4:
+                        case opcodetype.OP_5:
+                        case opcodetype.OP_6:
+                        case opcodetype.OP_7:
+                        case opcodetype.OP_8:
+                        case opcodetype.OP_9:
+                        case opcodetype.OP_10:
+                        case opcodetype.OP_11:
+                        case opcodetype.OP_12:
+                        case opcodetype.OP_13:
+                        case opcodetype.OP_14:
+                        case opcodetype.OP_15:
+                        case opcodetype.OP_16:
+                            {
+                                // ( -- value)
+                                BigInteger bn = new BigInteger((int)opcode - (int)(opcodetype.OP_1 - 1));
+                                stack.Add(bn.ToByteArray());
+                            }
+                            break;
+
+
+                        //
+                        // Control
+                        //
+                        case opcodetype.OP_NOP:
+                        case opcodetype.OP_NOP1:
+                        case opcodetype.OP_NOP2:
+                        case opcodetype.OP_NOP3:
+                        case opcodetype.OP_NOP4:
+                        case opcodetype.OP_NOP5:
+                        case opcodetype.OP_NOP6:
+                        case opcodetype.OP_NOP7:
+                        case opcodetype.OP_NOP8:
+                        case opcodetype.OP_NOP9:
+                        case opcodetype.OP_NOP10:
+                            break;
+
+                        case opcodetype.OP_IF:
+                        case opcodetype.OP_NOTIF:
+                            {
+                                // <expression> if [statements] [else [statements]] endif
+                                bool fValue = false;
+                                if (fExec)
+                                {
+                                    if (stack.Count() < 1)
+                                    {
+                                        return false;
+                                    }
+                                    IEnumerable<byte> vch = stacktop(ref stack, -1);
+                                    fValue = CastToBool(vch);
+                                    if (opcode == opcodetype.OP_NOTIF)
+                                    {
+                                        fValue = !fValue;
+                                    }
+                                    popstack(ref stack);
+                                }
+                                vfExec.Add(fValue);
+                            }
+                            break;
+
+                        case opcodetype.OP_ELSE:
+                            {
+                                int nExecCount = vfExec.Count();
+                                if (nExecCount == 0)
+                                {
+                                    return false;
+                                }
+                                vfExec[nExecCount - 1] = !vfExec[nExecCount - 1];
+                            }
+                            break;
+
+                        case opcodetype.OP_ENDIF:
+                            {
+                                int nExecCount = vfExec.Count();
+                                if (nExecCount == 0)
+                                {
+                                    return false;
+                                }
+                                vfExec.RemoveAt(nExecCount - 1);
+                            }
+                            break;
+
+                        case opcodetype.OP_VERIFY:
+                            {
+                                // (true -- ) or
+                                // (false -- false) and return
+                                if (stack.Count() < 1)
+                                {
+                                    return false;
+                                }
+
+                                bool fValue = CastToBool(stacktop(ref stack, -1));
+                                if (fValue)
+                                {
+                                    popstack(ref stack);
+                                }
+                                else
+                                {
+                                    return false;
+                                }
+                            }
+                            break;
+
+                        case opcodetype.OP_RETURN:
+                            return false;
+                        //
+                        // Stack ops
+                        //
+                        case opcodetype.OP_TOALTSTACK:
+                            {
+                                if (stack.Count() < 1)
+                                {
+                                    return false;
+                                }
+                                altstack.Add(stacktop(ref stack, -1));
+                                popstack(ref stack);
+                            }
+                            break;
+
+                        case opcodetype.OP_FROMALTSTACK:
+                            {
+                                if (altstack.Count() < 1)
+                                {
+                                    return false;
+                                }
+                                stack.Add(stacktop(ref stack, -1));
+                                popstack(ref altstack);
+                            }
+                            break;
+
+                        case opcodetype.OP_2DROP:
+                            {
+                                // (x1 x2 -- )
+                                if (stack.Count() < 2)
+                                {
+                                    return false;
+                                }
+                                popstack(ref stack);
+                                popstack(ref stack);
+                            }
+                            break;
+
+                        case opcodetype.OP_2DUP:
+                            {
+                                // (x1 x2 -- x1 x2 x1 x2)
+                                if (stack.Count() < 2)
+                                {
+                                    return false;
+                                }
+                                IEnumerable<byte> vch1 = stacktop(ref stack, -2);
+                                IEnumerable<byte> vch2 = stacktop(ref stack, -1);
+                                stack.Add(vch1);
+                                stack.Add(vch2);
+                            }
+                            break;
+
+                        case opcodetype.OP_3DUP:
+                            {
+                                // (x1 x2 x3 -- x1 x2 x3 x1 x2 x3)
+                                if (stack.Count() < 3)
+                                {
+                                    return false;
+                                }
+                                IEnumerable<byte> vch1 = stacktop(ref stack, -3);
+                                IEnumerable<byte> vch2 = stacktop(ref stack, -2);
+                                IEnumerable<byte> vch3 = stacktop(ref stack, -1);
+                                stack.Add(vch1);
+                                stack.Add(vch2);
+                                stack.Add(vch3);
+                            }
+                            break;
+
+                        case opcodetype.OP_2OVER:
+                            {
+                                // (x1 x2 x3 x4 -- x1 x2 x3 x4 x1 x2)
+                                if (stack.Count() < 4)
+                                {
+                                    return false;
+                                }
+                                IEnumerable<byte> vch1 = stacktop(ref stack, -4);
+                                IEnumerable<byte> vch2 = stacktop(ref stack, -3);
+                                stack.Add(vch1);
+                                stack.Add(vch2);
+                            }
+                            break;
+
+                        case opcodetype.OP_2ROT:
+                            {
+                                int nStackDepth = stack.Count();
+                                // (x1 x2 x3 x4 x5 x6 -- x3 x4 x5 x6 x1 x2)
+                                if (nStackDepth < 6)
+                                {
+                                    return false;
+                                }
+                                IEnumerable<byte> vch1 = stacktop(ref stack, -6);
+                                IEnumerable<byte> vch2 = stacktop(ref stack, -5);
+                                stack.RemoveRange(nStackDepth - 6, 2);
+                                stack.Add(vch1);
+                                stack.Add(vch2);
+                            }
+                            break;
+
+                        case opcodetype.OP_2SWAP:
+                            {
+                                // (x1 x2 x3 x4 -- x3 x4 x1 x2)
+                                int nStackDepth = stack.Count();
+                                if (nStackDepth < 4)
+                                {
+                                    return false;
+                                }
+                                stack.Swap(nStackDepth - 4, nStackDepth - 2);
+                                stack.Swap(nStackDepth - 3, nStackDepth - 1);
+                            }
+                            break;
+
+                        case opcodetype.OP_IFDUP:
+                            {
+                                // (x - 0 | x x)
+                                if (stack.Count() < 1)
+                                {
+                                    return false;
+                                }
+
+                                IEnumerable<byte> vch = stacktop(ref stack, -1);
+
+                                if (CastToBool(vch))
+                                {
+                                    stack.Add(vch);
+                                }
+                            }
+                            break;
+
+                        case opcodetype.OP_DEPTH:
+                            {
+                                // -- stacksize
+                                BigInteger bn = new BigInteger((ushort)stack.Count());
+                                stack.Add(bn.ToByteArray());
+                            }
+                            break;
+
+                        case opcodetype.OP_DROP:
+                            {
+                                // (x -- )
+                                if (stack.Count() < 1)
+                                {
+                                    return false;
+                                }
+
+                                popstack(ref stack);
+                            }
+                            break;
+
+                        case opcodetype.OP_DUP:
+                            {
+                                // (x -- x x)
+                                if (stack.Count() < 1)
+                                {
+                                    return false;
+                                }
+
+                                IEnumerable<byte> vch = stacktop(ref stack, -1);
+                                stack.Add(vch);
+                            }
+                            break;
+
+                        case opcodetype.OP_NIP:
+                            {
+                                // (x1 x2 -- x2)
+                                int nStackDepth = stack.Count();
+                                if (nStackDepth < 2)
+                                {
+                                    return false;
+                                }
+
+                                stack.RemoveAt(nStackDepth - 2);
+                            }
+                            break;
+
+                        case opcodetype.OP_OVER:
+                            {
+                                // (x1 x2 -- x1 x2 x1)
+                                if (stack.Count() < 2)
+                                {
+                                    return false;
+                                }
+
+                                IEnumerable<byte> vch = stacktop(ref stack, -2);
+                                stack.Add(vch);
+                            }
+                            break;
+
+                        case opcodetype.OP_PICK:
+                        case opcodetype.OP_ROLL:
+                            {
+                                // (xn ... x2 x1 x0 n - xn ... x2 x1 x0 xn)
+                                // (xn ... x2 x1 x0 n - ... x2 x1 x0 xn)
+
+                                int nStackDepth = stack.Count();
+                                if (nStackDepth < 2)
+                                {
+                                    return false;
+                                }
+
+                                int n = (int)CastToBigInteger(stacktop(ref stack, -1));
+                                popstack(ref stack);
+
+                                if (n < 0 || n >= stack.Count())
+                                {
+                                    return false;
+                                }
+
+                                IEnumerable<byte> vch = stacktop(ref stack, -n - 1);
+                                if (opcode == opcodetype.OP_ROLL)
+                                {
+                                    stack.RemoveAt(nStackDepth - n - 1);
+                                }
+
+                                stack.Add(vch);
+                            }
+                            break;
+
+                        case opcodetype.OP_ROT:
+                            {
+                                // (x1 x2 x3 -- x2 x3 x1)
+                                //  x2 x1 x3  after first swap
+                                //  x2 x3 x1  after second swap
+                                int nStackDepth = stack.Count();
+                                if (nStackDepth < 3)
+                                {
+                                    return false;
+                                }
+                                stack.Swap(nStackDepth - 3, nStackDepth - 2);
+                                stack.Swap(nStackDepth - 2, nStackDepth - 1);
+
+                            }
+                            break;
+
+                        case opcodetype.OP_SWAP:
+                            {
+                                // (x1 x2 -- x2 x1)
+                                int nStackDepth = stack.Count();
+                                if (nStackDepth < 2)
+                                {
+                                    return false;
+                                }
+                                stack.Swap(nStackDepth - 2, nStackDepth - 1);
+                            }
+                            break;
+
+                        case opcodetype.OP_TUCK:
+                            {
+                                // (x1 x2 -- x2 x1 x2)
+                                int nStackDepth = stack.Count();
+                                if (nStackDepth < 2)
+                                {
+                                    return false;
+                                }
+                                IEnumerable<byte> vch = stacktop(ref stack, -1);
+                                stack.Insert(nStackDepth - 2, vch);
+                            }
+                            break;
+
+
+                        case opcodetype.OP_SIZE:
+                            {
+                                // (in -- in size)
+                                if (stack.Count() < 1)
+                                {
+                                    return false;
+                                }
+
+                                BigInteger bnSize = new BigInteger((ushort)stacktop(ref stack, -1).Count());
+                                stack.Add(bnSize.ToByteArray());
+                            }
+                            break;
+
+
+                        //
+                        // Bitwise logic
+                        //
+                        case opcodetype.OP_EQUAL:
+                        case opcodetype.OP_EQUALVERIFY:
+                            //case opcodetype.OP_NOTEQUAL: // use OP_NUMNOTEQUAL
+                            {
+                                // (x1 x2 - bool)
+                                if (stack.Count() < 2)
+                                {
+                                    return false;
+                                }
+
+                                IEnumerable<byte> vch1 = stacktop(ref stack, -2);
+                                IEnumerable<byte> vch2 = stacktop(ref stack, -1);
+                                bool fEqual = (vch1 == vch2);
+                                // OP_NOTEQUAL is disabled because it would be too easy to say
+                                // something like n != 1 and have some wiseguy pass in 1 with extra
+                                // zero bytes after it (numerically, 0x01 == 0x0001 == 0x000001)
+                                //if (opcode == opcodetype.OP_NOTEQUAL)
+                                //    fEqual = !fEqual;
+                                popstack(ref stack);
+                                popstack(ref stack);
+                                stack.Add(fEqual ? vchTrue : vchFalse);
+
+                                if (opcode == opcodetype.OP_EQUALVERIFY)
+                                {
+                                    if (fEqual)
+                                    {
+                                        popstack(ref stack);
+                                    }
+                                    else
+                                    {
+                                        return false;
+                                    }
+                                }
+                            }
+                            break;
+
+
+                        //
+                        // Numeric
+                        //
+                        case opcodetype.OP_1ADD:
+                        case opcodetype.OP_1SUB:
+                        case opcodetype.OP_NEGATE:
+                        case opcodetype.OP_ABS:
+                        case opcodetype.OP_NOT:
+                        case opcodetype.OP_0NOTEQUAL:
+                            {
+                                // (in -- out)
+                                if (stack.Count() < 1)
+                                {
+                                    return false;
+                                }
+
+                                BigInteger bn = CastToBigInteger(stacktop(ref stack, -1));
+                                switch (opcode)
+                                {
+                                    case opcodetype.OP_1ADD:
+                                        bn = bn + 1;
+                                        break;
+                                    case opcodetype.OP_1SUB:
+                                        bn = bn - 1;
+                                        break;
+                                    case opcodetype.OP_NEGATE:
+                                        bn = -bn;
+                                        break;
+                                    case opcodetype.OP_ABS:
+                                        bn = BigInteger.Abs(bn);
+                                        break;
+                                    case opcodetype.OP_NOT:
+                                        bn = bn == 0 ? 1 : 0;
+                                        break;
+                                    case opcodetype.OP_0NOTEQUAL:
+                                        bn = bn != 0 ? 1 : 0;
+                                        break;
+
+                                    default:
+                                        throw new StackMachineException("invalid opcode");
+                                        break;
+                                }
+
+                                popstack(ref stack);
+                                stack.Add(bn.ToByteArray());
+                            }
+                            break;
+
+                        case opcodetype.OP_ADD:
+                        case opcodetype.OP_SUB:
+                        case opcodetype.OP_BOOLAND:
+                        case opcodetype.OP_BOOLOR:
+                        case opcodetype.OP_NUMEQUAL:
+                        case opcodetype.OP_NUMEQUALVERIFY:
+                        case opcodetype.OP_NUMNOTEQUAL:
+                        case opcodetype.OP_LESSTHAN:
+                        case opcodetype.OP_GREATERTHAN:
+                        case opcodetype.OP_LESSTHANOREQUAL:
+                        case opcodetype.OP_GREATERTHANOREQUAL:
+                        case opcodetype.OP_MIN:
+                        case opcodetype.OP_MAX:
+                            {
+                                // (x1 x2 -- out)
+                                if (stack.Count() < 2)
+                                {
+                                    return false;
+                                }
+
+                                BigInteger bn1 = CastToBigInteger(stacktop(ref stack, -2));
+                                BigInteger bn2 = CastToBigInteger(stacktop(ref stack, -1));
+                                BigInteger bn = 0;
+
+                                switch (opcode)
+                                {
+                                    case opcodetype.OP_ADD:
+                                        bn = bn1 + bn2;
+                                        break;
+                                    case opcodetype.OP_SUB:
+                                        bn = bn1 - bn2;
+                                        break;
+                                    case opcodetype.OP_BOOLAND:
+                                        bn = (bn1 != 0 && bn2 != 0) ? 1 : 0;
+                                        break;
+                                    case opcodetype.OP_BOOLOR:
+                                        bn = (bn1 != 0 || bn2 != 0) ? 1 : 0;
+                                        break;
+                                    case opcodetype.OP_NUMEQUAL:
+                                        bn = (bn1 == bn2) ? 1 : 0;
+                                        break;
+                                    case opcodetype.OP_NUMEQUALVERIFY:
+                                        bn = (bn1 == bn2) ? 1 : 0;
+                                        break;
+                                    case opcodetype.OP_NUMNOTEQUAL:
+                                        bn = (bn1 != bn2) ? 1 : 0;
+                                        break;
+                                    case opcodetype.OP_LESSTHAN:
+                                        bn = (bn1 < bn2) ? 1 : 0;
+                                        break;
+                                    case opcodetype.OP_GREATERTHAN:
+                                        bn = (bn1 > bn2) ? 1 : 0;
+                                        break;
+                                    case opcodetype.OP_LESSTHANOREQUAL:
+                                        bn = (bn1 <= bn2) ? 1 : 0;
+                                        break;
+                                    case opcodetype.OP_GREATERTHANOREQUAL:
+                                        bn = (bn1 >= bn2) ? 1 : 0;
+                                        break;
+                                    case opcodetype.OP_MIN:
+                                        bn = (bn1 < bn2 ? bn1 : bn2);
+                                        break;
+                                    case opcodetype.OP_MAX:
+                                        bn = (bn1 > bn2 ? bn1 : bn2);
+                                        break;
+
+                                    default:
+                                        throw new StackMachineException("invalid opcode");
+                                        break;
+                                }
+
+                                popstack(ref stack);
+                                popstack(ref stack);
+                                stack.Add(bn.ToByteArray());
+
+                                if (opcode == opcodetype.OP_NUMEQUALVERIFY)
+                                {
+                                    if (CastToBool(stacktop(ref stack, -1)))
+                                    {
+                                        popstack(ref stack);
+                                    }
+                                    else
+                                    {
+                                        return false;
+                                    }
+                                }
+                            }
+                            break;
+
+                        case opcodetype.OP_WITHIN:
+                            {
+                                // (x min max -- out)
+                                if (stack.Count() < 3)
+                                    return false;
+                                BigInteger bn1 = CastToBigInteger(stacktop(ref stack, -3));
+                                BigInteger bn2 = CastToBigInteger(stacktop(ref stack, -2));
+                                BigInteger bn3 = CastToBigInteger(stacktop(ref stack, -1));
+                                bool fValue = (bn2 <= bn1 && bn1 < bn3);
+                                popstack(ref stack);
+                                popstack(ref stack);
+                                popstack(ref stack);
+                                stack.Add(fValue ? vchTrue : vchFalse);
+                            }
+                            break;
+
+
+                        //
+                        // Crypto
+                        //
+                        case opcodetype.OP_RIPEMD160:
+                        case opcodetype.OP_SHA1:
+                        case opcodetype.OP_SHA256:
+                        case opcodetype.OP_HASH160:
+                        case opcodetype.OP_HASH256:
+                            {
+                                // (in -- hash)
+                                if (stack.Count() < 1)
+                                    return false;
+                                IEnumerable<byte> vch = stacktop(ref stack, -1);
+                                IEnumerable<byte> vchHash = null;
+                                if (opcode == opcodetype.OP_RIPEMD160)
+                                {
+                                    RIPEMD160 hash = RIPEMD160.Compute160(vch);
+                                    vchHash = hash.hashBytes;
+                                }
+                                else if (opcode == opcodetype.OP_SHA1)
+                                {
+                                    SHA1 hash = SHA1.Compute1(vch);
+                                    vchHash = hash.hashBytes;
+                                }
+                                else if (opcode == opcodetype.OP_SHA256)
+                                {
+                                    SHA256 hash = SHA256.Compute256(vch);
+                                    vchHash = hash.hashBytes;
+                                }
+                                else if (opcode == opcodetype.OP_HASH160)
+                                {
+                                    Hash160 hash = Hash160.Compute160(vch);
+                                    vchHash = hash.hashBytes;
+                                }
+                                else if (opcode == opcodetype.OP_HASH256)
+                                {
+                                    Hash256 hash = Hash256.Compute256(vch);
+                                    vchHash = hash.hashBytes;
+                                }
+                                popstack(ref stack);
+                                stack.Add(vchHash);
+                            }
+                            break;
+
+                        case opcodetype.OP_CODESEPARATOR:
+                            {
+                                // Hash starts after the code separator
+                                pbegincodehash = pc;
+                            }
+                            break;
+
+                        case opcodetype.OP_CHECKSIG:
+                        case opcodetype.OP_CHECKSIGVERIFY:
+                            {
+                                // (sig pubkey -- bool)
+                                if (stack.Count() < 2)
+                                {
+                                    return false;
+                                }
+
+                                IList<byte> sigBytes = stacktop(ref stack, -2).ToList();
+                                IList<byte> pubkeyBytes = stacktop(ref stack, -1).ToList();
+
+                                // Subset of script starting at the most recent codeseparator
+                                CScript scriptCode = new CScript(script.Bytes.Skip(pbegincodehash.CurrentIndex));
+
+                                // There's no way for a signature to sign itself
+                                scriptCode.RemovePattern(sigBytes);
+
+                                bool fSuccess = IsCanonicalSignature(sigBytes, flags) && IsCanonicalPubKey(pubkeyBytes.ToList(), flags) && CheckSig(sigBytes, pubkeyBytes, scriptCode, txTo, nIn, nHashType, flags);
+
+                                popstack(ref stack);
+                                popstack(ref stack);
+                                stack.Add(fSuccess ? vchTrue : vchFalse);
+                                if (opcode == opcodetype.OP_CHECKSIGVERIFY)
+                                {
+                                    if (fSuccess)
+                                    {
+                                        popstack(ref stack);
+                                    }
+                                    else
+                                    {
+                                        return false;
+                                    }
+                                }
+                            }
+                            break;
+
+                        case opcodetype.OP_CHECKMULTISIG:
+                        case opcodetype.OP_CHECKMULTISIGVERIFY:
+                            {
+                                // ([sig ...] num_of_signatures [pubkey ...] num_of_pubkeys -- bool)
+
+                                int i = 1;
+                                if (stack.Count() < i)
+                                {
+                                    return false;
+                                }
+
+                                int nKeysCount = (int)CastToBigInteger(stacktop(ref stack, -i));
+                                if (nKeysCount < 0 || nKeysCount > 20)
+                                {
+                                    return false;
+                                }
+                                nOpCount += nKeysCount;
+                                if (nOpCount > 201)
+                                {
+                                    return false;
+                                }
+                                int ikey = ++i;
+                                i += nKeysCount;
+                                if (stack.Count() < i)
+                                {
+                                    return false;
+                                }
+
+                                int nSigsCount = (int)CastToBigInteger(stacktop(ref stack, -i));
+                                if (nSigsCount < 0 || nSigsCount > nKeysCount)
+                                {
+                                    return false;
+                                }
+                                int isig = ++i;
+                                i += nSigsCount;
+                                if (stack.Count() < i)
+                                {
+                                    return false;
+                                }
+
+                                // Subset of script starting at the most recent codeseparator
+                                CScript scriptCode = new CScript(script.Bytes.Skip(pbegincodehash.CurrentIndex));
+
+                                // There is no way for a signature to sign itself, so we need to drop the signatures
+                                for (int k = 0; k < nSigsCount; k++)
+                                {
+                                    IEnumerable<byte> vchSig = stacktop(ref stack, -isig - k);
+                                    scriptCode.RemovePattern(vchSig.ToList());
+                                }
+
+                                bool fSuccess = true;
+                                while (fSuccess && nSigsCount > 0)
+                                {
+                                    IList<byte> sigBytes = stacktop(ref stack, -isig).ToList();
+                                    IList<byte> pubKeyBytes = stacktop(ref stack, -ikey).ToList();
+
+                                    // Check signature
+                                    bool fOk = IsCanonicalSignature(sigBytes, flags) && IsCanonicalPubKey(pubKeyBytes.ToList(), flags) && CheckSig(sigBytes, pubKeyBytes, scriptCode, txTo, nIn, nHashType, flags);
+
+                                    if (fOk)
+                                    {
+                                        isig++;
+                                        nSigsCount--;
+                                    }
+                                    ikey++;
+                                    nKeysCount--;
+
+                                    // If there are more signatures left than keys left,
+                                    // then too many signatures have failed
+                                    if (nSigsCount > nKeysCount)
+                                    {
+                                        fSuccess = false;
+                                    }
+                                }
+
+                                while (i-- > 1)
+                                {
+                                    popstack(ref stack);
+                                }
+
+                                // A bug causes CHECKMULTISIG to consume one extra argument
+                                // whose contents were not checked in any way.
+                                //
+                                // Unfortunately this is a potential source of mutability,
+                                // so optionally verify it is exactly equal to zero prior
+                                // to removing it from the stack.
+                                if (stack.Count() < 1)
+                                {
+                                    return false;
+                                }
+                                if ((flags & (int)scriptflag.SCRIPT_VERIFY_NULLDUMMY) != 0 && stacktop(ref stack, -1).Count() != 0)
+                                {
+                                    return false; // CHECKMULTISIG dummy argument not null
+                                }
+                                popstack(ref stack);
+
+                                stack.Add(fSuccess ? vchTrue : vchFalse);
+
+                                if (opcode == opcodetype.OP_CHECKMULTISIGVERIFY)
+                                {
+                                    if (fSuccess)
+                                    {
+                                        popstack(ref stack);
+                                    }
+                                    else
+                                    {
+                                        return false;
+                                    }
+                                }
+                            }
+                            break;
+
+                        default:
+                            return false;
+                    }
+
+                // Size limits
+                if (stack.Count() + altstack.Count() > 1000)
+                {
+                    return false;
+                }
+            }
+
+
+            if (vfExec.Count() == 0)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+
+        static bool IsCanonicalPubKey(IList<byte> pubKeyBytes, int flags)
+        {
+            if ((flags & (int)scriptflag.SCRIPT_VERIFY_STRICTENC) == 0)
+                return true;
+
+            if (pubKeyBytes.Count() < 33)
+                return false;  // Non-canonical public key: too short
+            if (pubKeyBytes[0] == 0x04)
+            {
+                if (pubKeyBytes.Count() != 65)
+                    return false; // Non-canonical public key: invalid length for uncompressed key
+            }
+            else if (pubKeyBytes[0] == 0x02 || pubKeyBytes[0] == 0x03)
+            {
+                if (pubKeyBytes.Count() != 33)
+                    return false; // Non-canonical public key: invalid length for compressed key
+            }
+            else
+            {
+                return false; // Non-canonical public key: compressed nor uncompressed
+            }
+            return true;
+        }
+
+        static bool IsCanonicalSignature(IList<byte> sigBytes, int flags)
+        {
+            // STUB
+
+            return true;
+        }
+
+
+        static bool CheckSig(IList<byte> sigBytes, IList<byte> pubKeyBytes, CScript scriptCode, CTransaction txTo, int nIn, int nHashType, int flags)
+        {
+            // STUB
+            return true;
+        }
+
+};
 }

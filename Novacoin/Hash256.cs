@@ -8,7 +8,7 @@ using System.Security.Cryptography;
 namespace Novacoin
 {
 	/// <summary>
-	/// Representation of SHA-256 hash
+	/// Representation of Double SHA-256 hash
 	/// </summary>
     public class Hash256 : Hash
     {

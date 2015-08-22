@@ -6,18 +6,18 @@ using System.Threading.Tasks;
 
 namespace Novacoin
 {
-    public class WrappedListException : Exception
+    public class ByteQueueException : Exception
     {
-        public WrappedListException()
+        public ByteQueueException()
         {
         }
 
-        public WrappedListException(string message)
+        public ByteQueueException(string message)
             : base(message)
         {
         }
 
-        public WrappedListException(string message, Exception inner)
+        public ByteQueueException(string message, Exception inner)
             : base(message, inner)
         {
         }
@@ -44,7 +44,7 @@ namespace Novacoin
         {
             if (Elements.Count <= Index)
             {
-                throw new WrappedListException("No elements left.");
+                throw new ByteQueueException("No elements left.");
             }
 
             return Elements[Index++];
@@ -59,7 +59,7 @@ namespace Novacoin
         {
             if (Elements.Count - Index < Count)
             {
-                throw new WrappedListException("Unable to read requested amount of data.");
+                throw new ByteQueueException("Unable to read requested amount of data.");
             }
 
             byte[] result = Elements.Skip(Index).Take(Count).ToArray();
@@ -72,7 +72,7 @@ namespace Novacoin
         {
             if (Elements.Count - Index < Count)
             {
-                throw new WrappedListException("Unable to read requested amount of data.");
+                throw new ByteQueueException("Unable to read requested amount of data.");
             }
 
             byte[] result = Elements.Skip(Index).Take(Count).ToArray();
@@ -80,11 +80,19 @@ namespace Novacoin
             return result;
         }
 
+        /// <summary>
+        /// Current index value
+        /// </summary>
+        public int CurrentIndex
+        {
+            get { return Index; }
+        }
+
         public IEnumerable<byte> GetEnumerable(int Count)
         {
             if (Elements.Count - Index < Count)
             {
-                throw new WrappedListException("Unable to read requested amount of data.");
+                throw new ByteQueueException("Unable to read requested amount of data.");
             }
 
             IEnumerable<byte> result = Elements.Skip(Index).Take(Count);
