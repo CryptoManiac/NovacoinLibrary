@@ -118,9 +118,9 @@ namespace Novacoin
         /// </summary>
         /// <param name="data">Hash to sigh</param>
         /// <returns>Signature bytes sequence</returns>
-        public IEnumerable<byte> Sign(Hash256 sigHash)
+        public IEnumerable<byte> Sign(Hash sigHash)
         {
-            ISigner signer = SignerUtilities.GetSigner("SHA-256withECDSA");
+            ISigner signer = SignerUtilities.GetSigner("NONEwithECDSA");
             signer.Init(true, _Private);
             signer.BlockUpdate(sigHash.hashBytes, 0, sigHash.hashSize);
 

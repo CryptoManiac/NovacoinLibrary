@@ -66,9 +66,9 @@ namespace Novacoin
         /// <param name="sigHash">Data hash</param>
         /// <param name="signature">Signature bytes</param>
         /// <returns>Checking result</returns>
-        public bool VerifySignature(Hash256 sigHash, IEnumerable<byte> signature)
+        public bool VerifySignature(Hash sigHash, IEnumerable<byte> signature)
         {
-            ISigner signer = SignerUtilities.GetSigner("SHA-256withECDSA");
+            ISigner signer = SignerUtilities.GetSigner("NONEwithECDSA");
             signer.Init(false, _Public);
             signer.BlockUpdate(sigHash.hashBytes, 0, sigHash.hashSize);
 
