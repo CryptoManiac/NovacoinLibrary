@@ -1639,9 +1639,6 @@ namespace Novacoin
                                     case instruction.OP_0NOTEQUAL:
                                         bn = bn != 0 ? 1 : 0;
                                         break;
-
-                                    default:
-                                        throw new StackMachineException("invalid instruction");
                                 }
 
                                 popstack(ref stack);
@@ -1714,9 +1711,6 @@ namespace Novacoin
                                     case instruction.OP_MAX:
                                         bn = (bn1 > bn2 ? bn1 : bn2);
                                         break;
-
-                                    default:
-                                        throw new StackMachineException("invalid instruction");
                                 }
 
                                 popstack(ref stack);
