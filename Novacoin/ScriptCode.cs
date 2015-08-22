@@ -993,7 +993,7 @@ namespace Novacoin
             if (nDepth >= 0)
             {
                 StringBuilder sb = new StringBuilder();
-                sb.AppendFormat("stacktop() : positive depth ({0})", nDepth);
+                sb.AppendFormat("stacktop() : positive depth ({0}) has no sense.", nDepth);
 
                 throw new StackMachineException(sb.ToString());
             }
@@ -1001,7 +1001,7 @@ namespace Novacoin
             if (nStackElement < 0)
             {
                 StringBuilder sb = new StringBuilder();
-                sb.AppendFormat("stacktop() : nDepth={0} exceeds real stack depth", nDepth);
+                sb.AppendFormat("stacktop() : nDepth={0} exceeds real stack depth ({1})", nDepth, stack.Count);
 
                 throw new StackMachineException(sb.ToString());
             }
@@ -1024,7 +1024,9 @@ namespace Novacoin
                 {
                     // Can be negative zero
                     if (i == value.Length - 1 && value[i] == 0x80)
+                    {
                         return false;
+                    }
 
                     return true;
                 }
@@ -1055,7 +1057,6 @@ namespace Novacoin
             ByteQueue pbegincodehash = script.GetByteQUeue();
 
             opcodetype opcode;
-            IEnumerable<byte> vchPushValue;
 
             List<bool> vfExec = new List<bool>();
             List<IEnumerable<byte>> altstack = new List<IEnumerable<byte>>();
@@ -1085,37 +1086,50 @@ namespace Novacoin
                 //
                 // Read instruction
                 //
-                if (!GetOp(ref pc, out opcode, out vchPushValue))
+                IEnumerable<byte> pushArg;
+                if (!GetOp(ref pc, out opcode, out pushArg))
+                {
                     return false;
-                if (vchPushValue.Count() > 520) // Check against MAX_SCRIPT_ELEMENT_SIZE
-                    return false;
-                if (opcode > opcodetype.OP_16 && ++nOpCount > 201)
-                    return false;
+                }
 
-                if (opcode == opcodetype.OP_CAT ||
-                    opcode == opcodetype.OP_SUBSTR ||
-                    opcode == opcodetype.OP_LEFT ||
-                    opcode == opcodetype.OP_RIGHT ||
-                    opcode == opcodetype.OP_INVERT ||
-                    opcode == opcodetype.OP_AND ||
-                    opcode == opcodetype.OP_OR ||
-                    opcode == opcodetype.OP_XOR ||
-                    opcode == opcodetype.OP_2MUL ||
-                    opcode == opcodetype.OP_2DIV ||
-                    opcode == opcodetype.OP_MUL ||
-                    opcode == opcodetype.OP_DIV ||
-                    opcode == opcodetype.OP_MOD ||
-                    opcode == opcodetype.OP_LSHIFT ||
-                    opcode == opcodetype.OP_RSHIFT)
-                    return false; // Disabled opcodes.
+                if (pushArg.Count() > 520) // Check against MAX_SCRIPT_ELEMENT_SIZE
+                {
+                    return false;
+                }
+
+                if (opcode > opcodetype.OP_16 && ++nOpCount > 201)
+                {
+                    return false;
+                }
 
                 if (fExec && 0 <= opcode && opcode <= opcodetype.OP_PUSHDATA4)
                 {
-                    stack.Add(vchPushValue);
+                    // Push argument to stack
+                    stack.Add(pushArg);
                 }
                 else if (fExec || (opcodetype.OP_IF <= opcode && opcode <= opcodetype.OP_ENDIF))
                     switch (opcode)
                     {
+                        //
+                        // Disabled opcodes
+                        //
+                        case opcodetype.OP_CAT:
+                        case opcodetype.OP_SUBSTR:
+                        case opcodetype.OP_LEFT:
+                        case opcodetype.OP_RIGHT:
+                        case opcodetype.OP_INVERT:
+                        case opcodetype.OP_AND:
+                        case opcodetype.OP_OR:
+                        case opcodetype.OP_XOR:
+                        case opcodetype.OP_2MUL:
+                        case opcodetype.OP_2DIV:
+                        case opcodetype.OP_MUL:
+                        case opcodetype.OP_DIV:
+                        case opcodetype.OP_MOD:
+                        case opcodetype.OP_LSHIFT:
+                        case opcodetype.OP_RSHIFT:
+                            return false;
+
                         //
                         // Push value
                         //
