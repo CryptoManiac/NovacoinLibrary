@@ -1019,7 +1019,7 @@ namespace Novacoin
         /// Remove last element from stack
         /// </summary>
         /// <param name="stack">Stack reference</param>
-        static void popstack(ref List<IEnumerable<byte>> stack)
+        private static void popstack(ref List<IEnumerable<byte>> stack)
         {
             int nCount = stack.Count;
             if (nCount == 0)
@@ -1033,7 +1033,7 @@ namespace Novacoin
         /// <param name="stack">Stack reference</param>
         /// <param name="nDepth">Depth</param>
         /// <returns>Byte sequence</returns>
-        static IEnumerable<byte> stacktop(ref List<IEnumerable<byte>> stack, int nDepth)
+        private static IEnumerable<byte> stacktop(ref List<IEnumerable<byte>> stack, int nDepth)
         {
             int nStackElement = stack.Count + nDepth;
 
@@ -1107,856 +1107,871 @@ namespace Novacoin
         /// <param name="flags">Signature checking flags</param>
         /// <param name="nHashType">Hash type flag</param>
         /// <returns></returns>
-        static bool EvalScript(ref List<IEnumerable<byte>> stack, CScript script, CTransaction txTo, int nIn, int flags, int nHashType)
+        public static bool EvalScript(ref List<IEnumerable<byte>> stack, CScript script, CTransaction txTo, int nIn, int flags, int nHashType)
         {
-            instruction opcode;
-
-            ByteQueue CodeQueue = script.GetByteQUeue();
-
-            List<bool> vfExec = new List<bool>();
-            List<IEnumerable<byte>> altStack = new List<IEnumerable<byte>>();
-
-            byte[] falseBytes = new byte[0];
-            byte[] trueBytes = new byte[] { 0x01 };
-
             if (script.Bytes.Count() > 10000)
             {
                 return false; // Size limit failed
             }
 
+            List<bool> vfExec = new List<bool>();
+
             int nOpCount = 0;
             int nCodeHashBegin = 0;
 
-            IEnumerable<byte> pushArg;
+            byte[] falseBytes = new byte[0];
+            byte[] trueBytes = new byte[] { 0x01 };
 
-            while (GetOp(ref CodeQueue, out opcode, out pushArg)) // Read instructions
+            ByteQueue CodeQueue = script.GetByteQUeue();
+            List<IEnumerable<byte>> altStack = new List<IEnumerable<byte>>();
+
+            try
             {
-                bool fExec = vfExec.IndexOf(false) != -1;
+                instruction opcode;
+                IEnumerable<byte> pushArg;
 
-                if (pushArg.Count() > 520)
+                while (GetOp(ref CodeQueue, out opcode, out pushArg)) // Read instructions
                 {
-                    return false; // Script element size limit failed
-                }
+                    bool fExec = vfExec.IndexOf(false) != -1;
 
-                if (opcode > instruction.OP_16 && ++nOpCount > 201)
-                {
-                    return false;
-                }
-
-                if (fExec && 0 <= opcode && opcode <= instruction.OP_PUSHDATA4)
-                {
-                    stack.Add(pushArg); // Push argument to stack
-                }
-                else if (fExec || (instruction.OP_IF <= opcode && opcode <= instruction.OP_ENDIF))
-                    switch (opcode)
+                    if (pushArg.Count() > 520)
                     {
-                        //
-                        // Disabled opcodes
-                        //
-                        case instruction.OP_CAT:
-                        case instruction.OP_SUBSTR:
-                        case instruction.OP_LEFT:
-                        case instruction.OP_RIGHT:
-                        case instruction.OP_INVERT:
-                        case instruction.OP_AND:
-                        case instruction.OP_OR:
-                        case instruction.OP_XOR:
-                        case instruction.OP_2MUL:
-                        case instruction.OP_2DIV:
-                        case instruction.OP_MUL:
-                        case instruction.OP_DIV:
-                        case instruction.OP_MOD:
-                        case instruction.OP_LSHIFT:
-                        case instruction.OP_RSHIFT:
-                            return false;
+                        return false; // Script element size limit failed
+                    }
 
-                        //
-                        // Push integer instructions
-                        //
-                        case instruction.OP_1NEGATE:
-                        case instruction.OP_1:
-                        case instruction.OP_2:
-                        case instruction.OP_3:
-                        case instruction.OP_4:
-                        case instruction.OP_5:
-                        case instruction.OP_6:
-                        case instruction.OP_7:
-                        case instruction.OP_8:
-                        case instruction.OP_9:
-                        case instruction.OP_10:
-                        case instruction.OP_11:
-                        case instruction.OP_12:
-                        case instruction.OP_13:
-                        case instruction.OP_14:
-                        case instruction.OP_15:
-                        case instruction.OP_16:
-                            {
-                                // ( -- value)
-                                BigInteger bn = DecodeOP_N(opcode, true);
-                                stack.Add(bn.ToByteArray());
-                            }
-                            break;
+                    if (opcode > instruction.OP_16 && ++nOpCount > 201)
+                    {
+                        return false;
+                    }
 
-                        //
-                        // Extension
-                        //
-                        case instruction.OP_NOP:
-                        case instruction.OP_NOP1:
-                        case instruction.OP_NOP2:
-                        case instruction.OP_NOP3:
-                        case instruction.OP_NOP4:
-                        case instruction.OP_NOP5:
-                        case instruction.OP_NOP6:
-                        case instruction.OP_NOP7:
-                        case instruction.OP_NOP8:
-                        case instruction.OP_NOP9:
-                        case instruction.OP_NOP10:
-                            {
-                                // Just do nothing
-                            }
-                            break;
+                    if (fExec && 0 <= opcode && opcode <= instruction.OP_PUSHDATA4)
+                    {
+                        stack.Add(pushArg); // Push argument to stack
+                    }
+                    else if (fExec || (instruction.OP_IF <= opcode && opcode <= instruction.OP_ENDIF))
+                        switch (opcode)
+                        {
+                            //
+                            // Disabled opcodes
+                            //
+                            case instruction.OP_CAT:
+                            case instruction.OP_SUBSTR:
+                            case instruction.OP_LEFT:
+                            case instruction.OP_RIGHT:
+                            case instruction.OP_INVERT:
+                            case instruction.OP_AND:
+                            case instruction.OP_OR:
+                            case instruction.OP_XOR:
+                            case instruction.OP_2MUL:
+                            case instruction.OP_2DIV:
+                            case instruction.OP_MUL:
+                            case instruction.OP_DIV:
+                            case instruction.OP_MOD:
+                            case instruction.OP_LSHIFT:
+                            case instruction.OP_RSHIFT:
+                                return false;
 
-                        //
-                        // Control
-                        //
-                        case instruction.OP_IF:
-                        case instruction.OP_NOTIF:
-                            {
-                                // <expression> if [statements] [else [statements]] endif
-                                bool fValue = false;
-                                if (fExec)
+                            //
+                            // Push integer instructions
+                            //
+                            case instruction.OP_1NEGATE:
+                            case instruction.OP_1:
+                            case instruction.OP_2:
+                            case instruction.OP_3:
+                            case instruction.OP_4:
+                            case instruction.OP_5:
+                            case instruction.OP_6:
+                            case instruction.OP_7:
+                            case instruction.OP_8:
+                            case instruction.OP_9:
+                            case instruction.OP_10:
+                            case instruction.OP_11:
+                            case instruction.OP_12:
+                            case instruction.OP_13:
+                            case instruction.OP_14:
+                            case instruction.OP_15:
+                            case instruction.OP_16:
+                                {
+                                    // ( -- value)
+                                    BigInteger bn = DecodeOP_N(opcode, true);
+                                    stack.Add(bn.ToByteArray());
+                                }
+                                break;
+
+                            //
+                            // Extension
+                            //
+                            case instruction.OP_NOP:
+                            case instruction.OP_NOP1:
+                            case instruction.OP_NOP2:
+                            case instruction.OP_NOP3:
+                            case instruction.OP_NOP4:
+                            case instruction.OP_NOP5:
+                            case instruction.OP_NOP6:
+                            case instruction.OP_NOP7:
+                            case instruction.OP_NOP8:
+                            case instruction.OP_NOP9:
+                            case instruction.OP_NOP10:
+                                {
+                                    // Just do nothing
+                                }
+                                break;
+
+                            //
+                            // Control
+                            //
+                            case instruction.OP_IF:
+                            case instruction.OP_NOTIF:
+                                {
+                                    // <expression> if [statements] [else [statements]] endif
+                                    bool fValue = false;
+                                    if (fExec)
+                                    {
+                                        if (stack.Count() < 1)
+                                        {
+                                            return false;
+                                        }
+                                        IEnumerable<byte> vch = stacktop(ref stack, -1);
+                                        fValue = CastToBool(vch);
+                                        if (opcode == instruction.OP_NOTIF)
+                                        {
+                                            fValue = !fValue;
+                                        }
+                                        popstack(ref stack);
+                                    }
+                                    vfExec.Add(fValue);
+                                }
+                                break;
+
+                            case instruction.OP_ELSE:
+                                {
+                                    int nExecCount = vfExec.Count();
+                                    if (nExecCount == 0)
+                                    {
+                                        return false;
+                                    }
+                                    vfExec[nExecCount - 1] = !vfExec[nExecCount - 1];
+                                }
+                                break;
+
+                            case instruction.OP_ENDIF:
+                                {
+                                    int nExecCount = vfExec.Count();
+                                    if (nExecCount == 0)
+                                    {
+                                        return false;
+                                    }
+                                    vfExec.RemoveAt(nExecCount - 1);
+                                }
+                                break;
+
+                            case instruction.OP_VERIFY:
+                                {
+                                    // (true -- ) or
+                                    // (false -- false) and return
+                                    if (stack.Count() < 1)
+                                    {
+                                        return false;
+                                    }
+
+                                    bool fValue = CastToBool(stacktop(ref stack, -1));
+                                    if (fValue)
+                                    {
+                                        popstack(ref stack);
+                                    }
+                                    else
+                                    {
+                                        return false;
+                                    }
+                                }
+                                break;
+
+                            case instruction.OP_RETURN:
+                                {
+                                    return false;
+                                }
+
+                            //
+                            // Stack ops
+                            //
+                            case instruction.OP_TOALTSTACK:
                                 {
                                     if (stack.Count() < 1)
                                     {
                                         return false;
                                     }
-                                    IEnumerable<byte> vch = stacktop(ref stack, -1);
-                                    fValue = CastToBool(vch);
-                                    if (opcode == instruction.OP_NOTIF)
+                                    altStack.Add(stacktop(ref stack, -1));
+                                    popstack(ref stack);
+                                }
+                                break;
+
+                            case instruction.OP_FROMALTSTACK:
+                                {
+                                    if (altStack.Count() < 1)
                                     {
-                                        fValue = !fValue;
+                                        return false;
+                                    }
+                                    stack.Add(stacktop(ref stack, -1));
+                                    popstack(ref altStack);
+                                }
+                                break;
+
+                            case instruction.OP_2DROP:
+                                {
+                                    // (x1 x2 -- )
+                                    if (stack.Count() < 2)
+                                    {
+                                        return false;
                                     }
                                     popstack(ref stack);
-                                }
-                                vfExec.Add(fValue);
-                            }
-                            break;
-
-                        case instruction.OP_ELSE:
-                            {
-                                int nExecCount = vfExec.Count();
-                                if (nExecCount == 0)
-                                {
-                                    return false;
-                                }
-                                vfExec[nExecCount - 1] = !vfExec[nExecCount - 1];
-                            }
-                            break;
-
-                        case instruction.OP_ENDIF:
-                            {
-                                int nExecCount = vfExec.Count();
-                                if (nExecCount == 0)
-                                {
-                                    return false;
-                                }
-                                vfExec.RemoveAt(nExecCount - 1);
-                            }
-                            break;
-
-                        case instruction.OP_VERIFY:
-                            {
-                                // (true -- ) or
-                                // (false -- false) and return
-                                if (stack.Count() < 1)
-                                {
-                                    return false;
-                                }
-
-                                bool fValue = CastToBool(stacktop(ref stack, -1));
-                                if (fValue)
-                                {
                                     popstack(ref stack);
                                 }
-                                else
+                                break;
+
+                            case instruction.OP_2DUP:
                                 {
-                                    return false;
+                                    // (x1 x2 -- x1 x2 x1 x2)
+                                    if (stack.Count() < 2)
+                                    {
+                                        return false;
+                                    }
+                                    IEnumerable<byte> vch1 = stacktop(ref stack, -2);
+                                    IEnumerable<byte> vch2 = stacktop(ref stack, -1);
+                                    stack.Add(vch1);
+                                    stack.Add(vch2);
                                 }
-                            }
-                            break;
+                                break;
 
-                        case instruction.OP_RETURN:
-                            {
-                                return false;
-                            }
-
-                        //
-                        // Stack ops
-                        //
-                        case instruction.OP_TOALTSTACK:
-                            {
-                                if (stack.Count() < 1)
+                            case instruction.OP_3DUP:
                                 {
-                                    return false;
+                                    // (x1 x2 x3 -- x1 x2 x3 x1 x2 x3)
+                                    if (stack.Count() < 3)
+                                    {
+                                        return false;
+                                    }
+                                    IEnumerable<byte> vch1 = stacktop(ref stack, -3);
+                                    IEnumerable<byte> vch2 = stacktop(ref stack, -2);
+                                    IEnumerable<byte> vch3 = stacktop(ref stack, -1);
+                                    stack.Add(vch1);
+                                    stack.Add(vch2);
+                                    stack.Add(vch3);
                                 }
-                                altStack.Add(stacktop(ref stack, -1));
-                                popstack(ref stack);
-                            }
-                            break;
+                                break;
 
-                        case instruction.OP_FROMALTSTACK:
-                            {
-                                if (altStack.Count() < 1)
+                            case instruction.OP_2OVER:
                                 {
-                                    return false;
+                                    // (x1 x2 x3 x4 -- x1 x2 x3 x4 x1 x2)
+                                    if (stack.Count() < 4)
+                                    {
+                                        return false;
+                                    }
+                                    IEnumerable<byte> vch1 = stacktop(ref stack, -4);
+                                    IEnumerable<byte> vch2 = stacktop(ref stack, -3);
+                                    stack.Add(vch1);
+                                    stack.Add(vch2);
                                 }
-                                stack.Add(stacktop(ref stack, -1));
-                                popstack(ref altStack);
-                            }
-                            break;
+                                break;
 
-                        case instruction.OP_2DROP:
-                            {
-                                // (x1 x2 -- )
-                                if (stack.Count() < 2)
+                            case instruction.OP_2ROT:
                                 {
-                                    return false;
+                                    int nStackDepth = stack.Count();
+                                    // (x1 x2 x3 x4 x5 x6 -- x3 x4 x5 x6 x1 x2)
+                                    if (nStackDepth < 6)
+                                    {
+                                        return false;
+                                    }
+                                    IEnumerable<byte> vch1 = stacktop(ref stack, -6);
+                                    IEnumerable<byte> vch2 = stacktop(ref stack, -5);
+                                    stack.RemoveRange(nStackDepth - 6, 2);
+                                    stack.Add(vch1);
+                                    stack.Add(vch2);
                                 }
-                                popstack(ref stack);
-                                popstack(ref stack);
-                            }
-                            break;
+                                break;
 
-                        case instruction.OP_2DUP:
-                            {
-                                // (x1 x2 -- x1 x2 x1 x2)
-                                if (stack.Count() < 2)
+                            case instruction.OP_2SWAP:
                                 {
-                                    return false;
+                                    // (x1 x2 x3 x4 -- x3 x4 x1 x2)
+                                    int nStackDepth = stack.Count();
+                                    if (nStackDepth < 4)
+                                    {
+                                        return false;
+                                    }
+                                    stack.Swap(nStackDepth - 4, nStackDepth - 2);
+                                    stack.Swap(nStackDepth - 3, nStackDepth - 1);
                                 }
-                                IEnumerable<byte> vch1 = stacktop(ref stack, -2);
-                                IEnumerable<byte> vch2 = stacktop(ref stack, -1);
-                                stack.Add(vch1);
-                                stack.Add(vch2);
-                            }
-                            break;
+                                break;
 
-                        case instruction.OP_3DUP:
-                            {
-                                // (x1 x2 x3 -- x1 x2 x3 x1 x2 x3)
-                                if (stack.Count() < 3)
+                            case instruction.OP_IFDUP:
                                 {
-                                    return false;
+                                    // (x - 0 | x x)
+                                    if (stack.Count() < 1)
+                                    {
+                                        return false;
+                                    }
+
+                                    IEnumerable<byte> vch = stacktop(ref stack, -1);
+
+                                    if (CastToBool(vch))
+                                    {
+                                        stack.Add(vch);
+                                    }
                                 }
-                                IEnumerable<byte> vch1 = stacktop(ref stack, -3);
-                                IEnumerable<byte> vch2 = stacktop(ref stack, -2);
-                                IEnumerable<byte> vch3 = stacktop(ref stack, -1);
-                                stack.Add(vch1);
-                                stack.Add(vch2);
-                                stack.Add(vch3);
-                            }
-                            break;
+                                break;
 
-                        case instruction.OP_2OVER:
-                            {
-                                // (x1 x2 x3 x4 -- x1 x2 x3 x4 x1 x2)
-                                if (stack.Count() < 4)
+                            case instruction.OP_DEPTH:
                                 {
-                                    return false;
+                                    // -- stacksize
+                                    BigInteger bn = new BigInteger((ushort)stack.Count());
+                                    stack.Add(bn.ToByteArray());
                                 }
-                                IEnumerable<byte> vch1 = stacktop(ref stack, -4);
-                                IEnumerable<byte> vch2 = stacktop(ref stack, -3);
-                                stack.Add(vch1);
-                                stack.Add(vch2);
-                            }
-                            break;
+                                break;
 
-                        case instruction.OP_2ROT:
-                            {
-                                int nStackDepth = stack.Count();
-                                // (x1 x2 x3 x4 x5 x6 -- x3 x4 x5 x6 x1 x2)
-                                if (nStackDepth < 6)
+                            case instruction.OP_DROP:
                                 {
-                                    return false;
+                                    // (x -- )
+                                    if (stack.Count() < 1)
+                                    {
+                                        return false;
+                                    }
+
+                                    popstack(ref stack);
                                 }
-                                IEnumerable<byte> vch1 = stacktop(ref stack, -6);
-                                IEnumerable<byte> vch2 = stacktop(ref stack, -5);
-                                stack.RemoveRange(nStackDepth - 6, 2);
-                                stack.Add(vch1);
-                                stack.Add(vch2);
-                            }
-                            break;
+                                break;
 
-                        case instruction.OP_2SWAP:
-                            {
-                                // (x1 x2 x3 x4 -- x3 x4 x1 x2)
-                                int nStackDepth = stack.Count();
-                                if (nStackDepth < 4)
+                            case instruction.OP_DUP:
                                 {
-                                    return false;
-                                }
-                                stack.Swap(nStackDepth - 4, nStackDepth - 2);
-                                stack.Swap(nStackDepth - 3, nStackDepth - 1);
-                            }
-                            break;
+                                    // (x -- x x)
+                                    if (stack.Count() < 1)
+                                    {
+                                        return false;
+                                    }
 
-                        case instruction.OP_IFDUP:
-                            {
-                                // (x - 0 | x x)
-                                if (stack.Count() < 1)
-                                {
-                                    return false;
-                                }
-
-                                IEnumerable<byte> vch = stacktop(ref stack, -1);
-
-                                if (CastToBool(vch))
-                                {
+                                    IEnumerable<byte> vch = stacktop(ref stack, -1);
                                     stack.Add(vch);
                                 }
-                            }
-                            break;
+                                break;
 
-                        case instruction.OP_DEPTH:
-                            {
-                                // -- stacksize
-                                BigInteger bn = new BigInteger((ushort)stack.Count());
-                                stack.Add(bn.ToByteArray());
-                            }
-                            break;
-
-                        case instruction.OP_DROP:
-                            {
-                                // (x -- )
-                                if (stack.Count() < 1)
+                            case instruction.OP_NIP:
                                 {
-                                    return false;
-                                }
-
-                                popstack(ref stack);
-                            }
-                            break;
-
-                        case instruction.OP_DUP:
-                            {
-                                // (x -- x x)
-                                if (stack.Count() < 1)
-                                {
-                                    return false;
-                                }
-
-                                IEnumerable<byte> vch = stacktop(ref stack, -1);
-                                stack.Add(vch);
-                            }
-                            break;
-
-                        case instruction.OP_NIP:
-                            {
-                                // (x1 x2 -- x2)
-                                int nStackDepth = stack.Count();
-                                if (nStackDepth < 2)
-                                {
-                                    return false;
-                                }
-
-                                stack.RemoveAt(nStackDepth - 2);
-                            }
-                            break;
-
-                        case instruction.OP_OVER:
-                            {
-                                // (x1 x2 -- x1 x2 x1)
-                                if (stack.Count() < 2)
-                                {
-                                    return false;
-                                }
-
-                                IEnumerable<byte> vch = stacktop(ref stack, -2);
-                                stack.Add(vch);
-                            }
-                            break;
-
-                        case instruction.OP_PICK:
-                        case instruction.OP_ROLL:
-                            {
-                                // (xn ... x2 x1 x0 n - xn ... x2 x1 x0 xn)
-                                // (xn ... x2 x1 x0 n - ... x2 x1 x0 xn)
-
-                                int nStackDepth = stack.Count();
-                                if (nStackDepth < 2)
-                                {
-                                    return false;
-                                }
-
-                                int n = (int)CastToBigInteger(stacktop(ref stack, -1));
-                                popstack(ref stack);
-
-                                if (n < 0 || n >= stack.Count())
-                                {
-                                    return false;
-                                }
-
-                                IEnumerable<byte> vch = stacktop(ref stack, -n - 1);
-                                if (opcode == instruction.OP_ROLL)
-                                {
-                                    stack.RemoveAt(nStackDepth - n - 1);
-                                }
-
-                                stack.Add(vch);
-                            }
-                            break;
-
-                        case instruction.OP_ROT:
-                            {
-                                // (x1 x2 x3 -- x2 x3 x1)
-                                //  x2 x1 x3  after first swap
-                                //  x2 x3 x1  after second swap
-                                int nStackDepth = stack.Count();
-                                if (nStackDepth < 3)
-                                {
-                                    return false;
-                                }
-                                stack.Swap(nStackDepth - 3, nStackDepth - 2);
-                                stack.Swap(nStackDepth - 2, nStackDepth - 1);
-
-                            }
-                            break;
-
-                        case instruction.OP_SWAP:
-                            {
-                                // (x1 x2 -- x2 x1)
-                                int nStackDepth = stack.Count();
-                                if (nStackDepth < 2)
-                                {
-                                    return false;
-                                }
-                                stack.Swap(nStackDepth - 2, nStackDepth - 1);
-                            }
-                            break;
-
-                        case instruction.OP_TUCK:
-                            {
-                                // (x1 x2 -- x2 x1 x2)
-                                int nStackDepth = stack.Count();
-                                if (nStackDepth < 2)
-                                {
-                                    return false;
-                                }
-                                IEnumerable<byte> vch = stacktop(ref stack, -1);
-                                stack.Insert(nStackDepth - 2, vch);
-                            }
-                            break;
-
-
-                        case instruction.OP_SIZE:
-                            {
-                                // (in -- in size)
-                                if (stack.Count() < 1)
-                                {
-                                    return false;
-                                }
-
-                                BigInteger bnSize = new BigInteger((ushort)stacktop(ref stack, -1).Count());
-                                stack.Add(bnSize.ToByteArray());
-                            }
-                            break;
-
-
-                        //
-                        // Bitwise logic
-                        //
-                        case instruction.OP_EQUAL:
-                        case instruction.OP_EQUALVERIFY:
-                            //case instruction.OP_NOTEQUAL: // use OP_NUMNOTEQUAL
-                            {
-                                // (x1 x2 - bool)
-                                if (stack.Count() < 2)
-                                {
-                                    return false;
-                                }
-
-                                IEnumerable<byte> vch1 = stacktop(ref stack, -2);
-                                IEnumerable<byte> vch2 = stacktop(ref stack, -1);
-                                bool fEqual = (vch1 == vch2);
-                                // OP_NOTEQUAL is disabled because it would be too easy to say
-                                // something like n != 1 and have some wiseguy pass in 1 with extra
-                                // zero bytes after it (numerically, 0x01 == 0x0001 == 0x000001)
-                                //if (opcode == instruction.OP_NOTEQUAL)
-                                //    fEqual = !fEqual;
-                                popstack(ref stack);
-                                popstack(ref stack);
-                                stack.Add(fEqual ? trueBytes : falseBytes);
-
-                                if (opcode == instruction.OP_EQUALVERIFY)
-                                {
-                                    if (fEqual)
-                                    {
-                                        popstack(ref stack);
-                                    }
-                                    else
+                                    // (x1 x2 -- x2)
+                                    int nStackDepth = stack.Count();
+                                    if (nStackDepth < 2)
                                     {
                                         return false;
                                     }
+
+                                    stack.RemoveAt(nStackDepth - 2);
                                 }
-                            }
-                            break;
+                                break;
 
-
-                        //
-                        // Numeric
-                        //
-                        case instruction.OP_1ADD:
-                        case instruction.OP_1SUB:
-                        case instruction.OP_NEGATE:
-                        case instruction.OP_ABS:
-                        case instruction.OP_NOT:
-                        case instruction.OP_0NOTEQUAL:
-                            {
-                                // (in -- out)
-                                if (stack.Count() < 1)
+                            case instruction.OP_OVER:
                                 {
-                                    return false;
-                                }
-
-                                BigInteger bn = CastToBigInteger(stacktop(ref stack, -1));
-                                switch (opcode)
-                                {
-                                    case instruction.OP_1ADD:
-                                        bn = bn + 1;
-                                        break;
-                                    case instruction.OP_1SUB:
-                                        bn = bn - 1;
-                                        break;
-                                    case instruction.OP_NEGATE:
-                                        bn = -bn;
-                                        break;
-                                    case instruction.OP_ABS:
-                                        bn = BigInteger.Abs(bn);
-                                        break;
-                                    case instruction.OP_NOT:
-                                        bn = bn == 0 ? 1 : 0;
-                                        break;
-                                    case instruction.OP_0NOTEQUAL:
-                                        bn = bn != 0 ? 1 : 0;
-                                        break;
-                                }
-
-                                popstack(ref stack);
-                                stack.Add(bn.ToByteArray());
-                            }
-                            break;
-
-                        case instruction.OP_ADD:
-                        case instruction.OP_SUB:
-                        case instruction.OP_BOOLAND:
-                        case instruction.OP_BOOLOR:
-                        case instruction.OP_NUMEQUAL:
-                        case instruction.OP_NUMEQUALVERIFY:
-                        case instruction.OP_NUMNOTEQUAL:
-                        case instruction.OP_LESSTHAN:
-                        case instruction.OP_GREATERTHAN:
-                        case instruction.OP_LESSTHANOREQUAL:
-                        case instruction.OP_GREATERTHANOREQUAL:
-                        case instruction.OP_MIN:
-                        case instruction.OP_MAX:
-                            {
-                                // (x1 x2 -- out)
-                                if (stack.Count() < 2)
-                                {
-                                    return false;
-                                }
-
-                                BigInteger bn1 = CastToBigInteger(stacktop(ref stack, -2));
-                                BigInteger bn2 = CastToBigInteger(stacktop(ref stack, -1));
-                                BigInteger bn = 0;
-
-                                switch (opcode)
-                                {
-                                    case instruction.OP_ADD:
-                                        bn = bn1 + bn2;
-                                        break;
-                                    case instruction.OP_SUB:
-                                        bn = bn1 - bn2;
-                                        break;
-                                    case instruction.OP_BOOLAND:
-                                        bn = (bn1 != 0 && bn2 != 0) ? 1 : 0;
-                                        break;
-                                    case instruction.OP_BOOLOR:
-                                        bn = (bn1 != 0 || bn2 != 0) ? 1 : 0;
-                                        break;
-                                    case instruction.OP_NUMEQUAL:
-                                        bn = (bn1 == bn2) ? 1 : 0;
-                                        break;
-                                    case instruction.OP_NUMEQUALVERIFY:
-                                        bn = (bn1 == bn2) ? 1 : 0;
-                                        break;
-                                    case instruction.OP_NUMNOTEQUAL:
-                                        bn = (bn1 != bn2) ? 1 : 0;
-                                        break;
-                                    case instruction.OP_LESSTHAN:
-                                        bn = (bn1 < bn2) ? 1 : 0;
-                                        break;
-                                    case instruction.OP_GREATERTHAN:
-                                        bn = (bn1 > bn2) ? 1 : 0;
-                                        break;
-                                    case instruction.OP_LESSTHANOREQUAL:
-                                        bn = (bn1 <= bn2) ? 1 : 0;
-                                        break;
-                                    case instruction.OP_GREATERTHANOREQUAL:
-                                        bn = (bn1 >= bn2) ? 1 : 0;
-                                        break;
-                                    case instruction.OP_MIN:
-                                        bn = (bn1 < bn2 ? bn1 : bn2);
-                                        break;
-                                    case instruction.OP_MAX:
-                                        bn = (bn1 > bn2 ? bn1 : bn2);
-                                        break;
-                                }
-
-                                popstack(ref stack);
-                                popstack(ref stack);
-                                stack.Add(bn.ToByteArray());
-
-                                if (opcode == instruction.OP_NUMEQUALVERIFY)
-                                {
-                                    if (CastToBool(stacktop(ref stack, -1)))
-                                    {
-                                        popstack(ref stack);
-                                    }
-                                    else
+                                    // (x1 x2 -- x1 x2 x1)
+                                    if (stack.Count() < 2)
                                     {
                                         return false;
                                     }
+
+                                    IEnumerable<byte> vch = stacktop(ref stack, -2);
+                                    stack.Add(vch);
                                 }
-                            }
-                            break;
+                                break;
 
-                        case instruction.OP_WITHIN:
-                            {
-                                // (x min max -- out)
-                                if (stack.Count() < 3)
-                                    return false;
-                                BigInteger bn1 = CastToBigInteger(stacktop(ref stack, -3));
-                                BigInteger bn2 = CastToBigInteger(stacktop(ref stack, -2));
-                                BigInteger bn3 = CastToBigInteger(stacktop(ref stack, -1));
-                                bool fValue = (bn2 <= bn1 && bn1 < bn3);
-                                popstack(ref stack);
-                                popstack(ref stack);
-                                popstack(ref stack);
-                                stack.Add(fValue ? trueBytes : falseBytes);
-                            }
-                            break;
-
-                        //
-                        // Crypto
-                        //
-                        case instruction.OP_RIPEMD160:
-                        case instruction.OP_SHA1:
-                        case instruction.OP_SHA256:
-                        case instruction.OP_HASH160:
-                        case instruction.OP_HASH256:
-                            {
-                                // (in -- hash)
-                                if (stack.Count() < 1)
+                            case instruction.OP_PICK:
+                            case instruction.OP_ROLL:
                                 {
-                                    return false;
-                                }
-                                Hash hash = null;
-                                IEnumerable<byte> data = stacktop(ref stack, -1);
+                                    // (xn ... x2 x1 x0 n - xn ... x2 x1 x0 xn)
+                                    // (xn ... x2 x1 x0 n - ... x2 x1 x0 xn)
 
-                                switch (opcode)
-                                {
-                                    case instruction.OP_HASH160:
-                                        hash = Hash160.Compute160(data);
-                                        break;
-                                    case instruction.OP_HASH256:
-                                        hash = Hash256.Compute256(data);
-                                        break;
-                                    case instruction.OP_SHA1:
-                                        hash = SHA1.Compute1(data);
-                                        break;
-                                    case instruction.OP_SHA256:
-                                        hash = SHA256.Compute256(data);
-                                        break;
-                                    case instruction.OP_RIPEMD160:
-                                        hash = RIPEMD160.Compute160(data);
-                                        break;
-                                }
-                                popstack(ref stack);
-                                stack.Add(hash.hashBytes);
-                            }
-                            break;
-
-                        case instruction.OP_CODESEPARATOR:
-                            {
-                                // Hash starts after the code separator
-                                nCodeHashBegin = CodeQueue.CurrentIndex;
-                            }
-                            break;
-
-                        case instruction.OP_CHECKSIG:
-                        case instruction.OP_CHECKSIGVERIFY:
-                            {
-                                // (sig pubkey -- bool)
-                                if (stack.Count() < 2)
-                                {
-                                    return false;
-                                }
-
-                                IList<byte> sigBytes = stacktop(ref stack, -2).ToList();
-                                IList<byte> pubkeyBytes = stacktop(ref stack, -1).ToList();
-
-                                // Subset of script starting at the most recent codeseparator
-                                CScript scriptCode = new CScript(script.Bytes.Skip(nCodeHashBegin));
-
-                                // There's no way for a signature to sign itself
-                                scriptCode.RemovePattern(sigBytes);
-
-                                bool fSuccess = IsCanonicalSignature(sigBytes, flags) && IsCanonicalPubKey(pubkeyBytes.ToList(), flags) && CheckSig(sigBytes, pubkeyBytes, scriptCode, txTo, nIn, nHashType, flags);
-
-                                popstack(ref stack);
-                                popstack(ref stack);
-                                stack.Add(fSuccess ? trueBytes : falseBytes);
-                                if (opcode == instruction.OP_CHECKSIGVERIFY)
-                                {
-                                    if (fSuccess)
-                                    {
-                                        popstack(ref stack);
-                                    }
-                                    else
+                                    int nStackDepth = stack.Count();
+                                    if (nStackDepth < 2)
                                     {
                                         return false;
                                     }
-                                }
-                            }
-                            break;
 
-                        case instruction.OP_CHECKMULTISIG:
-                        case instruction.OP_CHECKMULTISIGVERIFY:
-                            {
-                                // ([sig ...] num_of_signatures [pubkey ...] num_of_pubkeys -- bool)
-
-                                int i = 1;
-                                if (stack.Count() < i)
-                                {
-                                    return false;
-                                }
-
-                                int nKeysCount = (int)CastToBigInteger(stacktop(ref stack, -i));
-                                if (nKeysCount < 0 || nKeysCount > 20)
-                                {
-                                    return false;
-                                }
-                                nOpCount += nKeysCount;
-                                if (nOpCount > 201)
-                                {
-                                    return false;
-                                }
-                                int ikey = ++i;
-                                i += nKeysCount;
-                                if (stack.Count() < i)
-                                {
-                                    return false;
-                                }
-
-                                int nSigsCount = (int)CastToBigInteger(stacktop(ref stack, -i));
-                                if (nSigsCount < 0 || nSigsCount > nKeysCount)
-                                {
-                                    return false;
-                                }
-                                int isig = ++i;
-                                i += nSigsCount;
-                                if (stack.Count() < i)
-                                {
-                                    return false;
-                                }
-
-                                // Subset of script starting at the most recent codeseparator
-                                CScript scriptCode = new CScript(script.Bytes.Skip(nCodeHashBegin));
-
-                                // There is no way for a signature to sign itself, so we need to drop the signatures
-                                for (int k = 0; k < nSigsCount; k++)
-                                {
-                                    IEnumerable<byte> vchSig = stacktop(ref stack, -isig - k);
-                                    scriptCode.RemovePattern(vchSig.ToList());
-                                }
-
-                                bool fSuccess = true;
-                                while (fSuccess && nSigsCount > 0)
-                                {
-                                    IList<byte> sigBytes = stacktop(ref stack, -isig).ToList();
-                                    IList<byte> pubKeyBytes = stacktop(ref stack, -ikey).ToList();
-
-                                    // Check signature
-                                    bool fOk = IsCanonicalSignature(sigBytes, flags) && IsCanonicalPubKey(pubKeyBytes.ToList(), flags) && CheckSig(sigBytes, pubKeyBytes, scriptCode, txTo, nIn, nHashType, flags);
-
-                                    if (fOk)
-                                    {
-                                        isig++;
-                                        nSigsCount--;
-                                    }
-                                    ikey++;
-                                    nKeysCount--;
-
-                                    // If there are more signatures left than keys left,
-                                    // then too many signatures have failed
-                                    if (nSigsCount > nKeysCount)
-                                    {
-                                        fSuccess = false;
-                                    }
-                                }
-
-                                while (i-- > 1)
-                                {
+                                    int n = (int)CastToBigInteger(stacktop(ref stack, -1));
                                     popstack(ref stack);
-                                }
 
-                                // A bug causes CHECKMULTISIG to consume one extra argument
-                                // whose contents were not checked in any way.
-                                //
-                                // Unfortunately this is a potential source of mutability,
-                                // so optionally verify it is exactly equal to zero prior
-                                // to removing it from the stack.
-                                if (stack.Count() < 1)
-                                {
-                                    return false;
-                                }
-                                if ((flags & (int)scriptflag.SCRIPT_VERIFY_NULLDUMMY) != 0 && stacktop(ref stack, -1).Count() != 0)
-                                {
-                                    return false; // CHECKMULTISIG dummy argument not null
-                                }
-                                popstack(ref stack);
-
-                                stack.Add(fSuccess ? trueBytes : falseBytes);
-
-                                if (opcode == instruction.OP_CHECKMULTISIGVERIFY)
-                                {
-                                    if (fSuccess)
-                                    {
-                                        popstack(ref stack);
-                                    }
-                                    else
+                                    if (n < 0 || n >= stack.Count())
                                     {
                                         return false;
                                     }
+
+                                    IEnumerable<byte> vch = stacktop(ref stack, -n - 1);
+                                    if (opcode == instruction.OP_ROLL)
+                                    {
+                                        stack.RemoveAt(nStackDepth - n - 1);
+                                    }
+
+                                    stack.Add(vch);
                                 }
-                            }
-                            break;
+                                break;
 
-                        default:
-                            return false;
+                            case instruction.OP_ROT:
+                                {
+                                    // (x1 x2 x3 -- x2 x3 x1)
+                                    //  x2 x1 x3  after first swap
+                                    //  x2 x3 x1  after second swap
+                                    int nStackDepth = stack.Count();
+                                    if (nStackDepth < 3)
+                                    {
+                                        return false;
+                                    }
+                                    stack.Swap(nStackDepth - 3, nStackDepth - 2);
+                                    stack.Swap(nStackDepth - 2, nStackDepth - 1);
+
+                                }
+                                break;
+
+                            case instruction.OP_SWAP:
+                                {
+                                    // (x1 x2 -- x2 x1)
+                                    int nStackDepth = stack.Count();
+                                    if (nStackDepth < 2)
+                                    {
+                                        return false;
+                                    }
+                                    stack.Swap(nStackDepth - 2, nStackDepth - 1);
+                                }
+                                break;
+
+                            case instruction.OP_TUCK:
+                                {
+                                    // (x1 x2 -- x2 x1 x2)
+                                    int nStackDepth = stack.Count();
+                                    if (nStackDepth < 2)
+                                    {
+                                        return false;
+                                    }
+                                    IEnumerable<byte> vch = stacktop(ref stack, -1);
+                                    stack.Insert(nStackDepth - 2, vch);
+                                }
+                                break;
+
+
+                            case instruction.OP_SIZE:
+                                {
+                                    // (in -- in size)
+                                    if (stack.Count() < 1)
+                                    {
+                                        return false;
+                                    }
+
+                                    BigInteger bnSize = new BigInteger((ushort)stacktop(ref stack, -1).Count());
+                                    stack.Add(bnSize.ToByteArray());
+                                }
+                                break;
+
+
+                            //
+                            // Bitwise logic
+                            //
+                            case instruction.OP_EQUAL:
+                            case instruction.OP_EQUALVERIFY:
+                                //case instruction.OP_NOTEQUAL: // use OP_NUMNOTEQUAL
+                                {
+                                    // (x1 x2 - bool)
+                                    if (stack.Count() < 2)
+                                    {
+                                        return false;
+                                    }
+
+                                    IEnumerable<byte> vch1 = stacktop(ref stack, -2);
+                                    IEnumerable<byte> vch2 = stacktop(ref stack, -1);
+                                    bool fEqual = (vch1 == vch2);
+                                    // OP_NOTEQUAL is disabled because it would be too easy to say
+                                    // something like n != 1 and have some wiseguy pass in 1 with extra
+                                    // zero bytes after it (numerically, 0x01 == 0x0001 == 0x000001)
+                                    //if (opcode == instruction.OP_NOTEQUAL)
+                                    //    fEqual = !fEqual;
+                                    popstack(ref stack);
+                                    popstack(ref stack);
+                                    stack.Add(fEqual ? trueBytes : falseBytes);
+
+                                    if (opcode == instruction.OP_EQUALVERIFY)
+                                    {
+                                        if (fEqual)
+                                        {
+                                            popstack(ref stack);
+                                        }
+                                        else
+                                        {
+                                            return false;
+                                        }
+                                    }
+                                }
+                                break;
+
+
+                            //
+                            // Numeric
+                            //
+                            case instruction.OP_1ADD:
+                            case instruction.OP_1SUB:
+                            case instruction.OP_NEGATE:
+                            case instruction.OP_ABS:
+                            case instruction.OP_NOT:
+                            case instruction.OP_0NOTEQUAL:
+                                {
+                                    // (in -- out)
+                                    if (stack.Count() < 1)
+                                    {
+                                        return false;
+                                    }
+
+                                    BigInteger bn = CastToBigInteger(stacktop(ref stack, -1));
+                                    switch (opcode)
+                                    {
+                                        case instruction.OP_1ADD:
+                                            bn = bn + 1;
+                                            break;
+                                        case instruction.OP_1SUB:
+                                            bn = bn - 1;
+                                            break;
+                                        case instruction.OP_NEGATE:
+                                            bn = -bn;
+                                            break;
+                                        case instruction.OP_ABS:
+                                            bn = BigInteger.Abs(bn);
+                                            break;
+                                        case instruction.OP_NOT:
+                                            bn = bn == 0 ? 1 : 0;
+                                            break;
+                                        case instruction.OP_0NOTEQUAL:
+                                            bn = bn != 0 ? 1 : 0;
+                                            break;
+                                    }
+
+                                    popstack(ref stack);
+                                    stack.Add(bn.ToByteArray());
+                                }
+                                break;
+
+                            case instruction.OP_ADD:
+                            case instruction.OP_SUB:
+                            case instruction.OP_BOOLAND:
+                            case instruction.OP_BOOLOR:
+                            case instruction.OP_NUMEQUAL:
+                            case instruction.OP_NUMEQUALVERIFY:
+                            case instruction.OP_NUMNOTEQUAL:
+                            case instruction.OP_LESSTHAN:
+                            case instruction.OP_GREATERTHAN:
+                            case instruction.OP_LESSTHANOREQUAL:
+                            case instruction.OP_GREATERTHANOREQUAL:
+                            case instruction.OP_MIN:
+                            case instruction.OP_MAX:
+                                {
+                                    // (x1 x2 -- out)
+                                    if (stack.Count() < 2)
+                                    {
+                                        return false;
+                                    }
+
+                                    BigInteger bn1 = CastToBigInteger(stacktop(ref stack, -2));
+                                    BigInteger bn2 = CastToBigInteger(stacktop(ref stack, -1));
+                                    BigInteger bn = 0;
+
+                                    switch (opcode)
+                                    {
+                                        case instruction.OP_ADD:
+                                            bn = bn1 + bn2;
+                                            break;
+                                        case instruction.OP_SUB:
+                                            bn = bn1 - bn2;
+                                            break;
+                                        case instruction.OP_BOOLAND:
+                                            bn = (bn1 != 0 && bn2 != 0) ? 1 : 0;
+                                            break;
+                                        case instruction.OP_BOOLOR:
+                                            bn = (bn1 != 0 || bn2 != 0) ? 1 : 0;
+                                            break;
+                                        case instruction.OP_NUMEQUAL:
+                                            bn = (bn1 == bn2) ? 1 : 0;
+                                            break;
+                                        case instruction.OP_NUMEQUALVERIFY:
+                                            bn = (bn1 == bn2) ? 1 : 0;
+                                            break;
+                                        case instruction.OP_NUMNOTEQUAL:
+                                            bn = (bn1 != bn2) ? 1 : 0;
+                                            break;
+                                        case instruction.OP_LESSTHAN:
+                                            bn = (bn1 < bn2) ? 1 : 0;
+                                            break;
+                                        case instruction.OP_GREATERTHAN:
+                                            bn = (bn1 > bn2) ? 1 : 0;
+                                            break;
+                                        case instruction.OP_LESSTHANOREQUAL:
+                                            bn = (bn1 <= bn2) ? 1 : 0;
+                                            break;
+                                        case instruction.OP_GREATERTHANOREQUAL:
+                                            bn = (bn1 >= bn2) ? 1 : 0;
+                                            break;
+                                        case instruction.OP_MIN:
+                                            bn = (bn1 < bn2 ? bn1 : bn2);
+                                            break;
+                                        case instruction.OP_MAX:
+                                            bn = (bn1 > bn2 ? bn1 : bn2);
+                                            break;
+                                    }
+
+                                    popstack(ref stack);
+                                    popstack(ref stack);
+                                    stack.Add(bn.ToByteArray());
+
+                                    if (opcode == instruction.OP_NUMEQUALVERIFY)
+                                    {
+                                        if (CastToBool(stacktop(ref stack, -1)))
+                                        {
+                                            popstack(ref stack);
+                                        }
+                                        else
+                                        {
+                                            return false;
+                                        }
+                                    }
+                                }
+                                break;
+
+                            case instruction.OP_WITHIN:
+                                {
+                                    // (x min max -- out)
+                                    if (stack.Count() < 3)
+                                    {
+                                        return false;
+                                    }
+
+                                    BigInteger bn1 = CastToBigInteger(stacktop(ref stack, -3));
+                                    BigInteger bn2 = CastToBigInteger(stacktop(ref stack, -2));
+                                    BigInteger bn3 = CastToBigInteger(stacktop(ref stack, -1));
+
+                                    bool fValue = (bn2 <= bn1 && bn1 < bn3);
+
+                                    popstack(ref stack);
+                                    popstack(ref stack);
+                                    popstack(ref stack);
+
+                                    stack.Add(fValue ? trueBytes : falseBytes);
+                                }
+                                break;
+
+                            //
+                            // Crypto
+                            //
+                            case instruction.OP_RIPEMD160:
+                            case instruction.OP_SHA1:
+                            case instruction.OP_SHA256:
+                            case instruction.OP_HASH160:
+                            case instruction.OP_HASH256:
+                                {
+                                    // (in -- hash)
+                                    if (stack.Count() < 1)
+                                    {
+                                        return false;
+                                    }
+                                    Hash hash = null;
+                                    IEnumerable<byte> data = stacktop(ref stack, -1);
+
+                                    switch (opcode)
+                                    {
+                                        case instruction.OP_HASH160:
+                                            hash = Hash160.Compute160(data);
+                                            break;
+                                        case instruction.OP_HASH256:
+                                            hash = Hash256.Compute256(data);
+                                            break;
+                                        case instruction.OP_SHA1:
+                                            hash = SHA1.Compute1(data);
+                                            break;
+                                        case instruction.OP_SHA256:
+                                            hash = SHA256.Compute256(data);
+                                            break;
+                                        case instruction.OP_RIPEMD160:
+                                            hash = RIPEMD160.Compute160(data);
+                                            break;
+                                    }
+                                    popstack(ref stack);
+                                    stack.Add(hash.hashBytes);
+                                }
+                                break;
+
+                            case instruction.OP_CODESEPARATOR:
+                                {
+                                    // Hash starts after the code separator
+                                    nCodeHashBegin = CodeQueue.CurrentIndex;
+                                }
+                                break;
+
+                            case instruction.OP_CHECKSIG:
+                            case instruction.OP_CHECKSIGVERIFY:
+                                {
+                                    // (sig pubkey -- bool)
+                                    if (stack.Count() < 2)
+                                    {
+                                        return false;
+                                    }
+
+                                    IList<byte> sigBytes = stacktop(ref stack, -2).ToList();
+                                    IList<byte> pubkeyBytes = stacktop(ref stack, -1).ToList();
+
+                                    // Subset of script starting at the most recent codeseparator
+                                    CScript scriptCode = new CScript(script.Bytes.Skip(nCodeHashBegin));
+
+                                    // There's no way for a signature to sign itself
+                                    scriptCode.RemovePattern(sigBytes);
+
+                                    bool fSuccess = IsCanonicalSignature(sigBytes, flags) && IsCanonicalPubKey(pubkeyBytes.ToList(), flags) && CheckSig(sigBytes, pubkeyBytes, scriptCode, txTo, nIn, nHashType, flags);
+
+                                    popstack(ref stack);
+                                    popstack(ref stack);
+
+                                    stack.Add(fSuccess ? trueBytes : falseBytes);
+
+                                    if (opcode == instruction.OP_CHECKSIGVERIFY)
+                                    {
+                                        if (fSuccess)
+                                        {
+                                            popstack(ref stack);
+                                        }
+                                        else
+                                        {
+                                            return false;
+                                        }
+                                    }
+                                }
+                                break;
+
+                            case instruction.OP_CHECKMULTISIG:
+                            case instruction.OP_CHECKMULTISIGVERIFY:
+                                {
+                                    // ([sig ...] num_of_signatures [pubkey ...] num_of_pubkeys -- bool)
+
+                                    int i = 1;
+                                    if (stack.Count() < i)
+                                    {
+                                        return false;
+                                    }
+
+                                    int nKeysCount = (int)CastToBigInteger(stacktop(ref stack, -i));
+                                    if (nKeysCount < 0 || nKeysCount > 20)
+                                    {
+                                        return false;
+                                    }
+                                    nOpCount += nKeysCount;
+                                    if (nOpCount > 201)
+                                    {
+                                        return false;
+                                    }
+                                    int ikey = ++i;
+                                    i += nKeysCount;
+                                    if (stack.Count() < i)
+                                    {
+                                        return false;
+                                    }
+
+                                    int nSigsCount = (int)CastToBigInteger(stacktop(ref stack, -i));
+                                    if (nSigsCount < 0 || nSigsCount > nKeysCount)
+                                    {
+                                        return false;
+                                    }
+                                    int isig = ++i;
+                                    i += nSigsCount;
+                                    if (stack.Count() < i)
+                                    {
+                                        return false;
+                                    }
+
+                                    // Subset of script starting at the most recent codeseparator
+                                    CScript scriptCode = new CScript(script.Bytes.Skip(nCodeHashBegin));
+
+                                    // There is no way for a signature to sign itself, so we need to drop the signatures
+                                    for (int k = 0; k < nSigsCount; k++)
+                                    {
+                                        IEnumerable<byte> vchSig = stacktop(ref stack, -isig - k);
+                                        scriptCode.RemovePattern(vchSig.ToList());
+                                    }
+
+                                    bool fSuccess = true;
+                                    while (fSuccess && nSigsCount > 0)
+                                    {
+                                        IList<byte> sigBytes = stacktop(ref stack, -isig).ToList();
+                                        IList<byte> pubKeyBytes = stacktop(ref stack, -ikey).ToList();
+
+                                        // Check signature
+                                        bool fOk = IsCanonicalSignature(sigBytes, flags) && IsCanonicalPubKey(pubKeyBytes.ToList(), flags) && CheckSig(sigBytes, pubKeyBytes, scriptCode, txTo, nIn, nHashType, flags);
+
+                                        if (fOk)
+                                        {
+                                            isig++;
+                                            nSigsCount--;
+                                        }
+                                        ikey++;
+                                        nKeysCount--;
+
+                                        // If there are more signatures left than keys left,
+                                        // then too many signatures have failed
+                                        if (nSigsCount > nKeysCount)
+                                        {
+                                            fSuccess = false;
+                                        }
+                                    }
+
+                                    while (i-- > 1)
+                                    {
+                                        popstack(ref stack);
+                                    }
+
+                                    // A bug causes CHECKMULTISIG to consume one extra argument
+                                    // whose contents were not checked in any way.
+                                    //
+                                    // Unfortunately this is a potential source of mutability,
+                                    // so optionally verify it is exactly equal to zero prior
+                                    // to removing it from the stack.
+                                    if (stack.Count() < 1)
+                                    {
+                                        return false;
+                                    }
+                                    if ((flags & (int)scriptflag.SCRIPT_VERIFY_NULLDUMMY) != 0 && stacktop(ref stack, -1).Count() != 0)
+                                    {
+                                        return false; // CHECKMULTISIG dummy argument not null
+                                    }
+                                    popstack(ref stack);
+
+                                    stack.Add(fSuccess ? trueBytes : falseBytes);
+
+                                    if (opcode == instruction.OP_CHECKMULTISIGVERIFY)
+                                    {
+                                        if (fSuccess)
+                                        {
+                                            popstack(ref stack);
+                                        }
+                                        else
+                                        {
+                                            return false;
+                                        }
+                                    }
+                                }
+                                break;
+
+                            default:
+                                return false;
+                        }
+
+                    // Size limits
+                    if (stack.Count() + altStack.Count() > 1000)
+                    {
+                        return false;
                     }
-
-                // Size limits
-                if (stack.Count() + altStack.Count() > 1000)
-                {
-                    return false;
                 }
             }
-
-
-            if (vfExec.Count() == 0)
+            catch (Exception)
             {
+                // If there are any exceptions then just return false.
+                return false;
+            }
+
+            if (vfExec.Count() != 0)
+            {
+                // Something went wrong with conditional instructions.
                 return false;
             }
 
@@ -1964,7 +1979,7 @@ namespace Novacoin
         }
 
 
-        static bool IsCanonicalPubKey(IList<byte> pubKeyBytes, int flags)
+        public static bool IsCanonicalPubKey(IList<byte> pubKeyBytes, int flags)
         {
             if ((flags & (int)scriptflag.SCRIPT_VERIFY_STRICTENC) == 0)
                 return true;
@@ -1988,7 +2003,7 @@ namespace Novacoin
             return true;
         }
 
-        static bool IsCanonicalSignature(IList<byte> sigBytes, int flags)
+        public static bool IsCanonicalSignature(IList<byte> sigBytes, int flags)
         {
             // STUB
 
@@ -2006,7 +2021,7 @@ namespace Novacoin
         /// <param name="nHashType">Hashing type flag</param>
         /// <param name="flags">Signature checking flags</param>
         /// <returns></returns>
-        static bool CheckSig(IList<byte> sigBytes, IList<byte> pubkeyBytes, CScript script, CTransaction txTo, int nIn, int nHashType, int flags)
+        public static bool CheckSig(IList<byte> sigBytes, IList<byte> pubkeyBytes, CScript script, CTransaction txTo, int nIn, int nHashType, int flags)
         {
             CPubKey pubkey;
 
