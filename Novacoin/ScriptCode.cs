@@ -902,7 +902,15 @@ namespace Novacoin
             return false;
         }
 
-        public static Hash256 SignatureHash(CScript scriptCode, CTransaction txTo, int nIn, int nHashType)
+        /// <summary>
+        /// Generation of SignatureHash. This method is responsible for removal of transaction metadata. It's necessary signature can't sign itself. 
+        /// </summary>
+        /// <param name="script">Spending instructions</param>
+        /// <param name="txTo">Instance of transaction</param>
+        /// <param name="nIn">Input number</param>
+        /// <param name="nHashType">Hash type flag</param>
+        /// <returns></returns>
+        public static Hash256 SignatureHash(CScript script, CTransaction txTo, int nIn, int nHashType)
         {
             if (nIn >= txTo.vin.Length)
             {
@@ -911,18 +919,19 @@ namespace Novacoin
                 throw new ArgumentOutOfRangeException("nIn", sb.ToString());
             }
 
+            // Init a copy of transaction
             CTransaction txTmp = new CTransaction(txTo);
 
             // In case concatenating two scripts ends up with two codeseparators,
             // or an extra one at the end, this prevents all those possible incompatibilities.
-            scriptCode.RemovePattern(new byte[] { (byte)instruction.OP_CODESEPARATOR });
+            script.RemovePattern(new byte[] { (byte)instruction.OP_CODESEPARATOR });
 
             // Blank out other inputs' signatures
             for (int i = 0; i < txTmp.vin.Length; i++)
             {
                 txTmp.vin[i].scriptSig = new CScript();
             }
-            txTmp.vin[nIn].scriptSig = scriptCode;
+            txTmp.vin[nIn].scriptSig = script;
 
             // Blank out some of the outputs
             if ((nHashType & 0x1f) == (int)sigflag.SIGHASH_NONE)
@@ -981,6 +990,14 @@ namespace Novacoin
             return Hash256.Compute256(b);
         }
 
+        //
+        // Script is a stack machine (like Forth) that evaluates a predicate
+        // returning a bool indicating valid or not.  There are no loops.
+        //
+
+        /// <summary>
+        /// Script machine exception
+        /// </summary>
         public class StackMachineException : Exception
         {
             public StackMachineException()
@@ -997,12 +1014,6 @@ namespace Novacoin
             {
             }
         }
-
-
-        //
-        // Script is a stack machine (like Forth) that evaluates a predicate
-        // returning a bool indicating valid or not.  There are no loops.
-        //
 
         /// <summary>
         /// Remove last element from stack
@@ -1086,6 +1097,16 @@ namespace Novacoin
             return new BigInteger(value.ToArray());
         }
 
+        /// <summary>
+        /// Execution of script
+        /// </summary>
+        /// <param name="stack"></param>
+        /// <param name="script">Script to execute</param>
+        /// <param name="txTo">Transaction instance</param>
+        /// <param name="nIn">Input number</param>
+        /// <param name="flags">Signature checking flags</param>
+        /// <param name="nHashType">Hash type flag</param>
+        /// <returns></returns>
         static bool EvalScript(ref List<IEnumerable<byte>> stack, CScript script, CTransaction txTo, int nIn, int flags, int nHashType)
         {
             instruction opcode;
@@ -1171,7 +1192,7 @@ namespace Novacoin
                         case instruction.OP_16:
                             {
                                 // ( -- value)
-                                BigInteger bn = DecodeOP_N(opcode);
+                                BigInteger bn = DecodeOP_N(opcode, true);
                                 stack.Add(bn.ToByteArray());
                             }
                             break;
@@ -1192,8 +1213,8 @@ namespace Novacoin
                         case instruction.OP_NOP10:
                             {
                                 // Just do nothing
-                                break;
                             }
+                            break;
 
                         //
                         // Control
@@ -1732,7 +1753,6 @@ namespace Novacoin
                             }
                             break;
 
-
                         //
                         // Crypto
                         //
@@ -1744,36 +1764,32 @@ namespace Novacoin
                             {
                                 // (in -- hash)
                                 if (stack.Count() < 1)
+                                {
                                     return false;
-                                IEnumerable<byte> vch = stacktop(ref stack, -1);
-                                IEnumerable<byte> vchHash = null;
-                                if (opcode == instruction.OP_RIPEMD160)
-                                {
-                                    RIPEMD160 hash = RIPEMD160.Compute160(vch);
-                                    vchHash = hash.hashBytes;
                                 }
-                                else if (opcode == instruction.OP_SHA1)
+                                Hash hash = null;
+                                IEnumerable<byte> data = stacktop(ref stack, -1);
+
+                                switch (opcode)
                                 {
-                                    SHA1 hash = SHA1.Compute1(vch);
-                                    vchHash = hash.hashBytes;
-                                }
-                                else if (opcode == instruction.OP_SHA256)
-                                {
-                                    SHA256 hash = SHA256.Compute256(vch);
-                                    vchHash = hash.hashBytes;
-                                }
-                                else if (opcode == instruction.OP_HASH160)
-                                {
-                                    Hash160 hash = Hash160.Compute160(vch);
-                                    vchHash = hash.hashBytes;
-                                }
-                                else if (opcode == instruction.OP_HASH256)
-                                {
-                                    Hash256 hash = Hash256.Compute256(vch);
-                                    vchHash = hash.hashBytes;
+                                    case instruction.OP_HASH160:
+                                        hash = Hash160.Compute160(data);
+                                        break;
+                                    case instruction.OP_HASH256:
+                                        hash = Hash256.Compute256(data);
+                                        break;
+                                    case instruction.OP_SHA1:
+                                        hash = SHA1.Compute1(data);
+                                        break;
+                                    case instruction.OP_SHA256:
+                                        hash = SHA256.Compute256(data);
+                                        break;
+                                    case instruction.OP_RIPEMD160:
+                                        hash = RIPEMD160.Compute160(data);
+                                        break;
                                 }
                                 popstack(ref stack);
-                                stack.Add(vchHash);
+                                stack.Add(hash.hashBytes);
                             }
                             break;
 
@@ -1985,7 +2001,18 @@ namespace Novacoin
             return true;
         }
 
-        static bool CheckSig(IList<byte> vchSig, IList<byte> vchPubKey, CScript scriptCode, CTransaction txTo, int nIn, int nHashType, int flags)
+        /// <summary>
+        /// Check signature.
+        /// </summary>
+        /// <param name="sigBytes">Signature</param>
+        /// <param name="pubkeyBytes">Public key</param>
+        /// <param name="script">Spending script</param>
+        /// <param name="txTo">CTransaction instance</param>
+        /// <param name="nIn">Input number</param>
+        /// <param name="nHashType">Hashing type flag</param>
+        /// <param name="flags">Signature checking flags</param>
+        /// <returns></returns>
+        static bool CheckSig(IList<byte> sigBytes, IList<byte> pubkeyBytes, CScript script, CTransaction txTo, int nIn, int nHashType, int flags)
         {
             CPubKey pubkey;
 
@@ -1993,7 +2020,7 @@ namespace Novacoin
             {
                 // Trying to initialize the public key instance
 
-                pubkey = new CPubKey(vchPubKey);
+                pubkey = new CPubKey(pubkeyBytes);
             }
             catch (Exception)
             {
@@ -2007,7 +2034,7 @@ namespace Novacoin
                 return false;
             }
 
-            if (vchSig.Count == 0)
+            if (sigBytes.Count == 0)
             {
                 return false;
             }
@@ -2015,19 +2042,19 @@ namespace Novacoin
             // Hash type is one byte tacked on to the end of the signature
             if (nHashType == 0)
             {
-                nHashType = vchSig.Last();
+                nHashType = sigBytes.Last();
             }
-            else if (nHashType != vchSig.Last())
+            else if (nHashType != sigBytes.Last())
             {
                 return false;
             }
 
             // Remove hash type
-            vchSig.RemoveAt(vchSig.Count - 1);
+            sigBytes.RemoveAt(sigBytes.Count - 1);
 
-            Hash256 sighash = SignatureHash(scriptCode, txTo, nIn, nHashType);
+            Hash256 sighash = SignatureHash(script, txTo, nIn, nHashType);
 
-            if (!pubkey.VerifySignature(sighash, vchSig))
+            if (!pubkey.VerifySignature(sighash, sigBytes))
             {
                 return false;
             }
