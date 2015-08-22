@@ -73,19 +73,22 @@ namespace Novacoin
             }
         }
 
+        /// <summary>
+        /// Was this signed correctly?
+        /// </summary>
         public bool SignatureOK
         {
             get
             {
-                IList<IEnumerable<byte>> solutions;
-                txnouttype whichType;
-
                 if (IsProofOfStake)
                 {
                     if (signature.Length == 0)
                     {
                         return false; // No signature
                     }
+
+                    txnouttype whichType;
+                    IList<IEnumerable<byte>> solutions;
 
                     if (!ScriptCode.Solver(vtx[1].vout[1].scriptPubKey, out whichType, out solutions))
                     {
@@ -120,7 +123,7 @@ namespace Novacoin
         }
 
         /// <summary>
-        /// Convert current instance into sequence of bytes
+        /// Get current instance as sequence of bytes
         /// </summary>
         /// <returns>Byte sequence</returns>
         public IList<byte> Bytes 
@@ -152,12 +155,15 @@ namespace Novacoin
 
             foreach(CTransaction tx in vtx)
             {
-                sb.AppendFormat("{0},\n", tx.ToString());
+                sb.AppendFormat("{0}", tx.ToString());
             }
 
-            sb.AppendFormat("signature={0})\n", Interop.ToHex(signature));
-            sb.AppendFormat("signatureOK={0})\n", SignatureOK);
+            if (IsProofOfStake)
+            {
+                sb.AppendFormat(", signature={0}, signatureOK={1}\n", Interop.ToHex(signature), SignatureOK);
+            }
 
+            sb.Append(")");
 
             // TODO
             return sb.ToString();
