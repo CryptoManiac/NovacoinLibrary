@@ -457,10 +457,14 @@ namespace Novacoin
                     return "OP_NOP10";
 
                 // template matching params
+                case instruction.OP_SMALLINTEGER:
+                    return "OP_SMALLINTEGER";
                 case instruction.OP_PUBKEYHASH:
                     return "OP_PUBKEYHASH";
                 case instruction.OP_PUBKEY:
                     return "OP_PUBKEY";
+                case instruction.OP_PUBKEYS:
+                    return "OP_PUBKEYS";
                 case instruction.OP_SMALLDATA:
                     return "OP_SMALLDATA";
 
@@ -796,12 +800,12 @@ namespace Novacoin
 
                 IEnumerable<byte> args1, args2;
 
-                byte last1 = script1.Bytes.Last();
-                byte last2 = script2.Bytes.Last();
+                int last1 = script1.Bytes.Count() -1;
+                int last2 = script2.Bytes.Count() - 1;
 
                 while (true)
                 {
-                    if (bq1.GetCurrent() == last1 && bq2.GetCurrent() == last2)
+                    if (bq1.CurrentIndex == last1 && bq2.CurrentIndex == last2)
                     {
                         // Found a match
                         typeRet = templateTuple.Item1;
@@ -831,8 +835,7 @@ namespace Novacoin
                     // Template matching opcodes:
                     if (opcode2 == instruction.OP_PUBKEYS)
                     {
-                        int PubKeyLen = args1.Count();
-                        while (PubKeyLen >= 33 && PubKeyLen <= 120)
+                        while (args1.Count() >= 33 && args1.Count() <= 120)
                         {
                             solutions.Add(args1);
                             if (!GetOp(ref bq1, out opcode1, out args1))
@@ -841,7 +844,9 @@ namespace Novacoin
                             }
                         }
                         if (!GetOp(ref bq2, out opcode2, out args2))
+                        {
                             break;
+                        }
                         // Normal situation is to fall through
                         // to other if/else statements
                     }
@@ -870,7 +875,7 @@ namespace Novacoin
                             byte n = (byte)DecodeOP_N(opcode1);
                             solutions.Add(new byte[] { n });
                         }
-                        catch (ArgumentException)
+                        catch (Exception)
                         {
                             break;
                         }
