@@ -603,7 +603,7 @@ namespace Novacoin
         /// </summary>
         /// <param name="opcode">Small integer opcode (OP_1_NEGATE and OP_0 - OP_16)</param>
         /// <returns>Small integer</returns>
-        public static int DecodeOP_N(instruction opcode, bool AllowNegate=false)
+        public static int DecodeOP_N(instruction opcode, bool AllowNegate = false)
         {
             if (AllowNegate && opcode == instruction.OP_1NEGATE)
             {
@@ -629,7 +629,7 @@ namespace Novacoin
         /// </summary>
         /// <param name="n">Small integer from the range of -1 up to 16.</param>
         /// <returns>Corresponding opcode.</returns>
-        public static instruction EncodeOP_N(int n, bool allowNegate=false)
+        public static instruction EncodeOP_N(int n, bool allowNegate = false)
         {
             if (allowNegate && n == -1)
             {
@@ -1099,18 +1099,11 @@ namespace Novacoin
             int nOpCount = 0;
             int nCodeHashBegin = 0;
 
-            while (true)
+            IEnumerable<byte> pushArg;
+
+            while (GetOp(ref CodeQueue, out opcode, out pushArg)) // Read instructions
             {
                 bool fExec = vfExec.IndexOf(false) != -1;
-
-                //
-                // Read instruction
-                //
-                IEnumerable<byte> pushArg;
-                if (!GetOp(ref CodeQueue, out opcode, out pushArg))
-                {
-                    return false; // No instructions left
-                }
 
                 if (pushArg.Count() > 520)
                 {
@@ -1620,8 +1613,7 @@ namespace Novacoin
                                         break;
 
                                     default:
-                                        throw new StackMachineException("invalid opcode");
-                                        break;
+                                        throw new StackMachineException("invalid instruction");
                                 }
 
                                 popstack(ref stack);
@@ -1696,8 +1688,7 @@ namespace Novacoin
                                         break;
 
                                     default:
-                                        throw new StackMachineException("invalid opcode");
-                                        break;
+                                        throw new StackMachineException("invalid instruction");
                                 }
 
                                 popstack(ref stack);
@@ -1987,12 +1978,54 @@ namespace Novacoin
             return true;
         }
 
-
-        static bool CheckSig(IList<byte> sigBytes, IList<byte> pubKeyBytes, CScript scriptCode, CTransaction txTo, int nIn, int nHashType, int flags)
+        static bool CheckSig(IList<byte> vchSig, IList<byte> vchPubKey, CScript scriptCode, CTransaction txTo, int nIn, int nHashType, int flags)
         {
-            // STUB
+            CPubKey pubkey;
+
+            try
+            {
+                // Trying to initialize the public key instance
+
+                pubkey = new CPubKey(vchPubKey);
+            }
+            catch (Exception)
+            {
+                // Exception occurred while initializing the public key
+
+                return false; 
+            }
+
+            if (!pubkey.IsValid)
+            {
+                return false;
+            }
+
+            if (vchSig.Count == 0)
+            {
+                return false;
+            }
+
+            // Hash type is one byte tacked on to the end of the signature
+            if (nHashType == 0)
+            {
+                nHashType = vchSig.Last();
+            }
+            else if (nHashType != vchSig.Last())
+            {
+                return false;
+            }
+
+            // Remove hash type
+            vchSig.RemoveAt(vchSig.Count - 1);
+
+            Hash256 sighash = SignatureHash(scriptCode, txTo, nIn, nHashType);
+
+            if (!pubkey.VerifySignature(sighash, vchSig))
+            {
+                return false;
+            }
+
             return true;
         }
-
-};
+    };
 }

@@ -79,12 +79,12 @@ namespace NovacoinTest
             /// ECDSA keypair signing test
 
             string data = "Превед!";
-            byte[] dataBytes = Encoding.UTF8.GetBytes(data);
-            byte[] signature = keyPair1.Sign(dataBytes).ToArray();
+            Hash256 sigHash =  Hash256.Compute256(Encoding.UTF8.GetBytes(data));
+            byte[] signature = keyPair1.Sign(sigHash).ToArray();
 
             Console.WriteLine("Signature: {0}", Interop.ToHex(signature));
-            Console.WriteLine("Signature is OK: {0} (CKeyPair)", keyPair1.VerifySignature(dataBytes, signature));
-            Console.WriteLine("Signature is OK: {0} (CPubKey)", pubKey.VerifySignature(dataBytes, signature));
+            Console.WriteLine("Signature is OK: {0} (CKeyPair)", keyPair1.VerifySignature(sigHash, signature));
+            Console.WriteLine("Signature is OK: {0} (CPubKey)", pubKey.VerifySignature(sigHash, signature));
 
             /// Donation address
 

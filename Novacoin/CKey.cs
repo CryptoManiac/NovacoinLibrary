@@ -63,16 +63,14 @@ namespace Novacoin
         /// <summary>
         /// Does the signature matches our public key?
         /// </summary>
-        /// <param name="data">Data bytes</param>
+        /// <param name="sigHash">Data hash</param>
         /// <param name="signature">Signature bytes</param>
         /// <returns>Checking result</returns>
-        public bool VerifySignature(IEnumerable<byte> data, IEnumerable<byte> signature)
+        public bool VerifySignature(Hash256 sigHash, IEnumerable<byte> signature)
         {
-            byte[] dataBytes = data.ToArray();
-
             ISigner signer = SignerUtilities.GetSigner("SHA-256withECDSA");
             signer.Init(false, _Public);
-            signer.BlockUpdate(dataBytes, 0, dataBytes.Length);
+            signer.BlockUpdate(sigHash.hashBytes, 0, sigHash.hashSize);
 
             return signer.VerifySignature(signature.ToArray());
         }

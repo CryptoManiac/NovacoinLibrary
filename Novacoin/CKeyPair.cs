@@ -116,15 +116,13 @@ namespace Novacoin
         /// <summary>
         /// Create signature for supplied data
         /// </summary>
-        /// <param name="data">Data bytes sequence</param>
+        /// <param name="data">Hash to sigh</param>
         /// <returns>Signature bytes sequence</returns>
-        public IEnumerable<byte> Sign(IEnumerable<byte> data)
+        public IEnumerable<byte> Sign(Hash256 sigHash)
         {
-            byte[] dataBytes = data.ToArray();
-
             ISigner signer = SignerUtilities.GetSigner("SHA-256withECDSA");
             signer.Init(true, _Private);
-            signer.BlockUpdate(dataBytes, 0, dataBytes.Length);
+            signer.BlockUpdate(sigHash.hashBytes, 0, sigHash.hashSize);
 
             return signer.GenerateSignature();
         }
