@@ -174,7 +174,7 @@ namespace Novacoin
         /// <summary>
         /// Is it true that script doesn't contain anything except push value operations?
         /// </summary>
-        public bool IsPushonly
+        public bool IsPushOnly
         {
             get
             {

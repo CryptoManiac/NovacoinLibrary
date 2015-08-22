@@ -2020,7 +2020,7 @@ namespace Novacoin
         /// <param name="nIn">Input number</param>
         /// <param name="nHashType">Hashing type flag</param>
         /// <param name="flags">Signature checking flags</param>
-        /// <returns></returns>
+        /// <returns>Checking result</returns>
         public static bool CheckSig(IList<byte> sigBytes, IList<byte> pubkeyBytes, CScript script, CTransaction txTo, int nIn, int nHashType, int flags)
         {
             CPubKey pubkey;
@@ -2066,6 +2066,72 @@ namespace Novacoin
             if (!pubkey.VerifySignature(sighash, sigBytes))
             {
                 return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Evaluates the both scriptSig and scriptPubKey.
+        /// </summary>
+        /// <param name="scriptSig"></param>
+        /// <param name="scriptPubKey"></param>
+        /// <param name="txTo">Transaction</param>
+        /// <param name="nIn">Input number</param>
+        /// <param name="flags">Script validation flags</param>
+        /// <param name="nHashType">Hash type flag</param>
+        /// <returns></returns>
+        public static bool VerifyScript(CScript scriptSig, CScript scriptPubKey, CTransaction txTo, int nIn, int flags, int nHashType)
+        {
+            List<IEnumerable<byte>> stack = new List<IEnumerable<byte>>();
+            List<IEnumerable<byte>> stackCopy = null;
+
+            if (!EvalScript(ref stack, scriptSig, txTo, nIn, flags, nHashType))
+            {
+                return false;
+            }
+
+            if ((flags & (int)scriptflag.SCRIPT_VERIFY_P2SH) != 0)
+            {
+                stackCopy = new List<IEnumerable<byte>> (stack);
+            }
+
+            if (!EvalScript(ref stack, scriptPubKey, txTo, nIn, flags, nHashType))
+            {
+                return false;
+            }
+
+            if (stack.Count == 0 || CastToBool(stack.Last()) == false)
+            {
+                return false;
+            }
+
+            // Additional validation for spend-to-script-hash transactions:
+            if ((flags & (int)scriptflag.SCRIPT_VERIFY_P2SH) != 0 && scriptPubKey.IsPayToScriptHash)
+            {
+                if (!scriptSig.IsPushOnly) // scriptSig must be literals-only
+                {
+                    return false;
+                }
+
+                // stackCopy cannot be empty here, because if it was the
+                // P2SH  HASH <> EQUAL  scriptPubKey would be evaluated with
+                // an empty stack and the EvalScript above would return false.
+
+                if (stackCopy.Count == 0)
+                {
+                    throw new StackMachineException("Fatal script validation error.");
+                }
+
+                CScript pubKey2 = new CScript(stackCopy.Last());
+                popstack(ref stackCopy);
+
+                if (!EvalScript(ref stackCopy, pubKey2, txTo, nIn, flags, nHashType))
+                    return false;
+                if (stackCopy.Count == 0)
+                    return false;
+
+                return CastToBool(stackCopy.Last());
             }
 
             return true;
