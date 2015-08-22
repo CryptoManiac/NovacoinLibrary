@@ -19,10 +19,10 @@ namespace Novacoin
 		/// </summary>
 		public CTransaction[] vtx;
 
-		/// <summary>
-		/// Block header signature.
-		/// </summary>
-		public byte[] signature;
+        /// <summary>
+        /// Block header signature.
+        /// </summary>
+        public byte[] signature = new byte[0];
 
         public CBlock(CBlock b)
         {
@@ -63,6 +63,63 @@ namespace Novacoin
         }
 
         /// <summary>
+        /// Is this a Proof-of-Stake block?
+        /// </summary>
+        public bool IsProofOfStake
+        {
+            get
+            {
+                return (vtx.Length > 1 && vtx[1].IsCoinStake);
+            }
+        }
+
+        public bool SignatureOK
+        {
+            get
+            {
+                IList<IEnumerable<byte>> solutions;
+                txnouttype whichType;
+
+                if (IsProofOfStake)
+                {
+                    if (signature.Length == 0)
+                    {
+                        return false; // No signature
+                    }
+
+                    if (!ScriptCode.Solver(vtx[1].vout[1].scriptPubKey, out whichType, out solutions))
+                    {
+                        return false; // No solutions found
+                    }
+
+                    if (whichType == txnouttype.TX_PUBKEY)
+                    {
+                        CPubKey pubkey;
+
+                        try
+                        {
+                            pubkey = new CPubKey(solutions[0]);
+                        }
+                        catch (Exception)
+                        {
+                            return false; // Error while loading public key
+                        }
+
+                        return pubkey.VerifySignature(header.Hash, signature);
+                    }
+                }
+                else
+                {
+                    // Proof-of-Work blocks have no signature
+
+                    return true;
+                }
+
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Convert current instance into sequence of bytes
         /// </summary>
         /// <returns>Byte sequence</returns>
@@ -99,7 +156,9 @@ namespace Novacoin
             }
 
             sb.AppendFormat("signature={0})\n", Interop.ToHex(signature));
-            
+            sb.AppendFormat("signatureOK={0})\n", SignatureOK);
+
+
             // TODO
             return sb.ToString();
         }
