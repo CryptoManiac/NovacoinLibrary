@@ -618,7 +618,7 @@ namespace Novacoin
             // Only OP_n opcodes are supported, throw exception otherwise.
             if (opcode < instruction.OP_1 || opcode > instruction.OP_16)
             {
-                throw new Exception("Invalid integer instruction.");
+                throw new ArgumentException("Invalid integer instruction.");
             }
 
             return (int)opcode - (int)(instruction.OP_1 - 1);
@@ -643,7 +643,7 @@ namespace Novacoin
 
             // The n value must be in the range of 0 to 16.
             if (n < 0 || n > 16)
-                throw new Exception("Invalid integer value.");
+                throw new ArgumentException("Invalid integer value.");
             return (instruction.OP_1 + n - 1);
         }
 
@@ -831,7 +831,8 @@ namespace Novacoin
                     // Template matching opcodes:
                     if (opcode2 == instruction.OP_PUBKEYS)
                     {
-                        while (args1.Count() >= 33 && args1.Count() <= 120)
+                        int PubKeyLen = args1.Count();
+                        while (PubKeyLen >= 33 && PubKeyLen <= 120)
                         {
                             solutions.Add(args1);
                             if (!GetOp(ref bq1, out opcode1, out args1))
@@ -846,7 +847,8 @@ namespace Novacoin
                     }
                     if (opcode2 == instruction.OP_PUBKEY)
                     {
-                        if (args1.Count() < 33 || args1.Count() > 120)
+                        int PubKeyLen = args1.Count();
+                        if (PubKeyLen < 33 || PubKeyLen > 120)
                         {
                             break;
                         }
@@ -863,12 +865,12 @@ namespace Novacoin
                     else if (opcode2 == instruction.OP_SMALLINTEGER)
                     {
                         // Single-byte small integer pushed onto solutions
-                        if (opcode1 == instruction.OP_0 || (opcode1 >= instruction.OP_1 && opcode1 <= instruction.OP_16))
+                        try
                         {
                             byte n = (byte)DecodeOP_N(opcode1);
                             solutions.Add(new byte[] { n });
                         }
-                        else
+                        catch (ArgumentException)
                         {
                             break;
                         }
@@ -1952,16 +1954,16 @@ namespace Novacoin
             if ((flags & (int)scriptflag.SCRIPT_VERIFY_STRICTENC) == 0)
                 return true;
 
-            if (pubKeyBytes.Count() < 33)
+            if (pubKeyBytes.Count < 33)
                 return false;  // Non-canonical public key: too short
             if (pubKeyBytes[0] == 0x04)
             {
-                if (pubKeyBytes.Count() != 65)
+                if (pubKeyBytes.Count != 65)
                     return false; // Non-canonical public key: invalid length for uncompressed key
             }
             else if (pubKeyBytes[0] == 0x02 || pubKeyBytes[0] == 0x03)
             {
-                if (pubKeyBytes.Count() != 33)
+                if (pubKeyBytes.Count != 33)
                     return false; // Non-canonical public key: invalid length for compressed key
             }
             else
