@@ -57,7 +57,7 @@ namespace Novacoin
         }
 
         /// <summary>
-        /// Initializes a new instance of Hash class with first 20 bytes from supplied list
+        /// Initializes a new instance of Hash class
         /// </summary>
         /// <param name="bytesList">List of bytes</param>
         public Hash(IEnumerable<byte> bytes, int skip = 0)
@@ -65,12 +65,20 @@ namespace Novacoin
             _hashBytes = bytes.Skip(skip).Take(hashSize).ToArray();
         }
 
+        /// <summary>
+        /// Initializes a new instance of Hash class
+        /// </summary>
+        /// <param name="bytesList">Array of bytes</param>
         public Hash(byte[] bytes, int offset = 0)
         {
             _hashBytes = new byte[hashSize];
             Array.Copy(bytes, offset, _hashBytes, 0, hashSize);
         }
 
+        /// <summary>
+        /// Initializes a new instance of Hash class as a copy of another one
+        /// </summary>
+        /// <param name="bytesList">Instance of hash class</param>
         public Hash(Hash h)
         {
             _hashBytes = new byte[h.hashSize];
