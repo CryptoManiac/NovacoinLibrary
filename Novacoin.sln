@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Express 2012 for Windows Desktop
+# Visual Studio 14
+VisualStudioVersion = 14.0.23107.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Novacoin", "Novacoin\Novacoin.csproj", "{6C657EA6-E9FB-41D7-B949-B41DD5136748}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NovacoinTest", "NovacoinTest\NovacoinTest.csproj", "{BFBAD4AE-BCD5-4025-9637-3CE724126448}"

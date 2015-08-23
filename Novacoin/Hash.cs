@@ -21,6 +21,8 @@ using System.Security.Cryptography;
 using System.Collections.Generic;
 using System.Linq;
 
+using System.Numerics;
+
 namespace Novacoin
 {
     public abstract class Hash
@@ -53,7 +55,7 @@ namespace Novacoin
         /// </summary>
         public Hash()
         {
-            _hashBytes = Enumerable.Repeat<byte>(0, hashSize).ToArray();
+            _hashBytes = new byte[hashSize];
         }
 
         /// <summary>
@@ -89,6 +91,11 @@ namespace Novacoin
         {
             get { return !_hashBytes.Any(b => b != 0); }
         }
+
+        /*public static implicit operator BigInteger(Hash h)
+        {
+            return new BigInteger(h._hashBytes);
+        }*/
 
         public override string ToString()
         {

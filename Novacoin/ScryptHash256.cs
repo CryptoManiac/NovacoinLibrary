@@ -49,19 +49,20 @@ namespace Novacoin
             var keyBytes1 = CryptoUtils.PBKDF2_Sha256(128, dataBytes, dataBytes, 1);
             var X = Interop.ToUInt32Array(keyBytes1);
 
-            uint i, j, k;
-            for (i = 0; i < 1024; i++)
+            for (var i = 0; i < 1024; i++)
             {
                 Array.Copy(X, 0, V, i * 32, 32);
 
                 xor_salsa8(ref X, 0, ref X, 16);
                 xor_salsa8(ref X, 16, ref X, 0);
             }
-            for (i = 0; i < 1024; i++)
+            for (var i = 0; i < 1024; i++)
             {
-                j = 32 * (X[16] & 1023);
-                for (k = 0; k < 32; k++)
+                var j = 32 * (X[16] & 1023);
+                for (var k = 0; k < 32; k++)
+                {
                     X[k] ^= V[j + k];
+                }
                 xor_salsa8(ref X, 0, ref X, 16);
                 xor_salsa8(ref X, 16, ref X, 0);
             }

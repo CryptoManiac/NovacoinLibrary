@@ -16,9 +16,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
- using System;
+using System;
+using System.Linq;
 using System.Text;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 
 namespace Novacoin
 {
@@ -162,6 +164,47 @@ namespace Novacoin
                 r.AddRange(signature);
 
                 return r;
+            }
+        }
+
+        /// <summary>
+        /// MErkle root
+        /// </summary>
+        public Hash256 hashMerkleRoot
+        {
+            get {
+                
+                var merkleTree = new List<byte>();
+
+                foreach (var tx in vtx)
+                {
+                    merkleTree.AddRange(tx.Hash.hashBytes);
+                }
+
+                var hasher = new SHA256Managed();
+                hasher.Initialize();
+
+                int j = 0;
+                for (int nSize = vtx.Length; nSize > 1; nSize = (nSize + 1) / 2)
+                {
+                    for (int i = 0; i < nSize; i += 2)
+                    {
+                        int i2 = Math.Min(i + 1, nSize - 1);
+
+                        var pair = new List<byte>();
+
+                        pair.AddRange(merkleTree.GetRange((j + i)*32, 32));
+                        pair.AddRange(merkleTree.GetRange((j + i2)*32, 32));
+
+                        var digest1 = hasher.ComputeHash(pair.ToArray());
+                        var digest2 = hasher.ComputeHash(digest1);
+
+                        merkleTree.AddRange(digest2);
+                    }
+                    j += nSize;
+                }
+
+                return (merkleTree.Count == 0) ? new Hash256() : new Hash256(merkleTree.GetRange(merkleTree.Count-32, 32));
             }
         }
 
