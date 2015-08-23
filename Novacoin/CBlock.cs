@@ -168,7 +168,7 @@ namespace Novacoin
         }
 
         /// <summary>
-        /// MErkle root
+        /// Merkle root
         /// </summary>
         public Hash256 hashMerkleRoot
         {

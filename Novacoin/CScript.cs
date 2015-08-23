@@ -74,21 +74,21 @@ namespace Novacoin
         }
 
         /// <summary>
-        /// Adds specified operation to opcode bytes list
+        /// Adds specified operation to instruction list
         /// </summary>
         /// <param name="opcode"></param>
-        public void AddOp(instruction opcode)
+        public void AddInstruction(instruction opcode)
         {
             if (opcode < instruction.OP_0 || opcode > instruction.OP_INVALIDOPCODE)
             {
-                throw new CScriptException("CScript::AddOp() : invalid opcode");
+                throw new CScriptException("CScript::AddInstruction() : invalid instruction");
             }
 
             codeBytes.Add((byte)opcode);
         }
 
         /// <summary>
-        /// Adds hash to opcode bytes list.
+        /// Adds hash to instruction list.
         ///    New items are added in this format:
         ///    hash_length_byte hash_bytes
         /// </summary>
@@ -100,7 +100,7 @@ namespace Novacoin
         }
 
         /// <summary>
-        /// Adds hash to opcode bytes list.
+        /// Adds hash to instruction list.
         ///    New items are added in this format:
         ///    hash_length_byte hash_bytes
         /// </summary>
@@ -112,7 +112,7 @@ namespace Novacoin
         }
 
         /// <summary>
-        /// Create new OP_PUSHDATAn operator and add it to opcode bytes list
+        /// Create new OP_PUSHDATAn operator and add it to instruction list
         /// </summary>
         /// <param name="dataBytes">Set of data bytes</param>
         public void PushData(byte[] dataBytes)
@@ -385,7 +385,7 @@ namespace Novacoin
         {
             codeBytes.Clear();
             PushData(pubKey.PublicBytes);
-            AddOp(instruction.OP_CHECKSIG);
+            AddInstruction(instruction.OP_CHECKSIG);
         }
 
         /// <summary>
@@ -395,11 +395,11 @@ namespace Novacoin
         public void SetDestination(CKeyID ID)
         {
             codeBytes.Clear();
-            AddOp(instruction.OP_DUP);
-            AddOp(instruction.OP_HASH160);
+            AddInstruction(instruction.OP_DUP);
+            AddInstruction(instruction.OP_HASH160);
             AddHash(ID);
-            AddOp(instruction.OP_EQUALVERIFY);
-            AddOp(instruction.OP_CHECKSIG);
+            AddInstruction(instruction.OP_EQUALVERIFY);
+            AddInstruction(instruction.OP_CHECKSIG);
         }
 
         /// <summary>
@@ -409,9 +409,9 @@ namespace Novacoin
         public void SetDestination(CScriptID ID)
         {
             codeBytes.Clear();
-            AddOp(instruction.OP_HASH160);
+            AddInstruction(instruction.OP_HASH160);
             AddHash(ID);
-            AddOp(instruction.OP_EQUAL);
+            AddInstruction(instruction.OP_EQUAL);
         }
 
         /// <summary>
@@ -430,15 +430,15 @@ namespace Novacoin
         public void SetMultiSig(int nRequired, CPubKey[] keys)
         {
             codeBytes.Clear();
-            AddOp(ScriptCode.EncodeOP_N(nRequired));
+            AddInstruction(ScriptCode.EncodeOP_N(nRequired));
 
             foreach (var key in keys)
             {
                 PushData(key.PublicBytes);
             }
 
-            AddOp(ScriptCode.EncodeOP_N(keys.Length));
-            AddOp(instruction.OP_CHECKMULTISIG);
+            AddInstruction(ScriptCode.EncodeOP_N(keys.Length));
+            AddInstruction(instruction.OP_CHECKMULTISIG);
         }
 
         /// <summary>

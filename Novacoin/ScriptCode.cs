@@ -23,7 +23,7 @@ using System.Text;
 namespace Novacoin
 {
     /// <summary>
-    /// Script opcodes
+    /// Script instructions
     /// </summary>
     public enum instruction
     {
@@ -223,10 +223,10 @@ namespace Novacoin
         }
 
         /// <summary>
-        /// Get the name of supplied opcode
+        /// Get the name of instruction
         /// </summary>
-        /// <param name="opcode">Opcode</param>
-        /// <returns>Opcode name</returns>
+        /// <param name="opcode">Instruction</param>
+        /// <returns>Instruction name</returns>
         public static string GetOpName(instruction opcode)
         {
             if (opcode == instruction.OP_0) // OP_0 and OP_FALSE are synonyms
@@ -238,10 +238,10 @@ namespace Novacoin
         }
 
         /// <summary>
-        /// Get next opcode from passed list of bytes and extract push arguments if there are some.
+        /// Get next instruction from list of bytes and extract push arguments if there are some.
         /// </summary>
         /// <param name="codeBytes">ByteQueue reference.</param>
-        /// <param name="opcodeRet">Found opcode.</param>
+        /// <param name="opcodeRet">Found instruction.</param>
         /// <param name="bytesRet">IEnumerable out param which is used to get the push arguments.</param>
         /// <returns>Result of operation</returns>
         public static bool GetOp(ref ByteQueue codeBytes, out instruction opcodeRet, out byte[] bytesRet)
@@ -271,7 +271,7 @@ namespace Novacoin
                 {
                     if (opcode < instruction.OP_PUSHDATA1)
                     {
-                        // Zero value opcodes (OP_0, OP_FALSE)
+                        // Zero value instructions (OP_0, OP_FALSE)
                         szBytes[3] = (byte)opcode;
                     }
                     else if (opcode == instruction.OP_PUSHDATA1)
@@ -364,7 +364,7 @@ namespace Novacoin
         /// <summary>
         /// Decode instruction to integer value
         /// </summary>
-        /// <param name="opcode">Small integer opcode (OP_1_NEGATE and OP_0 - OP_16)</param>
+        /// <param name="opcode">Small integer instruction (OP_1_NEGATE and OP_0 - OP_16)</param>
         /// <returns>Small integer</returns>
         public static int DecodeOP_N(instruction opcode, bool AllowNegate = false)
         {
@@ -378,7 +378,7 @@ namespace Novacoin
                 return 0;
             }
 
-            // Only OP_n opcodes are supported, throw exception otherwise.
+            // Only OP_n instructions are supported, throw exception otherwise.
             if (opcode < instruction.OP_1 || opcode > instruction.OP_16)
             {
                 throw new ArgumentException("Invalid integer instruction.");
@@ -391,7 +391,7 @@ namespace Novacoin
         /// Converts integer into instruction
         /// </summary>
         /// <param name="n">Small integer from the range of -1 up to 16.</param>
-        /// <returns>Corresponding opcode.</returns>
+        /// <returns>Corresponding instruction.</returns>
         public static instruction EncodeOP_N(int n, bool allowNegate = false)
         {
             if (allowNegate && n == -1)
@@ -520,7 +520,7 @@ namespace Novacoin
 
             // Sender provides N pubkeys, receivers provides M signatures
             // N [pubkey1] [pubkey2] ... [pubkeyN] M OP_CHECKMULTISIG
-            // Where N and M are small integer opcodes (OP1 ... OP_16)
+            // Where N and M are small integer instructions (OP1 ... OP_16)
             templateTuples.Add(
                 new Tuple<txnouttype, byte[]>(
                     txnouttype.TX_MULTISIG,
@@ -591,7 +591,7 @@ namespace Novacoin
                         break;
                     }
 
-                    // Template matching opcodes:
+                    // Template matching instructions:
                     if (opcode2 == instruction.OP_PUBKEYS)
                     {
                         while (args1.Count() >= 33 && args1.Count() <= 120)
@@ -908,7 +908,7 @@ namespace Novacoin
                         switch (opcode)
                         {
                             //
-                            // Disabled opcodes
+                            // Disabled instructions
                             //
                             case instruction.OP_CAT:
                             case instruction.OP_SUBSTR:
