@@ -43,11 +43,11 @@ namespace Novacoin
         /// <returns>Hashing result instance</returns>
         public static ScryptHash256 Compute256(IEnumerable<byte> inputBytes)
         {
-            uint[] V = new uint[(131072 + 63) / sizeof(uint)];
+            var V = new uint[(131072 + 63) / sizeof(uint)];
 
-            byte[] dataBytes = inputBytes.ToArray();
-            byte[] keyBytes1 = CryptoUtils.PBKDF2_Sha256(128, dataBytes, dataBytes, 1);
-            uint[] X = Interop.ToUInt32Array(keyBytes1);
+            var dataBytes = inputBytes.ToArray();
+            var keyBytes1 = CryptoUtils.PBKDF2_Sha256(128, dataBytes, dataBytes, 1);
+            var X = Interop.ToUInt32Array(keyBytes1);
 
             uint i, j, k;
             for (i = 0; i < 1024; i++)
@@ -66,8 +66,8 @@ namespace Novacoin
                 xor_salsa8(ref X, 16, ref X, 0);
             }
 
-            byte[] xBytes = Interop.LEBytes(X);
-            byte[] keyBytes2 = CryptoUtils.PBKDF2_Sha256(32, dataBytes, xBytes, 1);
+            var xBytes = Interop.LEBytes(X);
+            var keyBytes2 = CryptoUtils.PBKDF2_Sha256(32, dataBytes, xBytes, 1);
 
             return new ScryptHash256(keyBytes2);
         }

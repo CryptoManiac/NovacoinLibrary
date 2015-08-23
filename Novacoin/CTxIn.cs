@@ -69,11 +69,9 @@ namespace Novacoin
         /// <returns>Inputs array</returns>
         public static CTxIn[] ReadTxInList(ref ByteQueue wBytes)
         {
-            CTxIn[] vin;
-
             // Get amount
             int nInputs = (int)wBytes.GetVarInt();
-            vin = new CTxIn[nInputs];
+            var vin = new CTxIn[nInputs];
 
             for (int nIndex = 0; nIndex < nInputs; nIndex++)
             {
@@ -96,13 +94,12 @@ namespace Novacoin
         {
             get
             {
-                List<byte> inputBytes = new List<byte>();
+                var inputBytes = new List<byte>();
 
                 inputBytes.AddRange(prevout.Bytes); // prevout
 
-                List<byte> s = new List<byte>(scriptSig.Bytes);
-
-                inputBytes.AddRange(VarInt.EncodeVarInt(s.Count)); // scriptSig length
+                var s = scriptSig.Bytes;
+                inputBytes.AddRange(VarInt.EncodeVarInt(s.Length)); // scriptSig length
                 inputBytes.AddRange(s); // scriptSig
                 inputBytes.AddRange(BitConverter.GetBytes(nSequence)); // Sequence
 

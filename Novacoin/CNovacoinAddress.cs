@@ -45,10 +45,10 @@ namespace Novacoin
         /// </summary>
         /// <param name="nVersionIn"></param>
         /// <param name="addrDataIn"></param>
-        public CNovacoinAddress(byte nVersionIn, IEnumerable<byte> addrDataIn)
+        public CNovacoinAddress(byte nVersionIn, byte[] addrDataIn)
         {
             nVersion = nVersionIn;
-            addrData = addrDataIn.ToList();
+            addrData = new List<byte>(addrDataIn);
         }
 
         /// <summary>
@@ -117,12 +117,12 @@ namespace Novacoin
         /// <returns>Base58(data + checksum)</returns>
         public override string ToString()
         {
-            List<byte> r = new List<byte>();
+            var r = new List<byte>();
 
             r.Add(nVersion);
             r.AddRange(addrData);
 
-            return AddressTools.Base58EncodeCheck(r);
+            return AddressTools.Base58EncodeCheck(r.ToArray());
         }
     }
 }

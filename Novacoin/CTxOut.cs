@@ -63,7 +63,7 @@ namespace Novacoin
         public static CTxOut[] ReadTxOutList(ref ByteQueue wBytes)
         {
             int nOutputs = (int)wBytes.GetVarInt();
-            CTxOut[] vout =new CTxOut[nOutputs];
+            var vout =new CTxOut[nOutputs];
 
             for (int nIndex = 0; nIndex < nOutputs; nIndex++)
             {
@@ -86,13 +86,12 @@ namespace Novacoin
         {
             get
             {
-                List<byte> resultBytes = new List<byte>();
+                var resultBytes = new List<byte>();
 
                 resultBytes.AddRange(BitConverter.GetBytes(nValue)); // txout value
 
-                List<byte> s = new List<byte>(scriptPubKey.Bytes);
-
-                resultBytes.AddRange(VarInt.EncodeVarInt(s.Count)); // scriptPubKey length
+                var s = scriptPubKey.Bytes;
+                resultBytes.AddRange(VarInt.EncodeVarInt(s.Length)); // scriptPubKey length
                 resultBytes.AddRange(s); // scriptPubKey
 
                 return resultBytes;
@@ -129,7 +128,7 @@ namespace Novacoin
 
 		public override string ToString ()
 		{
-			StringBuilder sb = new StringBuilder ();
+			var sb = new StringBuilder ();
 			sb.AppendFormat ("CTxOut(nValue={0}, scriptPubKey={1})", nValue, scriptPubKey.ToString());
 
 			return sb.ToString ();

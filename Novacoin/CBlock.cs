@@ -106,7 +106,7 @@ namespace Novacoin
                     }
 
                     txnouttype whichType;
-                    IList<IEnumerable<byte>> solutions;
+                    IList<byte[]> solutions;
 
                     if (!ScriptCode.Solver(vtx[1].vout[1].scriptPubKey, out whichType, out solutions))
                     {
@@ -148,12 +148,12 @@ namespace Novacoin
         {
             get
             {
-                List<byte> r = new List<byte>();
+                var r = new List<byte>();
 
                 r.AddRange(header.Bytes);
                 r.AddRange(VarInt.EncodeVarInt(vtx.LongLength)); // transactions count
 
-                foreach (CTransaction tx in vtx)
+                foreach (var tx in vtx)
                 {
                     r.AddRange(tx.Bytes);
                 }
@@ -167,11 +167,11 @@ namespace Novacoin
 
         public override string ToString()
         {
-            StringBuilder sb = new StringBuilder();
+            var sb = new StringBuilder();
 
             sb.AppendFormat("CBlock(\n header={0},\n", header.ToString());
 
-            foreach(CTransaction tx in vtx)
+            foreach(var tx in vtx)
             {
                 sb.AppendFormat("{0}", tx.ToString());
             }
@@ -182,8 +182,7 @@ namespace Novacoin
             }
 
             sb.Append(")");
-
-            // TODO
+            
             return sb.ToString();
         }
 	}

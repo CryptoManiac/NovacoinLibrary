@@ -34,7 +34,7 @@ namespace Novacoin
                     hashLength++;
                 }
                 int keyLength = dklen / hashLength;
-                if ((long)dklen > (0xFFFFFFFFL * hashLength) || dklen < 0)
+                if (dklen > (0xFFFFFFFFL * hashLength) || dklen < 0)
                 {
                     throw new ArgumentOutOfRangeException("dklen");
                 }
@@ -42,7 +42,7 @@ namespace Novacoin
                 {
                     keyLength++;
                 }
-                byte[] extendedkey = new byte[salt.Length + 4];
+                var extendedkey = new byte[salt.Length + 4];
                 Buffer.BlockCopy(salt, 0, extendedkey, 0, salt.Length);
                 using (var ms = new System.IO.MemoryStream())
                 {
@@ -56,11 +56,11 @@ namespace Novacoin
                         extendedkey[salt.Length + 3] = (byte)(((i + 1)) & 0xFF);
 
                         /* Compute U_1 = PRF(P, S || INT(i)). */
-                        byte[] u = hmac.ComputeHash(extendedkey);
+                        var u = hmac.ComputeHash(extendedkey);
                         Array.Clear(extendedkey, salt.Length, 4);
 
                         /* T_i = U_1 ... */
-                        byte[] f = u;
+                        var f = u;
                         for (int j = 1; j < iterationCount; j++)
                         {
                             /* Compute U_j. */
@@ -80,7 +80,7 @@ namespace Novacoin
                     ms.Position = 0;
 
                     /* Initialize result array. */
-                    byte[] dk = new byte[dklen];
+                    var dk = new byte[dklen];
 
                     /* Read key from memory stream. */
                     ms.Read(dk, 0, dklen);

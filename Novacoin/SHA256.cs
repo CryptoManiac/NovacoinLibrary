@@ -40,8 +40,8 @@ namespace Novacoin
 
         public static SHA256 Compute256(IEnumerable<byte> inputBytes)
         {
-            byte[] dataBytes = inputBytes.ToArray();
-            byte[] digest1 = _hasher256.ComputeHash(dataBytes, 0, dataBytes.Length);
+            var dataBytes = inputBytes.ToArray();
+            var digest1 = _hasher256.ComputeHash(dataBytes, 0, dataBytes.Length);
 
             return new SHA256(digest1);
         }

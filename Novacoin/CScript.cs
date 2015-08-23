@@ -115,9 +115,9 @@ namespace Novacoin
         /// Create new OP_PUSHDATAn operator and add it to opcode bytes list
         /// </summary>
         /// <param name="dataBytes">Set of data bytes</param>
-        public void PushData(IEnumerable<byte> dataBytes)
+        public void PushData(byte[] dataBytes)
         {
-            long nCount = dataBytes.LongCount();
+            var nCount = dataBytes.LongLength;
 
             if (nCount < (int)instruction.OP_PUSHDATA1)
             {
@@ -156,11 +156,11 @@ namespace Novacoin
         /// </summary>
         /// <param name="pattern">Pattern sequence</param>
         /// <returns>Matches enumerator</returns>
-        private IEnumerable<int> FindPattern(IList<byte> pattern)
+        private IEnumerable<int> FindPattern(byte[] pattern)
         {
             for (int i = 0; i < codeBytes.Count; i++)
             {
-                if (codeBytes.Skip(i).Take(pattern.Count).SequenceEqual(pattern))
+                if (codeBytes.Skip(i).Take(pattern.Length).SequenceEqual(pattern))
                 {
                     yield return i;
                 }
@@ -172,15 +172,14 @@ namespace Novacoin
         /// </summary>
         /// <param name="pattern">Pattern sequence</param>
         /// <returns>Matches number</returns>
-        public int RemovePattern(IList<byte> pattern)
+        public int RemovePattern(byte[] pattern)
         {
-            List<byte> resultBytes = new List<byte>(codeBytes);
+            var resultBytes = new List<byte>(codeBytes);
             int count = 0;
-            int patternLen = pattern.Count;
                         
             foreach (int i in FindPattern(pattern))
             {
-                resultBytes.RemoveRange(i - count * patternLen, patternLen);
+                resultBytes.RemoveRange(i - count * pattern.Length, pattern.Length);
                 count++;
             }
 
@@ -196,10 +195,10 @@ namespace Novacoin
         {
             get
             {
-                ByteQueue wCodeBytes = new ByteQueue(codeBytes);
+                var wCodeBytes = new ByteQueue(codeBytes);
 
                 instruction opcode; // Current opcode
-                IEnumerable<byte> pushArgs; // OP_PUSHDATAn argument
+                byte[] pushArgs; // OP_PUSHDATAn argument
 
                 // Scan opcodes sequence
                 while (ScriptCode.GetOp(ref wCodeBytes, out opcode, out pushArgs))
@@ -222,15 +221,15 @@ namespace Novacoin
         {
             get
             {
-                ByteQueue wCodeBytes = new ByteQueue(codeBytes);
+                var wCodeBytes = new ByteQueue(codeBytes);
 
+                byte[] pushArgs; // OP_PUSHDATAn argument
                 instruction opcode; // Current opcode
-                IEnumerable<byte> pushArgs; // OP_PUSHDATAn argument
 
                 // Scan opcodes sequence
                 while (ScriptCode.GetOp(ref wCodeBytes, out opcode, out pushArgs))
                 {
-                    byte[] data = pushArgs.ToArray();
+                    var data = pushArgs;
 
                     if (opcode < instruction.OP_PUSHDATA1 && opcode > instruction.OP_0 && (data.Length == 1 && data[0] <= 16))
                     {
@@ -311,13 +310,13 @@ namespace Novacoin
         /// <returns>Amount of sigops</returns>
         public int GetSigOpCount(bool fAccurate)
         {
-            ByteQueue wCodeBytes = new ByteQueue(codeBytes);
+            var wCodeBytes = new ByteQueue(codeBytes);
 
             instruction opcode; // Current opcode
-            IEnumerable<byte> pushArgs; // OP_PUSHDATAn argument
+            byte[] pushArgs; // OP_PUSHDATAn argument
 
             int nCount = 0;
-            instruction lastOpcode = instruction.OP_INVALIDOPCODE;
+            var lastOpcode = instruction.OP_INVALIDOPCODE;
 
             // Scan opcodes sequence
             while (ScriptCode.GetOp(ref wCodeBytes, out opcode, out pushArgs))
@@ -361,7 +360,7 @@ namespace Novacoin
             ByteQueue wScriptSig = scriptSig.GetByteQUeue();
 
             instruction opcode; // Current opcode
-            IEnumerable<byte> pushArgs; // OP_PUSHDATAn argument
+            byte[] pushArgs; // OP_PUSHDATAn argument
 
             while (ScriptCode.GetOp(ref wScriptSig, out opcode, out pushArgs))
             {
@@ -372,7 +371,7 @@ namespace Novacoin
             }
 
             /// ... and return its opcount:
-            CScript subScript = new CScript(pushArgs);
+            var subScript = new CScript(pushArgs);
 
             return subScript.GetSigOpCount(true);
 
@@ -428,26 +427,26 @@ namespace Novacoin
         /// </summary>
         /// <param name="nRequired">Amount of required signatures.</param>
         /// <param name="keys">Set of public keys.</param>
-        public void SetMultiSig(int nRequired, IEnumerable<CPubKey> keys)
+        public void SetMultiSig(int nRequired, CPubKey[] keys)
         {
             codeBytes.Clear();
             AddOp(ScriptCode.EncodeOP_N(nRequired));
 
-            foreach (CPubKey key in keys)
+            foreach (var key in keys)
             {
-                PushData(key.PublicBytes.ToList());
+                PushData(key.PublicBytes);
             }
 
-            AddOp(ScriptCode.EncodeOP_N(keys.Count()));
+            AddOp(ScriptCode.EncodeOP_N(keys.Length));
             AddOp(instruction.OP_CHECKMULTISIG);
         }
 
         /// <summary>
         /// Access to script code.
         /// </summary>
-        public IEnumerable<byte> Bytes
+        public byte[] Bytes
         {
-            get { return codeBytes; }
+            get { return codeBytes.ToArray(); }
         }
 
         public CScriptID ScriptID
@@ -461,11 +460,11 @@ namespace Novacoin
         /// <returns>Code listing</returns>
 		public override string ToString()
 		{
-			StringBuilder sb = new StringBuilder();
-            ByteQueue wCodeBytes = new ByteQueue(codeBytes);
+			var sb = new StringBuilder();
+            var wCodeBytes = new ByteQueue(codeBytes);
 
             instruction opcode; // Current opcode
-            IEnumerable<byte> pushArgs; // OP_PUSHDATAn argument
+            byte[] pushArgs; // OP_PUSHDATAn argument
             while (ScriptCode.GetOp(ref wCodeBytes, out opcode, out pushArgs))
             {
                 if (sb.Length != 0)
@@ -487,4 +486,3 @@ namespace Novacoin
 		}
 	}
 }
-

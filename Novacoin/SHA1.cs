@@ -45,8 +45,8 @@ namespace Novacoin
 
         public static SHA1 Compute1(IEnumerable<byte> inputBytes)
         {
-            byte[] dataBytes = inputBytes.ToArray();
-            byte[] digest1 = _hasher1.ComputeHash(dataBytes, 0, dataBytes.Length);
+            var dataBytes = inputBytes.ToArray();
+            var digest1 = _hasher1.ComputeHash(dataBytes, 0, dataBytes.Length);
 
             return new SHA1(digest1);
         }

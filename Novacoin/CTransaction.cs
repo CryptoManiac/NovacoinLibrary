@@ -97,7 +97,7 @@ namespace Novacoin
         /// <param name="txBytes">Byte sequence</param>
 		public CTransaction(IList<byte> txBytes)
         {
-            ByteQueue wBytes = new ByteQueue(txBytes);
+            var wBytes = new ByteQueue(txBytes);
 
             nVersion = BitConverter.ToUInt32(wBytes.Get(4), 0);
             nTime = BitConverter.ToUInt32(wBytes.Get(4), 0);
@@ -141,11 +141,9 @@ namespace Novacoin
         /// <returns>Transactions array</returns>
         public static CTransaction[] ReadTransactionsList(ref ByteQueue wTxBytes)
         {
-            CTransaction[] tx;
-
             // Read amount of transactions
             int nTransactions = (int)wTxBytes.GetVarInt();
-            tx = new CTransaction[nTransactions];
+            var tx = new CTransaction[nTransactions];
 
             for (int nTx = 0; nTx < nTransactions; nTx++)
             {
@@ -195,7 +193,7 @@ namespace Novacoin
         {
             get
             {
-                List<byte> resultBytes = new List<byte>();
+                var resultBytes = new List<byte>();
 
                 // Typical transaction example:
                 //
@@ -245,14 +243,14 @@ namespace Novacoin
                 resultBytes.AddRange(BitConverter.GetBytes(nTime));
                 resultBytes.AddRange(VarInt.EncodeVarInt(vin.LongLength));
 
-                foreach (CTxIn input in vin)
+                foreach (var input in vin)
                 {
                     resultBytes.AddRange(input.Bytes);
                 }
 
                 resultBytes.AddRange(VarInt.EncodeVarInt(vout.LongLength));
 
-                foreach (CTxOut output in vout)
+                foreach (var output in vout)
                 {
                     resultBytes.AddRange(output.Bytes);
                 }
@@ -265,16 +263,16 @@ namespace Novacoin
 
         public override string ToString()
         {
-            StringBuilder sb = new StringBuilder();
+            var sb = new StringBuilder();
 
             sb.AppendFormat("CTransaction(\n nVersion={0},\n nTime={1},\n", nVersion, nTime);
 
-            foreach (CTxIn txin in vin)
+            foreach (var txin in vin)
             {
                 sb.AppendFormat(" {0},\n", txin.ToString());
             }
 
-            foreach (CTxOut txout in vout)
+            foreach (var txout in vout)
             {
                 sb.AppendFormat(" {0},\n", txout.ToString());
             }

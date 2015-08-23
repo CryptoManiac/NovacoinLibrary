@@ -18,7 +18,6 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using Org.BouncyCastle.Math.EC;
 using Org.BouncyCastle.Crypto.Parameters;
 
 namespace Novacoin
@@ -43,7 +42,7 @@ namespace Novacoin
         /// <param name="bytes">Byte sequence</param>
         public CPubKey(IEnumerable<byte> bytes)
         {
-            ECPoint pQ = curve.Curve.DecodePoint(bytes.ToArray());
+            var pQ = curve.Curve.DecodePoint(bytes.ToArray());
             _Public = new ECPublicKeyParameters(pQ, domain);
         }
 
@@ -53,7 +52,7 @@ namespace Novacoin
         /// <param name="strBase58"></param>
         public CPubKey(string strBase58)
         {
-            ECPoint pQ = curve.Curve.DecodePoint(AddressTools.Base58DecodeCheck(strBase58).ToArray());
+            var pQ = curve.Curve.DecodePoint(AddressTools.Base58DecodeCheck(strBase58).ToArray());
             _Public = new ECPublicKeyParameters(pQ, domain);
         }
 
@@ -73,12 +72,12 @@ namespace Novacoin
 
         public override string ToString()
         {
-            List<byte> r = new List<byte>();
+            var r = new List<byte>();
 
             r.Add((byte)(AddrType.PUBKEY_ADDRESS));
             r.AddRange(PublicBytes);
 
-            return AddressTools.Base58EncodeCheck(r);
+            return AddressTools.Base58EncodeCheck(r.ToArray());
         }
     }
 }

@@ -20,9 +20,7 @@ using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Math;
-using Org.BouncyCastle.Math.EC;
 using Org.BouncyCastle.Security;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -38,10 +36,10 @@ namespace Novacoin
         /// </summary>
         public CKeyPair(bool Compressed=true)
         {
-            ECKeyGenerationParameters genParams = new ECKeyGenerationParameters(domain, new SecureRandom());
-            ECKeyPairGenerator generator = new ECKeyPairGenerator("ECDSA");
+            var genParams = new ECKeyGenerationParameters(domain, new SecureRandom());
+            var generator = new ECKeyPairGenerator("ECDSA");
             generator.Init(genParams);
-            AsymmetricCipherKeyPair ecKeyPair = generator.GenerateKeyPair();
+            var ecKeyPair = generator.GenerateKeyPair();
 
             _Private = (ECPrivateKeyParameters)ecKeyPair.Private;
             _Public = (ECPublicKeyParameters)ecKeyPair.Public;
@@ -57,21 +55,21 @@ namespace Novacoin
         /// </summary>
         /// <param name="secretBytes">Byte sequence</param>
         /// <param name="Compressed">Compression flag</param>
-        public CKeyPair(IEnumerable<byte> secretBytes, bool Compressed=true)
+        public CKeyPair(byte[] secretBytes, bool Compressed=true)
         {
             // Deserialize secret value
-            BigInteger D = new BigInteger(secretBytes.Take(32).ToArray());
+            var D = new BigInteger(secretBytes.Take(32).ToArray());
 
             if (D.SignValue == -1)
             {
-                List<byte> fixedKeyBytes = secretBytes.Take(32).ToList();
+                var fixedKeyBytes = secretBytes.Take(32).ToList();
                 fixedKeyBytes.Insert(0, 0x00); // prepend with sign byte
 
                 D = new BigInteger(fixedKeyBytes.ToArray());
             }
 
             // Calculate public key
-            ECPoint Q = curve.G.Multiply(D);
+            var Q = curve.G.Multiply(D);
 
             _Private = new ECPrivateKeyParameters(D, domain);
             _Public = new ECPublicKeyParameters(Q, domain);
@@ -86,29 +84,29 @@ namespace Novacoin
         /// Init key pair using secret sequence of bytes
         /// </summary>
         /// <param name="secretBytes">Byte sequence</param>
-        public CKeyPair(IEnumerable<byte> secretBytes) : 
-            this (secretBytes.Take(32), (secretBytes.Count() == 33 && secretBytes.Last() == 0x01))
+        public CKeyPair(byte[] secretBytes) : 
+            this (secretBytes.Take(32).ToArray(), (secretBytes.Count() == 33 && secretBytes.Last() == 0x01))
         {
         }
 
         public CKeyPair(string strBase58)
         {
-            List<byte> rawBytes = AddressTools.Base58DecodeCheck(strBase58).ToList();
+            var rawBytes = AddressTools.Base58DecodeCheck(strBase58).ToList();
             rawBytes.RemoveAt(0); // Remove key version byte
 
             // Deserialize secret value
-            BigInteger D = new BigInteger(rawBytes.Take(32).ToArray());
+            var D = new BigInteger(rawBytes.Take(32).ToArray());
 
             if (D.SignValue == -1)
             {
-                List<byte> secretbytes = rawBytes.Take(32).ToList(); // Copy secret
+                var secretbytes = rawBytes.Take(32).ToList(); // Copy secret
                 secretbytes.Insert(0, 0x00); // Prepend with sign byte
 
                 D = new BigInteger(secretbytes.ToArray()); // Try decoding again
             }
 
             // Calculate public key
-            ECPoint Q = curve.G.Multiply(D);
+            var Q = curve.G.Multiply(D);
 
             _Private = new ECPrivateKeyParameters(D, domain);
             _Public = new ECPublicKeyParameters(Q, domain);
@@ -134,9 +132,9 @@ namespace Novacoin
         /// </summary>
         /// <param name="data">Hash to sigh</param>
         /// <returns>Signature bytes sequence</returns>
-        public IEnumerable<byte> Sign(Hash sigHash)
+        public byte[] Sign(Hash sigHash)
         {
-            ISigner signer = SignerUtilities.GetSigner("NONEwithECDSA");
+            var signer = SignerUtilities.GetSigner("NONEwithECDSA");
             signer.Init(true, _Private);
             signer.BlockUpdate(sigHash.hashBytes, 0, sigHash.hashSize);
 
@@ -151,11 +149,11 @@ namespace Novacoin
         /// <summary>
         /// SecretBytes part of key pair
         /// </summary>
-        public IEnumerable<byte> SecretBytes
+        public byte[] SecretBytes
         {
             get
             {
-                List<byte> secretBytes = new List<byte>(_Private.D.ToByteArray());
+                var secretBytes = new List<byte>(_Private.D.ToByteArray());
 
                 if (secretBytes[0] == 0x00)
                 {
@@ -169,7 +167,7 @@ namespace Novacoin
                     secretBytes.Add(0x01);
                 }
 
-                return secretBytes;
+                return secretBytes.ToArray();
             }
         }
 
@@ -180,12 +178,12 @@ namespace Novacoin
 
         public override string ToString()
         {
-            List<byte> r = new List<byte>();
+            var r = new List<byte>();
 
             r.Add((byte)(128 + AddrType.PUBKEY_ADDRESS)); // Key version
             r.AddRange(SecretBytes); // Key data
 
-            return AddressTools.Base58EncodeCheck(r);
+            return AddressTools.Base58EncodeCheck(r.ToArray());
         }
     }
 }

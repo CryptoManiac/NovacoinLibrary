@@ -71,7 +71,7 @@ namespace Novacoin
                 return pubKeyParams;
             }
 
-            ECPoint q = new FpPoint(curve.Curve, pubKeyParams.Q.X, pubKeyParams.Q.Y, false);
+            var q = new FpPoint(curve.Curve, pubKeyParams.Q.X, pubKeyParams.Q.Y, false);
 
             return new ECPublicKeyParameters(q, domain);
         }
@@ -82,13 +82,13 @@ namespace Novacoin
         /// <param name="sigHash">Data hash</param>
         /// <param name="signature">Signature bytes</param>
         /// <returns>Checking result</returns>
-        public bool VerifySignature(Hash sigHash, IEnumerable<byte> signature)
+        public bool VerifySignature(Hash sigHash, byte[] signature)
         {
-            ISigner signer = SignerUtilities.GetSigner("NONEwithECDSA");
+            var signer = SignerUtilities.GetSigner("NONEwithECDSA");
             signer.Init(false, _Public);
             signer.BlockUpdate(sigHash.hashBytes, 0, sigHash.hashSize);
 
-            return signer.VerifySignature(signature.ToArray());
+            return signer.VerifySignature(signature);
         }
 
         /// <summary>
@@ -101,9 +101,9 @@ namespace Novacoin
         }
 
         /// <summary>
-        /// PublicBytes part of key pair
+        /// Public part of key pair
         /// </summary>
-        public IEnumerable<byte> PublicBytes
+        public byte[] PublicBytes
         {
             get { return _Public.Q.GetEncoded(); }
         }

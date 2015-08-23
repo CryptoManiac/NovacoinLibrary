@@ -104,19 +104,6 @@ namespace Novacoin
             get { return Index; }
         }
 
-        public IEnumerable<byte> GetEnumerable(int Count)
-        {
-            if (Elements.Count - Index < Count)
-            {
-                throw new ByteQueueException("Unable to read requested amount of data.");
-            }
-
-            IEnumerable<byte> result = Elements.Skip(Index).Take(Count);
-            Index += Count;
-
-            return result;
-        }
-
         public ulong GetVarInt()
         {
             byte prefix = Get();

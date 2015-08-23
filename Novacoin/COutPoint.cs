@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
 namespace Novacoin
@@ -53,10 +52,10 @@ namespace Novacoin
             n = o.n;
         }
 
-        public COutPoint(IEnumerable<byte> bytes)
+        public COutPoint(byte[] bytes)
         {
             hash = new Hash256(bytes);
-            n = BitConverter.ToUInt32(bytes.ToArray(), 32);
+            n = BitConverter.ToUInt32(bytes, 32);
         }
 
         public bool IsNull
@@ -68,7 +67,7 @@ namespace Novacoin
         {
             get
             {
-                List<byte> r = new List<byte>();
+                var r = new List<byte>();
                 r.AddRange(hash.hashBytes);
                 r.AddRange(BitConverter.GetBytes(n));
 
@@ -78,7 +77,7 @@ namespace Novacoin
 
         public override string ToString()
         {
-            StringBuilder sb = new StringBuilder();
+            var sb = new StringBuilder();
             sb.AppendFormat("COutPoint({0}, {1})", hash.ToString(), n);
 
             return sb.ToString();

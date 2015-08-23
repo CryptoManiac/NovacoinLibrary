@@ -93,7 +93,7 @@ namespace Novacoin
         {
             get
             {
-                List<byte> r = new List<byte>();
+                var r = new List<byte>();
 
                 r.AddRange(BitConverter.GetBytes(nVersion));
                 r.AddRange(prevHash.hashBytes);
@@ -115,7 +115,7 @@ namespace Novacoin
 
         public override string ToString()
         {
-            StringBuilder sb = new StringBuilder();
+            var sb = new StringBuilder();
             sb.AppendFormat("CBlockHeader(nVersion={0}, prevHash={1}, merkleRoot={2}, nTime={3}, nBits={4}, nNonce={5})", nVersion, prevHash.ToString(), merkleRoot.ToString(), nTime, nBits, nNonce);
             return sb.ToString();
         }

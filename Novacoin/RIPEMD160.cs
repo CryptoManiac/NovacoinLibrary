@@ -44,8 +44,8 @@ namespace Novacoin
 
         public static RIPEMD160 Compute160(IEnumerable<byte> inputBytes)
         {
-            byte[] dataBytes = inputBytes.ToArray();
-            byte[] digest1 = _hasher160.ComputeHash(dataBytes, 0, dataBytes.Length);
+            var dataBytes = inputBytes.ToArray();
+            var digest1 = _hasher160.ComputeHash(dataBytes, 0, dataBytes.Length);
 
             return new RIPEMD160(digest1);
         }

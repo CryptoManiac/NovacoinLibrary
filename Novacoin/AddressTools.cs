@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -63,13 +62,11 @@ namespace Novacoin
         /// </summary>
         /// <param name="bytes">Byte sequence</param>
         /// <returns>Base58(data+checksum)</returns>
-        public static string Base58EncodeCheck(IEnumerable<byte> bytes)
+        public static string Base58EncodeCheck(byte[] bytes)
         {
-            byte[] dataBytes = bytes.ToArray();
-            Array.Resize(ref dataBytes, dataBytes.Length + 4);
-
-            byte[] checkSum = Hash256.Compute256(bytes).hashBytes.Take(4).ToArray();
-
+            var dataBytes = new byte[bytes.Length + 4];
+            bytes.CopyTo(dataBytes, 0);
+            var checkSum = Hash256.Compute256(bytes).hashBytes.Take(4).ToArray();
             checkSum.CopyTo(dataBytes, dataBytes.Length - 4); // add 4-byte hash check to the end
 
             return Base58Encode(dataBytes);
@@ -115,22 +112,22 @@ namespace Novacoin
             return bi;
         }
 
-        public static IEnumerable<byte> Base58DecodeCheck(string strBase58Check)
+        public static byte[] Base58DecodeCheck(string strBase58Check)
         {
-            byte[] rawData = Base58Decode(strBase58Check).ToArray();
+            var rawData = Base58Decode(strBase58Check).ToArray();
 
             if (rawData.Length < 4)
             {
                 throw new Base58Exception("Data is too short.");
             }
 
-            byte[] result = new byte[rawData.Length - 4];
-            byte[] resultCheckSum = new byte[4];
+            var result = new byte[rawData.Length - 4];
+            var resultCheckSum = new byte[4];
 
             Array.Copy(rawData, result, result.Length);
             Array.Copy(rawData, result.Length, resultCheckSum, 0, 4);
 
-            byte[] checkSum = Hash256.Compute256(result).hashBytes.Take(4).ToArray();
+            var checkSum = Hash256.Compute256(result).hashBytes.Take(4).ToArray();
 
             if (!checkSum.SequenceEqual(resultCheckSum))
             {

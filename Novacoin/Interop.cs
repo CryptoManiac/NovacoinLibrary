@@ -44,7 +44,7 @@ namespace Novacoin
     {
         public static byte[] ReverseBytes(byte[] source)
         {
-            byte[] b = new byte[source.Length];
+            var b = new byte[source.Length];
 
             source.CopyTo(b, 0);
 
@@ -55,7 +55,7 @@ namespace Novacoin
 
         public static byte[] LEBytes(uint[] values)
         {
-            byte[] result = new byte[values.Length * sizeof(uint)];
+            var result = new byte[values.Length * sizeof(uint)];
             Buffer.BlockCopy(values, 0, result, 0, result.Length);
 
             return result;
@@ -63,7 +63,7 @@ namespace Novacoin
 
         public static uint[] ToUInt32Array(byte[] bytes)
         {
-            uint[] result = new uint[bytes.Length / sizeof(uint)];
+            var result = new uint[bytes.Length / sizeof(uint)];
             Buffer.BlockCopy(bytes, 0, result, 0, bytes.Length);
 
             return result;
@@ -71,7 +71,7 @@ namespace Novacoin
 
         public static byte[] BEBytes(ushort n)
         {
-            byte[] resultBytes = BitConverter.GetBytes(n);
+            var resultBytes = BitConverter.GetBytes(n);
 
             Array.Reverse(resultBytes);
 
@@ -80,7 +80,7 @@ namespace Novacoin
 
         public static byte[] BEBytes(uint n)
         {
-            byte[] resultBytes = BitConverter.GetBytes(n);
+            var resultBytes = BitConverter.GetBytes(n);
 
             Array.Reverse(resultBytes);
 
@@ -89,7 +89,7 @@ namespace Novacoin
 
         public static byte[] BEBytes(ulong n)
         {
-            byte[] resultBytes = BitConverter.GetBytes(n);
+            var resultBytes = BitConverter.GetBytes(n);
 
             Array.Reverse(resultBytes);
 
@@ -145,10 +145,15 @@ namespace Novacoin
             return HexToEnumerable(hex).ToList();
         }
 
+        public static byte[] HexToArray(string hex)
+        {
+            return HexToEnumerable(hex).ToArray();
+        }
+
         public static string ToHex(IEnumerable<byte> bytes)
         {
-            StringBuilder sb = new StringBuilder();
-            foreach (byte b in bytes)
+            var sb = new StringBuilder();
+            foreach (var b in bytes)
             {
                 sb.AppendFormat("{0:x2}", b);
             }

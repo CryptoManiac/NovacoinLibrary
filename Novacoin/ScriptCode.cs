@@ -244,9 +244,9 @@ namespace Novacoin
         /// <param name="opcodeRet">Found opcode.</param>
         /// <param name="bytesRet">IEnumerable out param which is used to get the push arguments.</param>
         /// <returns>Result of operation</returns>
-        public static bool GetOp(ref ByteQueue codeBytes, out instruction opcodeRet, out IEnumerable<byte> bytesRet)
+        public static bool GetOp(ref ByteQueue codeBytes, out instruction opcodeRet, out byte[] bytesRet)
         {
-            bytesRet = new List<byte>();
+            bytesRet = new byte[0];
             opcodeRet = instruction.OP_INVALIDOPCODE;
 
             instruction opcode;
@@ -307,7 +307,7 @@ namespace Novacoin
                     try
                     {
                         // Read found number of bytes into list of OP_PUSHDATAn arguments.
-                        bytesRet = codeBytes.GetEnumerable(nSize);
+                        bytesRet = codeBytes.Get(nSize);
                     }
                     catch (ByteQueueException)
                     {
@@ -329,16 +329,13 @@ namespace Novacoin
         /// </summary>
         /// <param name="bytes">Collection of value bytes.</param>
         /// <returns>Formatted value.</returns>
-        public static string ValueString(IEnumerable<byte> bytes)
+        public static string ValueString(byte[] bytes)
         {
-            StringBuilder sb = new StringBuilder();
+            var sb = new StringBuilder();
 
-            if (bytes.Count() <= 4)
+            if (bytes.Length <= 4)
             {
-                byte[] valueBytes = new byte[4] { 0, 0, 0, 0 };
-                bytes.ToArray().CopyTo(valueBytes, valueBytes.Length - bytes.Count());
-
-                sb.Append(Interop.BEBytesToUInt32(valueBytes));
+                sb.Append(Interop.BEBytesToUInt32(bytes));
             }
             else
             {
@@ -353,12 +350,12 @@ namespace Novacoin
         /// </summary>
         /// <param name="stackList">List of stack items.</param>
         /// <returns>Formatted value.</returns>
-        public static string StackString(IList<IList<byte>> stackList)
+        public static string StackString(IList<byte[]> stackList)
         {
-            StringBuilder sb = new StringBuilder();
-            foreach (IList<byte> bytesList in stackList)
+            var sb = new StringBuilder();
+            foreach (var bytes in stackList)
             {
-                sb.Append(ValueString(bytesList));
+                sb.Append(ValueString(bytes));
             }
 
             return sb.ToString();
@@ -413,7 +410,7 @@ namespace Novacoin
             return (instruction.OP_1 + n - 1);
         }
 
-        public static int ScriptSigArgsExpected(txnouttype t, IList<IEnumerable<byte>> solutions)
+        public static int ScriptSigArgsExpected(txnouttype t, IList<byte[]> solutions)
         {
             switch (t)
             {
@@ -426,9 +423,9 @@ namespace Novacoin
                 case txnouttype.TX_PUBKEYHASH:
                     return 2;
                 case txnouttype.TX_MULTISIG:
-                    if (solutions.Count() < 1 || solutions.First().Count() < 1)
+                    if (solutions.Count < 1 || solutions.First().Length < 1)
                         return -1;
-                    return solutions.First().First() + 1;
+                    return solutions.First()[0] + 1;
                 case txnouttype.TX_SCRIPTHASH:
                     return 1; // doesn't include args needed by the script
             }
@@ -443,7 +440,7 @@ namespace Novacoin
         /// <returns>Checking result</returns>
         public static bool IsStandard(CScript scriptPubKey, out txnouttype whichType)
         {
-            IList<IEnumerable<byte>> solutions = new List<IEnumerable<byte>>();
+            IList<byte[]> solutions;
 
             if (!Solver(scriptPubKey, out whichType, out solutions))
             {
@@ -454,8 +451,8 @@ namespace Novacoin
             if (whichType == txnouttype.TX_MULTISIG)
             {
                 // Additional verification of OP_CHECKMULTISIG arguments
-                byte m = solutions.First().First();
-                byte n = solutions.Last().First();
+                var m = solutions.First()[0];
+                var n = solutions.Last()[0];
 
                 // Support up to x-of-3 multisig txns as standard
                 if (n < 1 || n > 3)
@@ -478,9 +475,9 @@ namespace Novacoin
         /// <param name="typeRet">Output type</param>
         /// <param name="solutions">Set of solutions</param>
         /// <returns>Result</returns>
-        public static bool Solver(CScript scriptPubKey, out txnouttype typeRet, out IList<IEnumerable<byte>> solutions)
+        public static bool Solver(CScript scriptPubKey, out txnouttype typeRet, out IList<byte[]> solutions)
         {
-            solutions = new List<IEnumerable<byte>>();
+            solutions = new List<byte[]>();
 
             // There are shortcuts for pay-to-script-hash and pay-to-pubkey-hash, which are more constrained than the other types.
 
@@ -490,8 +487,8 @@ namespace Novacoin
                 typeRet = txnouttype.TX_SCRIPTHASH;
 
                 // Take 20 bytes with offset of 2 bytes
-                IEnumerable<byte> hashBytes = scriptPubKey.Bytes.Skip(2).Take(20);
-                solutions.Add(hashBytes);
+                var hashBytes = scriptPubKey.Bytes.Skip(2).Take(20);
+                solutions.Add(hashBytes.ToArray());
 
                 return true;
             }
@@ -502,18 +499,18 @@ namespace Novacoin
                 typeRet = txnouttype.TX_PUBKEYHASH;
 
                 // Take 20 bytes with offset of 3 bytes
-                IEnumerable<byte> hashBytes = scriptPubKey.Bytes.Skip(3).Take(20);
-                solutions.Add(hashBytes);
+                var hashBytes = scriptPubKey.Bytes.Skip(3).Take(20);
+                solutions.Add(hashBytes.ToArray());
 
                 return true;
             }
 
-            List<Tuple<txnouttype, IEnumerable<byte>>> templateTuples = new List<Tuple<txnouttype, IEnumerable<byte>>>();
+            var templateTuples = new List<Tuple<txnouttype, byte[]>>();
 
             // Sender provides pubkey, receiver adds signature
             // [ECDSA public key] OP_CHECKSIG
             templateTuples.Add(
-                new Tuple<txnouttype, IEnumerable<byte>>(
+                new Tuple<txnouttype, byte[]>(
                     txnouttype.TX_PUBKEY,
                     new byte[] {
                         (byte)instruction.OP_PUBKEY,
@@ -525,7 +522,7 @@ namespace Novacoin
             // N [pubkey1] [pubkey2] ... [pubkeyN] M OP_CHECKMULTISIG
             // Where N and M are small integer opcodes (OP1 ... OP_16)
             templateTuples.Add(
-                new Tuple<txnouttype, IEnumerable<byte>>(
+                new Tuple<txnouttype, byte[]>(
                     txnouttype.TX_MULTISIG,
                     new byte[] {
                         (byte)instruction.OP_SMALLINTEGER,
@@ -538,7 +535,7 @@ namespace Novacoin
             // Data-carrying output
             // OP_RETURN [up to 80 bytes of data]
             templateTuples.Add(
-                new Tuple<txnouttype, IEnumerable<byte>>(
+                new Tuple<txnouttype, byte[]>(
                     txnouttype.TX_NULL_DATA,
                     new byte[] {
                         (byte)instruction.OP_RETURN,
@@ -549,18 +546,18 @@ namespace Novacoin
             // Nonstandard tx output
             typeRet = txnouttype.TX_NONSTANDARD;
 
-            foreach (Tuple<txnouttype, IEnumerable<byte>> templateTuple in templateTuples)
+            foreach (var templateTuple in templateTuples)
             {
-                CScript script1 = scriptPubKey;
-                CScript script2 = new CScript(templateTuple.Item2);
+                var script1 = scriptPubKey;
+                var script2 = new CScript(templateTuple.Item2);
 
                 instruction opcode1, opcode2;
 
                 // Compare
-                ByteQueue bq1 = script1.GetByteQUeue();
-                ByteQueue bq2 = script2.GetByteQUeue();
+                var bq1 = script1.GetByteQUeue();
+                var bq2 = script2.GetByteQUeue();
 
-                IEnumerable<byte> args1, args2;
+                byte[] args1, args2;
 
                 int last1 = script1.Bytes.Count() -1;
                 int last2 = script2.Bytes.Count() - 1;
@@ -574,8 +571,8 @@ namespace Novacoin
                         if (typeRet == txnouttype.TX_MULTISIG)
                         {
                             // Additional checks for TX_MULTISIG:
-                            byte m = solutions.First().First();
-                            byte n = solutions.Last().First();
+                            var m = solutions.First().First();
+                            var n = solutions.Last().First();
 
                             if (m < 1 || n < 1 || m > n || solutions.Count - 2 != n)
                             {
@@ -634,7 +631,7 @@ namespace Novacoin
                         // Single-byte small integer pushed onto solutions
                         try
                         {
-                            byte n = (byte)DecodeOP_N(opcode1);
+                            var n = (byte)DecodeOP_N(opcode1);
                             solutions.Add(new byte[] { n });
                         }
                         catch (Exception)
@@ -645,7 +642,7 @@ namespace Novacoin
                     else if (opcode2 == instruction.OP_SMALLDATA)
                     {
                         // small pushdata, <= 80 bytes
-                        if (args1.Count() > 80)
+                        if (args1.Length > 80)
                         {
                             break;
                         }
@@ -676,13 +673,13 @@ namespace Novacoin
         {
             if (nIn >= txTo.vin.Length)
             {
-                StringBuilder sb = new StringBuilder();
+                var sb = new StringBuilder();
                 sb.AppendFormat("ERROR: SignatureHash() : nIn={0} out of range\n", nIn);
                 throw new ArgumentOutOfRangeException("nIn", sb.ToString());
             }
 
             // Init a copy of transaction
-            CTransaction txTmp = new CTransaction(txTo);
+            var txTmp = new CTransaction(txTo);
 
             // In case concatenating two scripts ends up with two codeseparators,
             // or an extra one at the end, this prevents all those possible incompatibilities.
@@ -745,7 +742,7 @@ namespace Novacoin
             }
 
             // Serialize and hash
-            List<byte> b = new List<byte>();
+            var b = new List<byte>();
             b.AddRange(txTmp.Bytes);
             b.AddRange(BitConverter.GetBytes(nHashType));
 
@@ -781,7 +778,7 @@ namespace Novacoin
         /// Remove last element from stack
         /// </summary>
         /// <param name="stack">Stack reference</param>
-        private static void popstack(ref List<IEnumerable<byte>> stack)
+        private static void popstack(ref List<byte[]> stack)
         {
             int nCount = stack.Count;
             if (nCount == 0)
@@ -795,7 +792,7 @@ namespace Novacoin
         /// <param name="stack">Stack reference</param>
         /// <param name="nDepth">Depth</param>
         /// <returns>Byte sequence</returns>
-        private static IEnumerable<byte> stacktop(ref List<IEnumerable<byte>> stack, int nDepth)
+        private static byte[] stacktop(ref List<byte[]> stack, int nDepth)
         {
             int nStackElement = stack.Count + nDepth;
 
@@ -823,16 +820,14 @@ namespace Novacoin
         /// </summary>
         /// <param name="value">Some byte sequence</param>
         /// <returns></returns>
-        private static bool CastToBool(IEnumerable<byte> arg)
+        private static bool CastToBool(byte[] arg)
         {
-            byte[] value = arg.ToArray();
-
-            for (var i = 0; i < value.Length; i++)
+            for (var i = 0; i < arg.Length; i++)
             {
-                if (value[i] != 0)
+                if (arg[i] != 0)
                 {
                     // Can be negative zero
-                    if (i == value.Length - 1 && value[i] == 0x80)
+                    if (i == arg.Length - 1 && arg[i] == 0x80)
                     {
                         return false;
                     }
@@ -849,14 +844,14 @@ namespace Novacoin
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        private static BigInteger CastToBigInteger(IEnumerable<byte> value)
+        private static BigInteger CastToBigInteger(byte[] value)
         {
-            if (value.Count() > 4)
+            if (value.Length > 4)
             {
                 throw new StackMachineException("CastToBigInteger() : overflow");
             }
 
-            return new BigInteger(value.ToArray());
+            return new BigInteger(value);
         }
 
         /// <summary>
@@ -869,34 +864,34 @@ namespace Novacoin
         /// <param name="flags">Signature checking flags</param>
         /// <param name="nHashType">Hash type flag</param>
         /// <returns></returns>
-        public static bool EvalScript(ref List<IEnumerable<byte>> stack, CScript script, CTransaction txTo, int nIn, int flags, int nHashType)
+        public static bool EvalScript(ref List<byte[]> stack, CScript script, CTransaction txTo, int nIn, int flags, int nHashType)
         {
             if (script.Bytes.Count() > 10000)
             {
                 return false; // Size limit failed
             }
 
-            List<bool> vfExec = new List<bool>();
+            var vfExec = new List<bool>();
 
             int nOpCount = 0;
             int nCodeHashBegin = 0;
 
-            byte[] falseBytes = new byte[0];
-            byte[] trueBytes = new byte[] { 0x01 };
+            var falseBytes = new byte[0];
+            var trueBytes = new byte[] { 0x01 };
 
-            ByteQueue CodeQueue = script.GetByteQUeue();
-            List<IEnumerable<byte>> altStack = new List<IEnumerable<byte>>();
+            var CodeQueue = script.GetByteQUeue();
+            var altStack = new List<byte[]>();
 
             try
             {
                 instruction opcode;
-                IEnumerable<byte> pushArg;
+                byte[] pushArg;
 
                 while (GetOp(ref CodeQueue, out opcode, out pushArg)) // Read instructions
                 {
                     bool fExec = vfExec.IndexOf(false) == -1;
 
-                    if (pushArg.Count() > 520)
+                    if (pushArg.Length > 520)
                     {
                         return false; // Script element size limit failed
                     }
@@ -986,14 +981,14 @@ namespace Novacoin
                             case instruction.OP_NOTIF:
                                 {
                                     // <expression> if [statements] [else [statements]] endif
-                                    bool fValue = false;
+                                    var fValue = false;
                                     if (fExec)
                                     {
                                         if (stack.Count() < 1)
                                         {
                                             return false;
                                         }
-                                        IEnumerable<byte> vch = stacktop(ref stack, -1);
+                                        var vch = stacktop(ref stack, -1);
                                         fValue = CastToBool(vch);
                                         if (opcode == instruction.OP_NOTIF)
                                         {
@@ -1097,8 +1092,8 @@ namespace Novacoin
                                     {
                                         return false;
                                     }
-                                    IEnumerable<byte> vch1 = stacktop(ref stack, -2);
-                                    IEnumerable<byte> vch2 = stacktop(ref stack, -1);
+                                    var vch1 = stacktop(ref stack, -2);
+                                    var vch2 = stacktop(ref stack, -1);
                                     stack.Add(vch1);
                                     stack.Add(vch2);
                                 }
@@ -1111,9 +1106,9 @@ namespace Novacoin
                                     {
                                         return false;
                                     }
-                                    IEnumerable<byte> vch1 = stacktop(ref stack, -3);
-                                    IEnumerable<byte> vch2 = stacktop(ref stack, -2);
-                                    IEnumerable<byte> vch3 = stacktop(ref stack, -1);
+                                    var vch1 = stacktop(ref stack, -3);
+                                    var vch2 = stacktop(ref stack, -2);
+                                    var vch3 = stacktop(ref stack, -1);
                                     stack.Add(vch1);
                                     stack.Add(vch2);
                                     stack.Add(vch3);
@@ -1127,8 +1122,8 @@ namespace Novacoin
                                     {
                                         return false;
                                     }
-                                    IEnumerable<byte> vch1 = stacktop(ref stack, -4);
-                                    IEnumerable<byte> vch2 = stacktop(ref stack, -3);
+                                    var vch1 = stacktop(ref stack, -4);
+                                    var vch2 = stacktop(ref stack, -3);
                                     stack.Add(vch1);
                                     stack.Add(vch2);
                                 }
@@ -1142,8 +1137,8 @@ namespace Novacoin
                                     {
                                         return false;
                                     }
-                                    IEnumerable<byte> vch1 = stacktop(ref stack, -6);
-                                    IEnumerable<byte> vch2 = stacktop(ref stack, -5);
+                                    var vch1 = stacktop(ref stack, -6);
+                                    var vch2 = stacktop(ref stack, -5);
                                     stack.RemoveRange(nStackDepth - 6, 2);
                                     stack.Add(vch1);
                                     stack.Add(vch2);
@@ -1153,7 +1148,7 @@ namespace Novacoin
                             case instruction.OP_2SWAP:
                                 {
                                     // (x1 x2 x3 x4 -- x3 x4 x1 x2)
-                                    int nStackDepth = stack.Count();
+                                    int nStackDepth = stack.Count;
                                     if (nStackDepth < 4)
                                     {
                                         return false;
@@ -1171,7 +1166,7 @@ namespace Novacoin
                                         return false;
                                     }
 
-                                    IEnumerable<byte> vch = stacktop(ref stack, -1);
+                                    var vch = stacktop(ref stack, -1);
 
                                     if (CastToBool(vch))
                                     {
@@ -1208,7 +1203,7 @@ namespace Novacoin
                                         return false;
                                     }
 
-                                    IEnumerable<byte> vch = stacktop(ref stack, -1);
+                                    var vch = stacktop(ref stack, -1);
                                     stack.Add(vch);
                                 }
                                 break;
@@ -1234,7 +1229,7 @@ namespace Novacoin
                                         return false;
                                     }
 
-                                    IEnumerable<byte> vch = stacktop(ref stack, -2);
+                                    var vch = stacktop(ref stack, -2);
                                     stack.Add(vch);
                                 }
                                 break;
@@ -1259,7 +1254,7 @@ namespace Novacoin
                                         return false;
                                     }
 
-                                    IEnumerable<byte> vch = stacktop(ref stack, -n - 1);
+                                    var vch = stacktop(ref stack, -n - 1);
                                     if (opcode == instruction.OP_ROLL)
                                     {
                                         stack.RemoveAt(nStackDepth - n - 1);
@@ -1305,7 +1300,7 @@ namespace Novacoin
                                     {
                                         return false;
                                     }
-                                    IEnumerable<byte> vch = stacktop(ref stack, -1);
+                                    var vch = stacktop(ref stack, -1);
                                     stack.Insert(nStackDepth - 2, vch);
                                 }
                                 break;
@@ -1319,7 +1314,7 @@ namespace Novacoin
                                         return false;
                                     }
 
-                                    BigInteger bnSize = new BigInteger((ushort)stacktop(ref stack, -1).Count());
+                                    var bnSize = new BigInteger((ushort)stacktop(ref stack, -1).Count());
                                     stack.Add(bnSize.ToByteArray());
                                 }
                                 break;
@@ -1338,8 +1333,8 @@ namespace Novacoin
                                         return false;
                                     }
 
-                                    IEnumerable<byte> vch1 = stacktop(ref stack, -2);
-                                    IEnumerable<byte> vch2 = stacktop(ref stack, -1);
+                                    var vch1 = stacktop(ref stack, -2);
+                                    var vch2 = stacktop(ref stack, -1);
                                     bool fEqual = (vch1.SequenceEqual(vch2));
                                     // OP_NOTEQUAL is disabled because it would be too easy to say
                                     // something like n != 1 and have some wiseguy pass in 1 with extra
@@ -1381,7 +1376,7 @@ namespace Novacoin
                                         return false;
                                     }
 
-                                    BigInteger bn = CastToBigInteger(stacktop(ref stack, -1));
+                                    var bn = CastToBigInteger(stacktop(ref stack, -1));
                                     switch (opcode)
                                     {
                                         case instruction.OP_1ADD:
@@ -1429,8 +1424,8 @@ namespace Novacoin
                                         return false;
                                     }
 
-                                    BigInteger bn1 = CastToBigInteger(stacktop(ref stack, -2));
-                                    BigInteger bn2 = CastToBigInteger(stacktop(ref stack, -1));
+                                    var bn1 = CastToBigInteger(stacktop(ref stack, -2));
+                                    var bn2 = CastToBigInteger(stacktop(ref stack, -1));
                                     BigInteger bn = 0;
 
                                     switch (opcode)
@@ -1502,9 +1497,9 @@ namespace Novacoin
                                         return false;
                                     }
 
-                                    BigInteger bn1 = CastToBigInteger(stacktop(ref stack, -3));
-                                    BigInteger bn2 = CastToBigInteger(stacktop(ref stack, -2));
-                                    BigInteger bn3 = CastToBigInteger(stacktop(ref stack, -1));
+                                    var bn1 = CastToBigInteger(stacktop(ref stack, -3));
+                                    var bn2 = CastToBigInteger(stacktop(ref stack, -2));
+                                    var bn3 = CastToBigInteger(stacktop(ref stack, -1));
 
                                     bool fValue = (bn2 <= bn1 && bn1 < bn3);
 
@@ -1531,7 +1526,7 @@ namespace Novacoin
                                         return false;
                                     }
                                     Hash hash = null;
-                                    IEnumerable<byte> data = stacktop(ref stack, -1);
+                                    var data = stacktop(ref stack, -1);
 
                                     switch (opcode)
                                     {
@@ -1572,8 +1567,8 @@ namespace Novacoin
                                         return false;
                                     }
 
-                                    IList<byte> sigBytes = stacktop(ref stack, -2).ToList();
-                                    IList<byte> pubkeyBytes = stacktop(ref stack, -1).ToList();
+                                    byte[] sigBytes = stacktop(ref stack, -2);
+                                    byte[] pubkeyBytes = stacktop(ref stack, -1);
 
                                     // Subset of script starting at the most recent codeseparator
                                     CScript scriptCode = new CScript(script.Bytes.Skip(nCodeHashBegin));
@@ -1581,7 +1576,7 @@ namespace Novacoin
                                     // There's no way for a signature to sign itself
                                     scriptCode.RemovePattern(sigBytes);
 
-                                    bool fSuccess = IsCanonicalSignature(sigBytes, flags) && IsCanonicalPubKey(pubkeyBytes.ToList(), flags) && CheckSig(sigBytes, pubkeyBytes, scriptCode, txTo, nIn, nHashType, flags);
+                                    bool fSuccess = IsCanonicalSignature(sigBytes, flags) && IsCanonicalPubKey(pubkeyBytes, flags) && CheckSig(sigBytes, pubkeyBytes, scriptCode, txTo, nIn, nHashType, flags);
 
                                     popstack(ref stack);
                                     popstack(ref stack);
@@ -1648,18 +1643,18 @@ namespace Novacoin
                                     // There is no way for a signature to sign itself, so we need to drop the signatures
                                     for (int k = 0; k < nSigsCount; k++)
                                     {
-                                        IEnumerable<byte> vchSig = stacktop(ref stack, -isig - k);
-                                        scriptCode.RemovePattern(vchSig.ToList());
+                                        var vchSig = stacktop(ref stack, -isig - k);
+                                        scriptCode.RemovePattern(vchSig);
                                     }
 
                                     bool fSuccess = true;
                                     while (fSuccess && nSigsCount > 0)
                                     {
-                                        IList<byte> sigBytes = stacktop(ref stack, -isig).ToList();
-                                        IList<byte> pubKeyBytes = stacktop(ref stack, -ikey).ToList();
+                                        var sigBytes = stacktop(ref stack, -isig);
+                                        var pubKeyBytes = stacktop(ref stack, -ikey);
 
                                         // Check signature
-                                        bool fOk = IsCanonicalSignature(sigBytes, flags) && IsCanonicalPubKey(pubKeyBytes.ToList(), flags) && CheckSig(sigBytes, pubKeyBytes, scriptCode, txTo, nIn, nHashType, flags);
+                                        bool fOk = IsCanonicalSignature(sigBytes, flags) && IsCanonicalPubKey(pubKeyBytes, flags) && CheckSig(sigBytes, pubKeyBytes, scriptCode, txTo, nIn, nHashType, flags);
 
                                         if (fOk)
                                         {
@@ -1741,21 +1736,21 @@ namespace Novacoin
         }
 
 
-        public static bool IsCanonicalPubKey(IList<byte> pubKeyBytes, int flags)
+        public static bool IsCanonicalPubKey(byte[] pubKeyBytes, int flags)
         {
             if ((flags & (int)scriptflag.SCRIPT_VERIFY_STRICTENC) == 0)
                 return true;
 
-            if (pubKeyBytes.Count < 33)
+            if (pubKeyBytes.Length < 33)
                 return false;  // Non-canonical public key: too short
             if (pubKeyBytes[0] == 0x04)
             {
-                if (pubKeyBytes.Count != 65)
+                if (pubKeyBytes.Length != 65)
                     return false; // Non-canonical public key: invalid length for uncompressed key
             }
             else if (pubKeyBytes[0] == 0x02 || pubKeyBytes[0] == 0x03)
             {
-                if (pubKeyBytes.Count != 33)
+                if (pubKeyBytes.Length != 33)
                     return false; // Non-canonical public key: invalid length for compressed key
             }
             else
@@ -1765,7 +1760,7 @@ namespace Novacoin
             return true;
         }
 
-        public static bool IsCanonicalSignature(IList<byte> sigBytes, int flags)
+        public static bool IsCanonicalSignature(byte[] sigBytes, int flags)
         {
             // STUB
 
@@ -1783,7 +1778,7 @@ namespace Novacoin
         /// <param name="nHashType">Hashing type flag</param>
         /// <param name="flags">Signature checking flags</param>
         /// <returns>Checking result</returns>
-        public static bool CheckSig(IList<byte> sigBytes, IList<byte> pubkeyBytes, CScript script, CTransaction txTo, int nIn, int nHashType, int flags)
+        public static bool CheckSig(byte[] sigBytes, byte[] pubkeyBytes, CScript script, CTransaction txTo, int nIn, int nHashType, int flags)
         {
             CPubKey pubkey;
 
@@ -1805,7 +1800,7 @@ namespace Novacoin
                 return false;
             }
 
-            if (sigBytes.Count == 0)
+            if (sigBytes.Length == 0)
             {
                 return false;
             }
@@ -1821,9 +1816,9 @@ namespace Novacoin
             }
 
             // Remove hash type
-            sigBytes.RemoveAt(sigBytes.Count - 1);
+            Array.Resize(ref sigBytes, sigBytes.Length - 1);
 
-            Hash256 sighash = SignatureHash(script, txTo, nIn, nHashType);
+            var sighash = SignatureHash(script, txTo, nIn, nHashType);
 
             if (!pubkey.VerifySignature(sighash, sigBytes))
             {
@@ -1845,8 +1840,8 @@ namespace Novacoin
         /// <returns></returns>
         public static bool VerifyScript(CScript scriptSig, CScript scriptPubKey, CTransaction txTo, int nIn, int flags, int nHashType)
         {
-            List<IEnumerable<byte>> stack = new List<IEnumerable<byte>>();
-            List<IEnumerable<byte>> stackCopy = null;
+            var stack = new List<byte[]>();
+            List<byte[]> stackCopy = null;
 
             if (!EvalScript(ref stack, scriptSig, txTo, nIn, flags, nHashType))
             {
@@ -1855,7 +1850,7 @@ namespace Novacoin
 
             if ((flags & (int)scriptflag.SCRIPT_VERIFY_P2SH) != 0)
             {
-                stackCopy = new List<IEnumerable<byte>> (stack);
+                stackCopy = new List<byte[]>(stack);
             }
 
             if (!EvalScript(ref stack, scriptPubKey, txTo, nIn, flags, nHashType))
@@ -1885,7 +1880,7 @@ namespace Novacoin
                     throw new StackMachineException("Fatal script validation error.");
                 }
 
-                CScript pubKey2 = new CScript(stackCopy.Last());
+                var pubKey2 = new CScript(stackCopy.Last());
                 popstack(ref stackCopy);
 
                 if (!EvalScript(ref stackCopy, pubKey2, txTo, nIn, flags, nHashType))

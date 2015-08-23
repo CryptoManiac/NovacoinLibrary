@@ -45,9 +45,9 @@ namespace Novacoin
 
         public static Hash160 Compute160(IEnumerable<byte> inputBytes)
         {
-            byte[] dataBytes = inputBytes.ToArray();
-            byte[] digest1 = _hasher256.ComputeHash(dataBytes, 0, dataBytes.Length);
-            byte[] digest2 = _hasher160.ComputeHash(digest1, 0, digest1.Length);
+            var dataBytes = inputBytes.ToArray();
+            var digest1 = _hasher256.ComputeHash(dataBytes, 0, dataBytes.Length);
+            var digest2 = _hasher160.ComputeHash(digest1, 0, digest1.Length);
 
             return new Hash160(digest2);
         }

@@ -31,9 +31,9 @@ namespace Novacoin
         /// </summary>
         /// <param name="n">Unsigned integer value</param>
         /// <returns>Byte sequence</returns>
-        public static IList<byte> EncodeVarInt(ulong n)
+        public static byte[] EncodeVarInt(ulong n)
         {
-            List<byte> resultBytes = new List<byte>();
+            var resultBytes = new List<byte>();
 
             if (n <= 0xfc)
             {
@@ -68,7 +68,7 @@ namespace Novacoin
                 resultBytes.AddRange(valueBytes);
             }
 
-            return resultBytes;
+            return resultBytes.ToArray();
         }
 
         /// <summary>
@@ -78,7 +78,7 @@ namespace Novacoin
         /// </summary>
         /// <param name="n">Integer value</param>
         /// <returns>Byte sequence</returns>
-        public static IList<byte> EncodeVarInt(long n)
+        public static byte[] EncodeVarInt(long n)
         {
             return EncodeVarInt((ulong)n);
         }
@@ -90,13 +90,12 @@ namespace Novacoin
         /// </summary>
         /// <param name="bytes">Byte sequence</param>
         /// <returns>Integer value</returns>
-        public static ulong DecodeVarInt(IList<byte> bytes)
+        public static ulong DecodeVarInt(byte[] bytes)
         {
-            byte prefix = bytes[0];
+            var prefix = bytes[0];
+            var bytesArray = new byte[bytes.Length - 1];
 
-            bytes.RemoveAt(0); // Remove prefix
-
-            byte[] bytesArray = bytes.ToArray();
+            bytes.CopyTo(bytesArray, 1);  // Get rid of prefix
 
             switch (prefix)
             {
