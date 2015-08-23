@@ -1327,7 +1327,7 @@ namespace Novacoin
 
                                     IEnumerable<byte> vch1 = stacktop(ref stack, -2);
                                     IEnumerable<byte> vch2 = stacktop(ref stack, -1);
-                                    bool fEqual = (vch1 == vch2);
+                                    bool fEqual = (vch1.SequenceEqual(vch2));
                                     // OP_NOTEQUAL is disabled because it would be too easy to say
                                     // something like n != 1 and have some wiseguy pass in 1 with extra
                                     // zero bytes after it (numerically, 0x01 == 0x0001 == 0x000001)
