@@ -881,7 +881,7 @@ namespace Novacoin
 
                 while (GetOp(ref CodeQueue, out opcode, out pushArg)) // Read instructions
                 {
-                    bool fExec = vfExec.IndexOf(false) != -1;
+                    bool fExec = vfExec.IndexOf(false) == -1;
 
                     if (pushArg.Count() > 520)
                     {
