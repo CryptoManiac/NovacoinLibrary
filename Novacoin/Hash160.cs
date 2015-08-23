@@ -48,8 +48,8 @@ namespace Novacoin
         {
             var dataBytes = inputBytes.ToArray();
 
-            var digest1 = new byte[32];
-            var digest2 = new byte[20];
+			var digest1 = new byte[_hasher256.GetDigestSize()];
+			var digest2 = new byte[_hasher160.GetDigestSize()];
 
             _hasher256.BlockUpdate(dataBytes, 0, dataBytes.Length);
             _hasher256.DoFinal(digest1, 0);
