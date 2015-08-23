@@ -24,7 +24,6 @@ namespace Novacoin
         }
     }
 
-
     public class AddressTools
     {
         private const string strDigits = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
