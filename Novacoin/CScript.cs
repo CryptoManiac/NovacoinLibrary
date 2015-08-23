@@ -197,15 +197,15 @@ namespace Novacoin
             {
                 var wCodeBytes = new ByteQueue(codeBytes);
 
-                instruction opcode; // Current opcode
+                instruction opcode; // Current instruction
                 byte[] pushArgs; // OP_PUSHDATAn argument
 
-                // Scan opcodes sequence
+                // Scan instructions sequence
                 while (ScriptCode.GetOp(ref wCodeBytes, out opcode, out pushArgs))
                 {
                     if (opcode > instruction.OP_16)
                     {
-                        // We don't allow control opcodes here
+                        // We don't allow control instructions here
                         return false;
                     }
                 }
@@ -224,9 +224,9 @@ namespace Novacoin
                 var wCodeBytes = new ByteQueue(codeBytes);
 
                 byte[] pushArgs; // OP_PUSHDATAn argument
-                instruction opcode; // Current opcode
+                instruction opcode; // Current instruction
 
-                // Scan opcodes sequence
+                // Scan instructions sequence
                 while (ScriptCode.GetOp(ref wCodeBytes, out opcode, out pushArgs))
                 {
                     var data = pushArgs;
@@ -312,13 +312,13 @@ namespace Novacoin
         {
             var wCodeBytes = new ByteQueue(codeBytes);
 
-            instruction opcode; // Current opcode
+            instruction opcode; // Current instruction
             byte[] pushArgs; // OP_PUSHDATAn argument
 
             int nCount = 0;
             var lastOpcode = instruction.OP_INVALIDOPCODE;
 
-            // Scan opcodes sequence
+            // Scan instructions sequence
             while (ScriptCode.GetOp(ref wCodeBytes, out opcode, out pushArgs))
             {
                 if (opcode == instruction.OP_CHECKSIG || opcode == instruction.OP_CHECKSIGVERIFY)
@@ -359,7 +359,7 @@ namespace Novacoin
             // pushes onto the stack:
             ByteQueue wScriptSig = scriptSig.GetByteQUeue();
 
-            instruction opcode; // Current opcode
+            instruction opcode; // Current instruction
             byte[] pushArgs; // OP_PUSHDATAn argument
 
             while (ScriptCode.GetOp(ref wScriptSig, out opcode, out pushArgs))
@@ -463,7 +463,7 @@ namespace Novacoin
 			var sb = new StringBuilder();
             var wCodeBytes = new ByteQueue(codeBytes);
 
-            instruction opcode; // Current opcode
+            instruction opcode; // Current instruction
             byte[] pushArgs; // OP_PUSHDATAn argument
             while (ScriptCode.GetOp(ref wCodeBytes, out opcode, out pushArgs))
             {

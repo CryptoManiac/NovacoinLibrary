@@ -17,16 +17,15 @@
  */
 
 using System;
-using System.Linq;
 using System.Text;
 using System.Collections.Generic;
 
 namespace Novacoin
 {
-	/// <summary>
-	/// Block header
-	/// </summary>
-	public class CBlockHeader
+    /// <summary>
+    /// Block header
+    /// </summary>
+    public class CBlockHeader
 	{
 		/// <summary>
 		/// Version of block schema.
