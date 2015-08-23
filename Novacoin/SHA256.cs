@@ -16,8 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-using System.Linq;
-using System.Collections.Generic;
+using Org.BouncyCastle.Crypto.Digests;
 
 namespace Novacoin
 {
@@ -26,22 +25,25 @@ namespace Novacoin
     /// </summary>
     public class SHA256 : Hash
     {
+        private static Sha256Digest _hasher256 = new Sha256Digest();
+
         // 32 bytes
         public override int hashSize
         {
-            get { return 32; }
+            get { return _hasher256.GetDigestSize(); }
         }
 
         public SHA256() : base() { }
         public SHA256(byte[] bytes, int offset = 0) : base(bytes, offset) { }
-        public SHA256(IEnumerable<byte> bytes, int skip = 0) : base(bytes, skip) { }
         public SHA256(SHA256 h) : base(h) { }
 
 
-        public static SHA256 Compute256(IEnumerable<byte> inputBytes)
+        public static SHA256 Compute256(byte[] inputBytes)
         {
-            var dataBytes = inputBytes.ToArray();
-            var digest1 = _hasher256.ComputeHash(dataBytes, 0, dataBytes.Length);
+            var digest1 = new byte[_hasher256.GetDigestSize()];
+
+            _hasher256.BlockUpdate(inputBytes, 0, inputBytes.Length);
+            _hasher256.DoFinal(digest1, 0);
 
             return new SHA256(digest1);
         }

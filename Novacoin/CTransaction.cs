@@ -189,7 +189,7 @@ namespace Novacoin
         /// <summary>
         /// A sequence of bytes, which corresponds to the current state of CTransaction.
         /// </summary>
-        public IList<byte> Bytes
+        public byte[] Bytes
         {
             get
             {
@@ -257,7 +257,7 @@ namespace Novacoin
 
                 resultBytes.AddRange(BitConverter.GetBytes(nLockTime));
 
-                return resultBytes;
+                return resultBytes.ToArray();
             }
         }
 

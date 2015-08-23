@@ -14,10 +14,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
+using Org.BouncyCastle.Crypto.Digests;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography;
 
 namespace Novacoin
 {
@@ -29,23 +28,24 @@ namespace Novacoin
         /// <summary>
         /// Computes RIPEMD160 hash using managed library
         /// </summary>
-        private static readonly RIPEMD160Managed _hasher160 = new RIPEMD160Managed();
-
+        // private static readonly RIPEMD160Managed _hasher160 = new RIPEMD160Managed();
+        private static RipeMD160Digest _hasher160 = new RipeMD160Digest();
+        
         // 20 bytes
         public override int hashSize
         {
-            get { return 20; }
+            get { return _hasher160.GetDigestSize(); }
         }
 
         public RIPEMD160() : base() { }
         public RIPEMD160(byte[] bytes, int offset = 0) : base(bytes, offset) { }
-        public RIPEMD160(IEnumerable<byte> bytes, int skip = 0) : base(bytes, skip) { }
         public RIPEMD160(RIPEMD160 h) : base(h) { }
 
-        public static RIPEMD160 Compute160(IEnumerable<byte> inputBytes)
+        public static RIPEMD160 Compute160(byte[] inputBytes)
         {
-            var dataBytes = inputBytes.ToArray();
-            var digest1 = _hasher160.ComputeHash(dataBytes, 0, dataBytes.Length);
+            var digest1 = new byte[_hasher160.GetDigestSize()];
+            _hasher160.BlockUpdate(inputBytes, 0, inputBytes.Length);
+            _hasher160.DoFinal(digest1, 0);
 
             return new RIPEMD160(digest1);
         }

@@ -89,7 +89,7 @@ namespace Novacoin
         /// Convert current block header instance into sequence of bytes
         /// </summary>
         /// <returns>Byte sequence</returns>
-        public IList<byte> Bytes
+        public byte[] Bytes
         {
             get
             {
@@ -102,7 +102,7 @@ namespace Novacoin
                 r.AddRange(BitConverter.GetBytes(nBits));
                 r.AddRange(BitConverter.GetBytes(nNonce));
 
-                return r;
+                return r.ToArray();
             }
         }
 

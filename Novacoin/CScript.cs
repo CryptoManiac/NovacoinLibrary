@@ -451,7 +451,7 @@ namespace Novacoin
 
         public CScriptID ScriptID
         {
-            get { return new CScriptID(Hash160.Compute160(codeBytes)); }
+            get { return new CScriptID(Hash160.Compute160(codeBytes.ToArray())); }
         }
 
         /// <summary>

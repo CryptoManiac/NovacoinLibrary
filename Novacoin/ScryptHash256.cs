@@ -16,7 +16,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
+//using System.Linq;
 
 namespace Novacoin
 {
@@ -33,7 +33,6 @@ namespace Novacoin
 
         public ScryptHash256() : base() { }
         public ScryptHash256(byte[] bytes, int offset = 0) : base(bytes, offset) { }
-        public ScryptHash256(IEnumerable<byte> bytes, int skip = 0) : base(bytes, skip) { }
         public ScryptHash256(ScryptHash256 h) : base(h) { }
 
         /// <summary>
@@ -41,12 +40,11 @@ namespace Novacoin
         /// </summary>
         /// <param name="inputBytes">Byte sequence to hash</param>
         /// <returns>Hashing result instance</returns>
-        public static ScryptHash256 Compute256(IEnumerable<byte> inputBytes)
+        public static ScryptHash256 Compute256(byte[] inputBytes)
         {
             var V = new uint[(131072 + 63) / sizeof(uint)];
 
-            var dataBytes = inputBytes.ToArray();
-            var keyBytes1 = CryptoUtils.PBKDF2_Sha256(128, dataBytes, dataBytes, 1);
+            var keyBytes1 = CryptoUtils.PBKDF2_Sha256(128, (byte[])inputBytes, (byte[])inputBytes, 1);
             var X = Interop.ToUInt32Array(keyBytes1);
 
             for (var i = 0; i < 1024; i++)
@@ -68,7 +66,7 @@ namespace Novacoin
             }
 
             var xBytes = Interop.LEBytes(X);
-            var keyBytes2 = CryptoUtils.PBKDF2_Sha256(32, dataBytes, xBytes, 1);
+            var keyBytes2 = CryptoUtils.PBKDF2_Sha256(32, (byte[])inputBytes, xBytes, 1);
 
             return new ScryptHash256(keyBytes2);
         }

@@ -17,8 +17,7 @@
  */
 
 using System.Linq;
-using System.Collections.Generic;
-using System.Security.Cryptography;
+using Org.BouncyCastle.Crypto.Digests;
 
 namespace Novacoin
 {
@@ -30,24 +29,32 @@ namespace Novacoin
         /// <summary>
         /// Computes RIPEMD160 hash using managed library
         /// </summary>
-        private static readonly RIPEMD160Managed _hasher160 = new RIPEMD160Managed();
-        
+        //private static readonly RIPEMD160Managed _hasher160 = new RIPEMD160Managed();
+
+        private static RipeMD160Digest _hasher160 = new RipeMD160Digest();
+        private static Sha256Digest _hasher256 = new Sha256Digest();
+
         // 20 bytes
         public override int hashSize
         {
-            get { return 20; }
+            get { return _hasher160.GetDigestSize(); }
         }
 
         public Hash160() : base() { }
         public Hash160(byte[] bytes, int offset = 0) : base(bytes, offset) { }
-        public Hash160(IEnumerable<byte> bytes, int skip = 0) : base(bytes, skip) { }
         public Hash160(Hash160 h) : base(h) { }
 
-        public static Hash160 Compute160(IEnumerable<byte> inputBytes)
+        public static Hash160 Compute160(byte[] inputBytes)
         {
             var dataBytes = inputBytes.ToArray();
-            var digest1 = _hasher256.ComputeHash(dataBytes, 0, dataBytes.Length);
-            var digest2 = _hasher160.ComputeHash(digest1, 0, digest1.Length);
+
+            var digest1 = new byte[32];
+            var digest2 = new byte[20];
+
+            _hasher256.BlockUpdate(dataBytes, 0, dataBytes.Length);
+            _hasher256.DoFinal(digest1, 0);
+            _hasher160.BlockUpdate(digest1, 0, digest1.Length);
+            _hasher160.DoFinal(digest2, 0);
 
             return new Hash160(digest2);
         }

@@ -17,21 +17,12 @@
  */
 
 using System;
-using System.Security.Cryptography;
-using System.Collections.Generic;
 using System.Linq;
-
-using System.Numerics;
 
 namespace Novacoin
 {
     public abstract class Hash
     {
-        /// <summary>
-        /// Computes the SHA256 hash for the input data using the managed library.
-        /// </summary>
-        protected static SHA256Managed _hasher256 = new SHA256Managed();
-        
         /// <summary>
         /// Array of digest bytes.
         /// </summary>
@@ -56,15 +47,6 @@ namespace Novacoin
         public Hash()
         {
             _hashBytes = new byte[hashSize];
-        }
-
-        /// <summary>
-        /// Initializes a new instance of Hash class
-        /// </summary>
-        /// <param name="bytesList">List of bytes</param>
-        public Hash(IEnumerable<byte> bytes, int skip = 0)
-        {
-            _hashBytes = bytes.Skip(skip).Take(hashSize).ToArray();
         }
 
         /// <summary>

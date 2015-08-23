@@ -178,33 +178,25 @@ namespace Novacoin
 
                 foreach (var tx in vtx)
                 {
-                    merkleTree.AddRange(tx.Hash.hashBytes);
+                    merkleTree.AddRange(Hash256.ComputeRaw256(tx.Bytes));
                 }
 
-                var hasher = new SHA256Managed();
-                hasher.Initialize();
-
-                int j = 0;
-                for (int nSize = vtx.Length; nSize > 1; nSize = (nSize + 1) / 2)
+                int levelOffset = 0;
+                for (int nLevelSize = vtx.Length; nLevelSize > 1; nLevelSize = (nLevelSize + 1) / 2)
                 {
-                    for (int i = 0; i < nSize; i += 2)
+                    for (int nLeft = 0; nLeft < nLevelSize; nLeft += 2)
                     {
-                        int i2 = Math.Min(i + 1, nSize - 1);
+                        int nRight = Math.Min(nLeft + 1, nLevelSize - 1);
 
-                        var pair = new List<byte>();
+                        var left = merkleTree.GetRange((levelOffset + nLeft) * 32, 32).ToArray();
+                        var right = merkleTree.GetRange((levelOffset + nRight) * 32, 32).ToArray();
 
-                        pair.AddRange(merkleTree.GetRange((j + i)*32, 32));
-                        pair.AddRange(merkleTree.GetRange((j + i2)*32, 32));
-
-                        var digest1 = hasher.ComputeHash(pair.ToArray());
-                        var digest2 = hasher.ComputeHash(digest1);
-
-                        merkleTree.AddRange(digest2);
+                        merkleTree.AddRange(Hash256.ComputeRaw256(ref left, ref right));
                     }
-                    j += nSize;
+                    levelOffset += nLevelSize;
                 }
 
-                return (merkleTree.Count == 0) ? new Hash256() : new Hash256(merkleTree.GetRange(merkleTree.Count-32, 32));
+                return (merkleTree.Count == 0) ? new Hash256() : new Hash256(merkleTree.GetRange(merkleTree.Count-32, 32).ToArray());
             }
         }
 

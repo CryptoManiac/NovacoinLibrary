@@ -741,12 +741,11 @@ namespace Novacoin
                 Array.Resize(ref txTmp.vin, 1);
             }
 
-            // Serialize and hash
-            var b = new List<byte>();
-            b.AddRange(txTmp.Bytes);
-            b.AddRange(BitConverter.GetBytes(nHashType));
+            // Concatenate and hash
+            var txBytes = txTmp.Bytes;
+            var nHashTypeBytes = BitConverter.GetBytes(nHashType);
 
-            return Hash256.Compute256(b);
+            return Hash256.Compute256(ref txBytes, ref nHashTypeBytes);
         }
 
         //
