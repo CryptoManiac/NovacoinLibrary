@@ -152,39 +152,84 @@ namespace Novacoin
         }
 
         /// <summary>
-        /// Scan code bytes for pattern
+        /// Scan pushed data bytes for pattern and, in case of exact match, remove it.
         /// </summary>
         /// <param name="pattern">Pattern sequence</param>
-        /// <returns>Matches enumerator</returns>
-        private IEnumerable<int> FindPattern(byte[] pattern)
+        /// <returns>Matches count</returns>
+        public int RemovePattern(byte[] pattern)
         {
-            for (int i = 0; i < codeBytes.Count; i++)
+            // There is no sense to continue if pattern is longer than script itself
+            if (pattern.Length == 0 || pattern.Length > codeBytes.Count)
             {
-                if (codeBytes.Skip(i).Take(pattern.Length).SequenceEqual(pattern))
+                return 0;
+            }
+
+            var count = 0;
+            var bq1 = new ByteQueue(codeBytes);
+
+
+            byte[] pushData;
+            instruction opcode;
+
+            var newScript = new CScript();
+
+            while (ScriptCode.GetOp(ref bq1, out opcode, out pushData))
+            {
+                if (pushData.Length == 0)
                 {
-                    yield return i;
+                    // No data, put instruction on its place
+                    newScript.AddInstruction(opcode);
+                }
+                else if (!pushData.SequenceEqual(pattern))
+                {
+                    // No match, create push operator
+                    newScript.PushData(pushData);
+                }
+                else
+                {
+                    count++; // match
                 }
             }
+
+            codeBytes = newScript.codeBytes;
+
+            return count;
         }
 
         /// <summary>
-        /// Scan code bytes for pattern and remove it
+        /// Scan script for specific instruction and remove it if there are some matches.
         /// </summary>
-        /// <param name="pattern">Pattern sequence</param>
-        /// <returns>Matches number</returns>
-        public int RemovePattern(byte[] pattern)
+        /// <param name="op">Instruction</param>
+        /// <returns>Matches count</returns>
+        public int RemoveInstruction(instruction op)
         {
-            var resultBytes = new List<byte>(codeBytes);
-            int count = 0;
-                        
-            foreach (int i in FindPattern(pattern))
+            var count = 0;
+            var bq1 = new ByteQueue(codeBytes);
+
+
+            byte[] pushData;
+            instruction opcode;
+
+            var newScript = new CScript();
+
+            while (ScriptCode.GetOp(ref bq1, out opcode, out pushData))
             {
-                resultBytes.RemoveRange(i - count * pattern.Length, pattern.Length);
-                count++;
+                if (pushData.Length != 0)
+                {
+                    newScript.PushData(pushData);
+                }
+                else if (Enum.IsDefined(typeof(instruction), op) && op != opcode)
+                {
+                    newScript.AddInstruction(opcode);
+                }
+                else
+                {
+                    count++; // match
+                }
             }
 
-            codeBytes = resultBytes;
-            
+            codeBytes = newScript.codeBytes;
+
             return count;
         }
 

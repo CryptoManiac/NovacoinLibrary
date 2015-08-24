@@ -685,7 +685,7 @@ namespace Novacoin
 
             // In case concatenating two scripts ends up with two codeseparators,
             // or an extra one at the end, this prevents all those possible incompatibilities.
-            //script.RemovePattern(new byte[] { (byte)instruction.OP_CODESEPARATOR });     // TODO: issue here, due to false matches this breaks the validation of some scripts
+            script.RemoveInstruction(instruction.OP_CODESEPARATOR);
 
             // Blank out other inputs' signatures
             for (int i = 0; i < txTmp.vin.Length; i++)
