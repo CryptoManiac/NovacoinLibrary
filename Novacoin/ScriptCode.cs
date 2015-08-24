@@ -268,31 +268,32 @@ namespace Novacoin
             if (opcode <= instruction.OP_PUSHDATA4)
             {
                 var szBytes = new byte[4] { 0, 0, 0, 0 }; // Zero length
+                int nSize = 0;
 
                 try
                 {
                     if (opcode < instruction.OP_PUSHDATA1)
                     {
                         // Zero value instructions (OP_0, OP_FALSE)
-                        szBytes[3] = (byte)opcode;
+                        nSize = (int) opcode;
                     }
                     else if (opcode == instruction.OP_PUSHDATA1)
                     {
                         // The next byte contains the number of bytes to be pushed onto the stack, 
                         //    i.e. you have something like OP_PUSHDATA1 0x01 [0x5a]
-                        szBytes[3] = codeBytes.Get();
+                        nSize = codeBytes.Get();
                     }
                     else if (opcode == instruction.OP_PUSHDATA2)
                     {
                         // The next two bytes contain the number of bytes to be pushed onto the stack,
-                        //    i.e. now your operation will seem like this: OP_PUSHDATA2 0x00 0x01 [0x5a]
-                        codeBytes.Get(2).CopyTo(szBytes, 2);
+                        //    i.e. now your operation will seem like this: OP_PUSHDATA2 0x01 0x00 [0x5a]
+                        nSize = BitConverter.ToInt16(codeBytes.Get(2), 0);
                     }
                     else if (opcode == instruction.OP_PUSHDATA4)
                     {
                         // The next four bytes contain the number of bytes to be pushed onto the stack,
-                        //   OP_PUSHDATA4 0x00 0x00 0x00 0x01 [0x5a]
-                        szBytes = codeBytes.Get(4);
+                        //   OP_PUSHDATA4 0x01 0x00 0x00 0x00 [0x5a]
+                        nSize = BitConverter.ToInt32(codeBytes.Get(4), 0);
                     }
                 }
                 catch (ByteQueueException)
@@ -300,8 +301,6 @@ namespace Novacoin
                     // Unable to read operand length
                     return false;
                 }
-
-                int nSize = (int)Interop.BEBytesToUInt32(szBytes);
 
                 if (nSize > 0)
                 {
@@ -337,7 +336,7 @@ namespace Novacoin
 
             if (bytes.Length <= 4)
             {
-                sb.Append(Interop.BEBytesToUInt32(bytes));
+                sb.Append(new BigInteger(bytes));
             }
             else
             {

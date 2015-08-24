@@ -135,7 +135,7 @@ namespace Novacoin
                 // OP_PUSHDATA1 0x00 0x01 [0x5a]
                 codeBytes.Add((byte)instruction.OP_PUSHDATA2);
 
-                var szBytes = Interop.BEBytes((ushort)nCount);
+                var szBytes = BitConverter.GetBytes((ushort)nCount);
                 codeBytes.AddRange(szBytes);
             }
             else if (nCount < 0xffffffff)
@@ -143,10 +143,21 @@ namespace Novacoin
                 // OP_PUSHDATA1 0x00 0x00 0x00 0x01 [0x5a]
                 codeBytes.Add((byte)instruction.OP_PUSHDATA4);
 
-                var szBytes = Interop.BEBytes((uint)nCount);
+                var szBytes = BitConverter.GetBytes((uint)nCount);
                 codeBytes.AddRange(szBytes);
             }
 
+            // Add data bytes
+            codeBytes.AddRange(dataBytes);
+        }
+
+        /// <summary>
+        /// Just insert data array without including any prefixes. Please make sure that you know what you're doing, 
+        ///    it is recommended to use AddInstruction, AddHash or PushData instead.
+        /// </summary>
+        /// <param name="dataBytes">Data bytes</param>
+        public void AddRawData(byte[] dataBytes)
+        {
             // Add data bytes
             codeBytes.AddRange(dataBytes);
         }
@@ -158,7 +169,7 @@ namespace Novacoin
         /// <returns>Matches count</returns>
         public int RemovePattern(byte[] pattern)
         {
-            // There is no sense to continue if pattern is longer than script itself
+            // There is no sense to continue if pattern is empty or longer than script itself
             if (pattern.Length == 0 || pattern.Length > codeBytes.Count)
             {
                 return 0;
@@ -166,7 +177,6 @@ namespace Novacoin
 
             var count = 0;
             var bq1 = new ByteQueue(codeBytes);
-
 
             byte[] pushData;
             instruction opcode;
@@ -191,7 +201,11 @@ namespace Novacoin
                 }
             }
 
-            codeBytes = newScript.codeBytes;
+            if (count > 0)
+            {
+                // Replace current script if any matches were found
+                codeBytes = newScript.codeBytes;
+            }
 
             return count;
         }
@@ -203,23 +217,23 @@ namespace Novacoin
         /// <returns>Matches count</returns>
         public int RemoveInstruction(instruction op)
         {
-            var count = 0;
-            var bq1 = new ByteQueue(codeBytes);
-
-
             byte[] pushData;
             instruction opcode;
 
+            var count = 0;
             var newScript = new CScript();
+            var bq1 = new ByteQueue(codeBytes);
 
             while (ScriptCode.GetOp(ref bq1, out opcode, out pushData))
             {
-                if (pushData.Length != 0)
+                if (pushData.Length != 0 && op != opcode)
                 {
+                    // If instruction didn't match then push its data again
                     newScript.PushData(pushData);
                 }
                 else if (Enum.IsDefined(typeof(instruction), op) && op != opcode)
                 {
+                    // Instruction didn't match
                     newScript.AddInstruction(opcode);
                 }
                 else
@@ -228,7 +242,11 @@ namespace Novacoin
                 }
             }
 
-            codeBytes = newScript.codeBytes;
+            if (count > 0)
+            {
+                // Replace current script if any matches were found
+                codeBytes = newScript.codeBytes;
+            }
 
             return count;
         }
