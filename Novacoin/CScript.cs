@@ -132,7 +132,7 @@ namespace Novacoin
             }
             else if (nCount < 0xffff)
             {
-                // OP_PUSHDATA1 0x00 0x01 [0x5a]
+                // OP_PUSHDATA1 0x01 0x00 [0x5a]
                 codeBytes.Add((byte)instruction.OP_PUSHDATA2);
 
                 var szBytes = BitConverter.GetBytes((ushort)nCount);
@@ -140,7 +140,7 @@ namespace Novacoin
             }
             else if (nCount < 0xffffffff)
             {
-                // OP_PUSHDATA1 0x00 0x00 0x00 0x01 [0x5a]
+                // OP_PUSHDATA1 0x01 0x00 0x00 0x00 [0x5a]
                 codeBytes.Add((byte)instruction.OP_PUSHDATA4);
 
                 var szBytes = BitConverter.GetBytes((uint)nCount);
