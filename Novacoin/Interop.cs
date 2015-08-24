@@ -98,6 +98,10 @@ namespace Novacoin
 
         public static ushort BEBytesToUInt16(byte[] bytes)
         {
+            if (bytes.Length < sizeof(ushort))
+            {
+                Array.Resize(ref bytes, sizeof(ushort));
+            }
             if (bytes.Length != sizeof(ushort))
             {
                 throw new InteropException("Array size doesn't match the ushort data type.");
@@ -110,7 +114,11 @@ namespace Novacoin
 
         public static uint BEBytesToUInt32(byte[] bytes)
         {
-            if (bytes.Length != sizeof(uint))
+            if (bytes.Length < sizeof(uint))
+            {
+                Array.Resize(ref bytes, sizeof(uint));
+            }
+            else if (bytes.Length != sizeof(uint))
             {
                 throw new InteropException("Array size doesn't match the uint data type.");
             }
@@ -122,7 +130,11 @@ namespace Novacoin
 
         public static ulong BEBytesToUInt64(byte[] bytes)
         {
-            if (bytes.Length != sizeof(ulong))
+            if (bytes.Length < sizeof(ulong))
+            {
+                Array.Resize(ref bytes, sizeof(ulong));
+            }
+            else if (bytes.Length != sizeof(ulong))
             {
                 throw new InteropException("Array size doesn't match the ulong data type.");
             }
