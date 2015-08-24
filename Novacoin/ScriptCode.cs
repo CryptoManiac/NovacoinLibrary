@@ -1572,7 +1572,7 @@ namespace Novacoin
                                     var pubkeyBytes = stacktop(ref stack, -1);
 
                                     // Subset of script starting at the most recent codeseparator
-                                    var scriptCode = new CScript(script.Bytes.Skip(nCodeHashBegin));
+                                    var scriptCode = new CScript(script.Bytes.Skip(nCodeHashBegin).ToArray());
 
                                     // There's no way for a signature to sign itself
                                     scriptCode.RemovePattern(sigBytes);
@@ -1639,7 +1639,7 @@ namespace Novacoin
                                     }
 
                                     // Subset of script starting at the most recent codeseparator
-                                    var scriptCode = new CScript(script.Bytes.Skip(nCodeHashBegin));
+                                    var scriptCode = new CScript(script.Bytes.Skip(nCodeHashBegin).ToArray());
 
                                     // There is no way for a signature to sign itself, so we need to drop the signatures
                                     for (int k = 0; k < nSigsCount; k++)

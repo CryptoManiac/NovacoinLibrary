@@ -40,9 +40,9 @@ namespace Novacoin
         /// Initializes a new instance of CPubKey class using supplied sequence of bytes
         /// </summary>
         /// <param name="bytes">Byte sequence</param>
-        public CPubKey(IEnumerable<byte> bytes)
+        public CPubKey(byte[] bytes)
         {
-            var pQ = curve.Curve.DecodePoint(bytes.ToArray());
+            var pQ = curve.Curve.DecodePoint(bytes);
             _Public = new ECPublicKeyParameters(pQ, domain);
         }
 

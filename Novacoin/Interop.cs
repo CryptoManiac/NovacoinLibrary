@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
 namespace Novacoin
@@ -133,21 +132,17 @@ namespace Novacoin
             return BitConverter.ToUInt64(bytes, 0);
         }
 
-        public static IEnumerable<byte> HexToEnumerable(string hex)
-        {
-            return Enumerable.Range(0, hex.Length)
-                             .Where(x => x % 2 == 0)
-                             .Select(x => Convert.ToByte(hex.Substring(x, 2), 16));
-        }
-
-        public static IList<byte> HexToList(string hex)
-        {
-            return HexToEnumerable(hex).ToList();
-        }
-
         public static byte[] HexToArray(string hex)
         {
-            return HexToEnumerable(hex).ToArray();
+            int nChars = hex.Length;
+            var bytes = new byte[nChars / 2];
+
+            for (int i = 0; i < nChars; i += 2)
+            {
+                bytes[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);
+            }
+
+            return bytes;
         }
 
         public static string ToHex(IEnumerable<byte> bytes)

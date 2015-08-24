@@ -95,7 +95,7 @@ namespace Novacoin
         /// Parse byte sequence and initialize new instance of CTransaction
         /// </summary>
         /// <param name="txBytes">Byte sequence</param>
-		public CTransaction(IList<byte> txBytes)
+		public CTransaction(byte[] txBytes)
         {
             var wBytes = new ByteQueue(txBytes);
 

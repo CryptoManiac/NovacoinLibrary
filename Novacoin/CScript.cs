@@ -59,7 +59,7 @@ namespace Novacoin
         /// Initializes new instance of CScript and fills it with supplied bytes
         /// </summary>
         /// <param name="bytes">Enumerator interface for byte sequence</param>
-        public CScript(IEnumerable<byte> bytes)
+        public CScript(byte[] bytes)
         {
             codeBytes = new List<byte>(bytes);
         }

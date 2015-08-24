@@ -43,13 +43,25 @@ namespace Novacoin
         private int Index;
         private List<byte> Elements;
 
-        public ByteQueue(IList<byte> List, int Start)
+        public ByteQueue(byte[] List, int Start)
         {
             Elements = new List<byte>(List);
             Index = Start;
         }
 
-        public ByteQueue(IList<byte> List)
+        public ByteQueue(byte[] List)
+        {
+            Elements = new List<byte>(List);
+            Index = 0;
+        }
+
+        public ByteQueue(List<byte> List, int Start)
+        {
+            Elements = new List<byte>(List);
+            Index = Start;
+        }
+
+        public ByteQueue(List<byte> List)
         {
             Elements = new List<byte>(List);
             Index = 0;
