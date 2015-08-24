@@ -135,7 +135,7 @@ namespace Novacoin
                 // OP_PUSHDATA1 0x00 0x01 [0x5a]
                 codeBytes.Add((byte)instruction.OP_PUSHDATA2);
 
-                byte[] szBytes = Interop.BEBytes((ushort)nCount);
+                var szBytes = Interop.BEBytes((ushort)nCount);
                 codeBytes.AddRange(szBytes);
             }
             else if (nCount < 0xffffffff)
@@ -143,7 +143,7 @@ namespace Novacoin
                 // OP_PUSHDATA1 0x00 0x00 0x00 0x01 [0x5a]
                 codeBytes.Add((byte)instruction.OP_PUSHDATA4);
 
-                byte[] szBytes = Interop.BEBytes((uint)nCount);
+                var szBytes = Interop.BEBytes((uint)nCount);
                 codeBytes.AddRange(szBytes);
             }
 

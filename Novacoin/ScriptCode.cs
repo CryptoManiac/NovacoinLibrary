@@ -267,7 +267,7 @@ namespace Novacoin
             // Immediate operand
             if (opcode <= instruction.OP_PUSHDATA4)
             {
-                byte[] szBytes = new byte[4] { 0, 0, 0, 0 }; // Zero length
+                var szBytes = new byte[4] { 0, 0, 0, 0 }; // Zero length
 
                 try
                 {
@@ -1568,11 +1568,11 @@ namespace Novacoin
                                         return false;
                                     }
 
-                                    byte[] sigBytes = stacktop(ref stack, -2);
-                                    byte[] pubkeyBytes = stacktop(ref stack, -1);
+                                    var sigBytes = stacktop(ref stack, -2);
+                                    var pubkeyBytes = stacktop(ref stack, -1);
 
                                     // Subset of script starting at the most recent codeseparator
-                                    CScript scriptCode = new CScript(script.Bytes.Skip(nCodeHashBegin));
+                                    var scriptCode = new CScript(script.Bytes.Skip(nCodeHashBegin));
 
                                     // There's no way for a signature to sign itself
                                     scriptCode.RemovePattern(sigBytes);
@@ -1639,7 +1639,7 @@ namespace Novacoin
                                     }
 
                                     // Subset of script starting at the most recent codeseparator
-                                    CScript scriptCode = new CScript(script.Bytes.Skip(nCodeHashBegin));
+                                    var scriptCode = new CScript(script.Bytes.Skip(nCodeHashBegin));
 
                                     // There is no way for a signature to sign itself, so we need to drop the signatures
                                     for (int k = 0; k < nSigsCount; k++)

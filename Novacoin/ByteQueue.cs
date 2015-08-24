@@ -77,7 +77,7 @@ namespace Novacoin
                 throw new ByteQueueException("Unable to read requested amount of data.");
             }
 
-            byte[] result = Elements.GetRange(Index, Count).ToArray();
+            var result = Elements.GetRange(Index, Count).ToArray();
             Index += Count;
 
             return result;
@@ -90,7 +90,7 @@ namespace Novacoin
                 throw new ByteQueueException("Unable to read requested amount of data.");
             }
 
-            byte[] result = Elements.GetRange(Index, Count).ToArray();
+            var result = Elements.GetRange(Index, Count).ToArray();
 
             return result;
         }
