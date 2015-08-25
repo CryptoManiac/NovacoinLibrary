@@ -231,12 +231,12 @@ namespace NovacoinTest
 
             Hash256 merkleroot = null;
 
-            Console.WriteLine("\nRinning 1000 iterations of merkle tree computation for very big block...");
+            Console.WriteLine("\nRinning 100 iterations of merkle tree computation for very big block...");
 
             watch = Stopwatch.StartNew();
             // the code that you want to measure comes here
 
-            for (int i = 0; i < 1000; i++)
+            for (int i = 0; i < 100; i++)
             {
                 merkleroot = veryBigBlock.hashMerkleRoot;
             }
@@ -245,6 +245,25 @@ namespace NovacoinTest
             elapsedMs = watch.ElapsedMilliseconds;
             Console.WriteLine("Calculation time: {0} ms\n", elapsedMs);
             Console.WriteLine("Merkle tree is OK: {0}", merkleroot.hashBytes.SequenceEqual(veryBigBlock.header.merkleRoot.hashBytes));
+
+            // Initialization of key store
+
+            Console.Write("Initialization of key store...");
+            var keyStore = new CKeyStore();
+
+            Console.WriteLine("Adding and querying new key pair");
+            var kp1 = new CKeyPair();
+            keyStore.AddKey(kp1);
+
+
+            CKeyPair kp2;
+            var queryRes = keyStore.GetKey(kp1.KeyID, out kp2);
+            Console.WriteLine("KeyID={0} exists in database: {1}", kp1.KeyID.ToString(), queryRes);
+
+            if (queryRes)
+            {
+                Console.WriteLine("KeyID={0} is identical to inserted one: {1}", kp2.KeyID.ToString(), kp2.KeyID.ToString() == kp1.KeyID.ToString());
+            }
 
             Console.ReadLine();
         }
