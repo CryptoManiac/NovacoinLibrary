@@ -39,19 +39,19 @@ namespace Novacoin
         public int ItemId { get; set; }
 
         /// <summary>
-        /// Hash160 of pubkey in base58 form
+        /// Hash160 of pubkey
         /// </summary>
-        public string KeyID { get; set; }
+        public byte[] KeyID { get; set; }
 
         /// <summary>
-        /// Public key in base58 form
+        /// Public key 
         /// </summary>
-        public string PublicKey { get; set; }
+        public byte[] PublicKey { get; set; }
 
         /// <summary>
-        /// Private key in base58 form
+        /// Private key 
         /// </summary>
-        public string PrivateKey { get; set; }
+        public byte[] PrivateKey { get; set; }
 
         /// <summary>
         /// Compressed key flag
@@ -78,15 +78,14 @@ namespace Novacoin
         public int ItemId { get; set; }
 
         /// <summary>
-        /// Hash160 of script in base58 form
+        /// Hash160 of script 
         /// </summary>
-        public string ScriptID { get; set; }
+        public byte[] ScriptID { get; set; }
 
         /// <summary>
-        /// Script code bytes in hex form
+        /// Script code bytes 
         /// </summary>
-        public string ScriptCode { get; set; }
-
+        public byte[] ScriptCode { get; set; }
     }
 
     /// <summary>
@@ -116,15 +115,15 @@ namespace Novacoin
                     dbConn.CreateTable<ScriptStorageItem>(CreateFlags.AutoIncPK);
 
                     // Generate keys
-                    for (int i = 0; i < 100; i++)
+                    for (int i = 0; i < 1000; i++)
                     {
                         var keyPair = new CKeyPair();
 
                         var res = dbConn.Insert(new KeyStorageItem()
                         {
-                            KeyID = keyPair.KeyID.ToString(),       // Use string serializarion of binary values, 
-                            PublicKey = keyPair.PubKey.ToString(),  //  otherwise sqlite corrupts them.
-                            PrivateKey = keyPair.ToString(),
+                            KeyID = keyPair.KeyID.hashBytes,
+                            PublicKey = keyPair.PublicBytes,
+                            PrivateKey = keyPair.SecretBytes,
                             IsCompressed = keyPair.IsCompressed,
                             IsUsed = false
                         });
@@ -155,9 +154,9 @@ namespace Novacoin
             {
                 var res = dbConn.Insert(new KeyStorageItem()
                 {
-                    KeyID = keyPair.KeyID.ToString(),
-                    PublicKey = keyPair.PubKey.ToString(),
-                    PrivateKey = keyPair.ToString(),
+                    KeyID = keyPair.KeyID.hashBytes,
+                    PublicKey = keyPair.PublicBytes,
+                    PrivateKey = keyPair.SecretBytes,
                     IsCompressed = keyPair.IsCompressed,
                     IsUsed = true
                 });
@@ -173,8 +172,7 @@ namespace Novacoin
 
         public bool HaveKey(CKeyID keyID)
         {
-            var QueryCount = dbConn.Query<CountQuery>("select count([ItemID]) as [Count] from [KeyStorage] where [KeyID] = ?", keyID.ToString());
-
+            var QueryCount = dbConn.Query<CountQuery>("select count([ItemID]) as [Count] from [KeyStorage] where [KeyID] = ?", keyID.hashBytes);
 
             return QueryCount.First().Count == 1;
         }
@@ -187,7 +185,7 @@ namespace Novacoin
         /// <returns>Result</returns>
         public bool GetKey(CKeyID keyID, out CKeyPair keyPair)
         {
-            var QueryGet = dbConn.Query<KeyStorageItem>("select * from [KeyStorage] where [KeyID] = ?", keyID.ToString());
+            var QueryGet = dbConn.Query<KeyStorageItem>("select * from [KeyStorage] where [KeyID] = ?", keyID.hashBytes);
 
             if (QueryGet.Count() == 1)
             {
@@ -205,8 +203,8 @@ namespace Novacoin
             {
                 var res = dbConn.Insert(new ScriptStorageItem()
                 {
-                    ScriptID = script.ScriptID.ToString(),
-                    ScriptCode = Interop.ToHex(script.Bytes)
+                    ScriptID = script.ScriptID.hashBytes,
+                    ScriptCode = script.Bytes
                 });
 
                 if (res == 0)
@@ -220,18 +218,18 @@ namespace Novacoin
 
         public bool HaveScript(CScriptID scriptID)
         {
-            var QueryGet = dbConn.Query<CountQuery>("select count([ItemID]) from [ScriptStorage] where [ScriptID] = ?", scriptID.ToString());
+            var QueryGet = dbConn.Query<CountQuery>("select count([ItemID]) from [ScriptStorage] where [ScriptID] = ?", scriptID.hashBytes);
 
             return QueryGet.First().Count == 1;
         }
 
         public bool GetScript(CScriptID scriptID, out CScript script)
         {
-            var QueryGet = dbConn.Query<ScriptStorageItem>("select * from [ScriptStorage] where [ScriptID] = ?", scriptID.ToString());
+            var QueryGet = dbConn.Query<ScriptStorageItem>("select * from [ScriptStorage] where [ScriptID] = ?", scriptID.hashBytes);
 
             if (QueryGet.Count() == 1)
             {
-                script = new CScript(Interop.HexToArray(QueryGet.First().ScriptCode));
+                script = new CScript(QueryGet.First().ScriptCode);
                 return true;
             }
 
