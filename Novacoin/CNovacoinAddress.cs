@@ -79,9 +79,12 @@ namespace Novacoin
             addrData = new List<byte>(scriptID.hashBytes);
         }
 
-        public Hash160 Hash
+        /// <summary>
+        /// 20 bytes, Hash160 of script or public key
+        /// </summary>
+        public byte[] HashBytes
         {
-            get { return new Hash160(addrData.ToArray()); }
+            get { return addrData.ToArray(); }
         }
 
         /// <summary>
