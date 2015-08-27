@@ -26,7 +26,7 @@ using Org.BouncyCastle.Math;
 using Org.BouncyCastle.Security;
 using System.Collections.Generic;
 using System.Linq;
-
+using System;
 
 namespace Novacoin
 {
@@ -86,15 +86,20 @@ namespace Novacoin
         /// <param name="Compressed">Compression flag</param>
         public CKeyPair(byte[] secretBytes, bool Compressed=true)
         {
-            // Deserialize secret value
-            var D = new BigInteger(secretBytes.Take(32).ToArray());
+            if (secretBytes.Length != 32)
+            {
+                throw new ArgumentException("Serialized secret key must be 32 bytes long.");
+            }
 
+            // Deserialize secret value
+            var D = new BigInteger(secretBytes);
+
+            // Append with zero byte if necessary
             if (D.SignValue == -1)
             {
-                var fixedKeyBytes = secretBytes.Take(32).ToList();
-                fixedKeyBytes.Insert(0, 0x00); // prepend with sign byte
-
-                D = new BigInteger(fixedKeyBytes.ToArray());
+                var positiveKeyBytes = new byte[33];
+                Array.Copy(secretBytes, 0, positiveKeyBytes, 1, 32);
+                D = new BigInteger(positiveKeyBytes);
             }
 
             // Calculate public key
@@ -120,18 +125,22 @@ namespace Novacoin
 
         public CKeyPair(string strBase58)
         {
-            var rawBytes = AddressTools.Base58DecodeCheck(strBase58).ToList();
-            rawBytes.RemoveAt(0); // Remove key version byte
+            var rawSecretBytes = AddressTools.Base58DecodeCheck(strBase58);
+
+            if (rawSecretBytes.Length > 34 || rawSecretBytes.Length < 33)
+            {
+                throw new ArgumentException("Though you have provided a correct Base58 representation of some data, this data doesn't represent a valid private key.");
+            }
 
             // Deserialize secret value
-            var D = new BigInteger(rawBytes.Take(32).ToArray());
+            var D = new BigInteger(rawSecretBytes.Skip(1).Take(32).ToArray());
 
             if (D.SignValue == -1)
             {
-                var secretbytes = rawBytes.Take(32).ToList(); // Copy secret
-                secretbytes.Insert(0, 0x00); // Prepend with sign byte
+                var secretBytes = new byte[33];
+                Array.Copy(rawSecretBytes, 1, secretBytes, 1, 32); // Copying the privkey, 32 bytes starting from second byte of array
 
-                D = new BigInteger(secretbytes.ToArray()); // Try decoding again
+                D = new BigInteger(secretBytes); // Try decoding again
             }
 
             // Calculate public key
@@ -140,7 +149,7 @@ namespace Novacoin
             _Private = new ECPrivateKeyParameters(D, domain);
             _Public = new ECPublicKeyParameters(Q, domain);
 
-            if (rawBytes.Count == 33 && rawBytes.Last() == 0x01) // Check compression tag
+            if (rawSecretBytes.Length == 34 && rawSecretBytes.Last() == 0x01) // Check compression tag
             {
                 _Public = Compress(_Public);
             }
@@ -205,6 +214,10 @@ namespace Novacoin
             return Interop.ToHex(SecretBytes);
         }
 
+        /// <summary>
+        /// Generate Base58 string in wallet import format
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
             var r = new List<byte>();
