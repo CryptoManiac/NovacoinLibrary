@@ -18,6 +18,9 @@
 
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Generators;
+
+using System.Security.Cryptography;
+
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Math;
 using Org.BouncyCastle.Security;
@@ -30,12 +33,15 @@ namespace Novacoin
     public class CKeyPair : CKey
     {
         private ECPrivateKeyParameters _Private;
+        private RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
 
         /// <summary>
         /// Initialize new CKeyPair instance with random secret.
         /// </summary>
-        public CKeyPair(bool Compressed=true)
+        public CKeyPair(bool Compressed = true)
         {
+
+
             var genParams = new ECKeyGenerationParameters(domain, new SecureRandom());
             var generator = new ECKeyPairGenerator("ECDSA");
             generator.Init(genParams);
@@ -43,6 +49,29 @@ namespace Novacoin
 
             _Private = (ECPrivateKeyParameters)ecKeyPair.Private;
             _Public = (ECPublicKeyParameters)ecKeyPair.Public;
+
+            /*
+              BigInteger D;
+              var buffer1 = new byte[32];
+              var buffer2 = new byte[32];
+
+              do
+              {
+                  rng.GetBytes(buffer1);
+                  rng.GetNonZeroBytes(buffer2);
+
+                  D = new BigInteger(Hash256.ComputeRaw256(ref buffer1, ref buffer2));
+
+                  if (D.BitLength < 249)
+                      System.Console.WriteLine(D.BitLength);
+              }
+              while (D.SignValue == -1);
+
+              var Q = curve.G.Multiply(D);
+
+              _Private = new ECPrivateKeyParameters(D, domain);
+              _Public = new ECPublicKeyParameters(Q, domain);
+            */
 
             if (Compressed)
             {

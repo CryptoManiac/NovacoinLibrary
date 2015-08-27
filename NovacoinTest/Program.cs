@@ -248,10 +248,11 @@ namespace NovacoinTest
 
             // Initialization of key store
 
-            Console.Write("Initialization of key store...");
+            Console.WriteLine("Initialization of key store...");
+            watch = Stopwatch.StartNew();
             var keyStore = new CKeyStore();
 
-            Console.WriteLine("Adding and querying new key pair");
+            Console.WriteLine("Initialization done in {0} ms, adding and querying new key pair.", watch.ElapsedMilliseconds);
             var kp1 = new CKeyPair();
             keyStore.AddKey(kp1);
 
