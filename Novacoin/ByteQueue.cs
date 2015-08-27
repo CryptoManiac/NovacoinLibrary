@@ -40,6 +40,11 @@ namespace Novacoin
         }
     }
 
+    /// <summary>
+    /// Stream of bytes.
+    /// 
+    /// TODO: rewrite using MemoryStream
+    /// </summary>
     public class ByteQueue
     {
         private int _Index;
