@@ -184,7 +184,7 @@ namespace Novacoin
             {
                 var secretBytes = new List<byte>(_Private.D.ToByteArray());
 
-                if (secretBytes[0] == 0x00)
+                if (secretBytes.Count == 33 && secretBytes[0] == 0x00)
                 {
                     // Remove sign
                     secretBytes.RemoveAt(0);
