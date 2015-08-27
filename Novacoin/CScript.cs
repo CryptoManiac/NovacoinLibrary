@@ -20,26 +20,10 @@ using System;
 using System.Linq;
 using System.Text;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 
 namespace Novacoin
 {
-    public class CScriptException : Exception
-    {
-        public CScriptException()
-        {
-        }
-
-        public CScriptException(string message)
-            : base(message)
-        {
-        }
-
-        public CScriptException(string message, Exception inner)
-            : base(message, inner)
-        {
-        }
-    }
-
     /// <summary>
     /// Representation of script code
     /// </summary>
@@ -79,10 +63,7 @@ namespace Novacoin
         /// <param name="opcode"></param>
         public void AddInstruction(instruction opcode)
         {
-            if (opcode < instruction.OP_0 || opcode > instruction.OP_INVALIDOPCODE)
-            {
-                throw new CScriptException("CScript::AddInstruction() : invalid instruction");
-            }
+            Contract.Requires<ArgumentException>(opcode >= instruction.OP_0 && opcode <= instruction.OP_INVALIDOPCODE, "Invalid instruction.");
 
             codeBytes.Add((byte)opcode);
         }

@@ -19,6 +19,7 @@
 using System;
 using System.Text;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 
 namespace Novacoin
 {
@@ -76,6 +77,8 @@ namespace Novacoin
 
         public CBlockHeader(byte[] bytes)
         {
+            Contract.Requires<ArgumentException>(bytes.Length == 80, "Any valid block header is exactly 80 bytes long.");
+
             nVersion = BitConverter.ToUInt32(bytes, 0);
             prevHash = new Hash256(bytes, 4);
             merkleRoot = new Hash256(bytes, 36);

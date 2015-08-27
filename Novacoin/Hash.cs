@@ -17,6 +17,7 @@
  */
 
 using System;
+using System.Diagnostics.Contracts;
 using System.Linq;
 
 namespace Novacoin
@@ -50,6 +51,11 @@ namespace Novacoin
         /// <param name="bytesList">Array of bytes</param>
         public Hash(byte[] bytes, int offset = 0)
         {
+            if (bytes.Length - offset < hashSize)
+            {
+                throw new ArgumentException("You need to provide a sufficient amount of data to initialize new instance of hash object.");
+            }
+
             _hashBytes = new byte[hashSize];
             Array.Copy(bytes, offset, _hashBytes, 0, hashSize);
         }

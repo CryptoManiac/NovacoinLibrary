@@ -6,6 +6,7 @@ using Org.BouncyCastle.Math;
 
 namespace Novacoin
 {
+    [Serializable]
     public class Base58Exception : Exception
     {
         public Base58Exception()

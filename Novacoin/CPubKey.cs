@@ -52,7 +52,7 @@ namespace Novacoin
         /// <param name="strBase58"></param>
         public CPubKey(string strBase58)
         {
-            var pQ = curve.Curve.DecodePoint(AddressTools.Base58DecodeCheck(strBase58).ToArray());
+            var pQ = curve.Curve.DecodePoint(AddressTools.Base58DecodeCheck(strBase58));
             _Public = new ECPublicKeyParameters(pQ, domain);
         }
 

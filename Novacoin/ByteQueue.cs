@@ -18,9 +18,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 
 namespace Novacoin
 {
+    [Serializable]
     public class ByteQueueException : Exception
     {
         public ByteQueueException()
@@ -40,69 +42,63 @@ namespace Novacoin
 
     public class ByteQueue
     {
-        private int Index;
-        private List<byte> Elements;
+        private int _Index;
+        private List<byte> _Elements;
 
         public ByteQueue(byte[] List, int Start)
         {
-            Elements = new List<byte>(List);
-            Index = Start;
+            _Elements = new List<byte>(List);
+            _Index = Start;
         }
 
         public ByteQueue(byte[] List)
         {
-            Elements = new List<byte>(List);
-            Index = 0;
+            _Elements = new List<byte>(List);
+            _Index = 0;
         }
 
         public ByteQueue(List<byte> List, int Start)
         {
-            Elements = new List<byte>(List);
-            Index = Start;
+            _Elements = new List<byte>(List);
+            _Index = Start;
         }
 
         public ByteQueue(List<byte> List)
         {
-            Elements = new List<byte>(List);
-            Index = 0;
+            _Elements = new List<byte>(List);
+            _Index = 0;
         }
 
         public byte Get()
         {
-            if (Elements.Count <= Index)
+            if (_Elements.Count <= _Index)
             {
                 throw new ByteQueueException("No elements left.");
             }
 
-            return Elements[Index++];
+            return _Elements[_Index++];
         }
 
         public byte GetCurrent()
         {
-            return Elements[Index];
+            return _Elements[_Index];
         }
 
-        public byte[] Get(int Count)
+        public byte[] Get(int nCount)
         {
-            if (Elements.Count - Index < Count)
-            {
-                throw new ByteQueueException("Unable to read requested amount of data.");
-            }
+            Contract.Requires<ArgumentException>(Count - Index >= nCount, "nCount is greater than amount of elements.");
 
-            var result = Elements.GetRange(Index, Count).ToArray();
-            Index += Count;
+            var result = _Elements.GetRange(_Index, nCount).ToArray();
+            _Index += nCount;
 
             return result;
         }
 
-        public byte[] GetCurrent(int Count)
+        public byte[] GetCurrent(int nCount)
         {
-            if (Elements.Count - Index < Count)
-            {
-                throw new ByteQueueException("Unable to read requested amount of data.");
-            }
+            Contract.Requires<ArgumentException>(Count - Index >= nCount, "nCount is greater than amount of elements.");
 
-            var result = Elements.GetRange(Index, Count).ToArray();
+            var result = _Elements.GetRange(_Index, nCount).ToArray();
 
             return result;
         }
@@ -110,9 +106,14 @@ namespace Novacoin
         /// <summary>
         /// Current index value
         /// </summary>
-        public int CurrentIndex
+        public int Index
         {
-            get { return Index; }
+            get { return _Index; }
+        }
+
+        public int Count
+        {
+            get { return _Elements.Count; }
         }
 
         public ulong GetVarInt()

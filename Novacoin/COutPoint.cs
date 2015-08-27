@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Text;
 
 namespace Novacoin
@@ -54,6 +55,8 @@ namespace Novacoin
 
         public COutPoint(byte[] bytes)
         {
+            Contract.Requires<ArgumentException>(bytes.Length == 36, "Any valid outpoint reference data item is exactly 36 bytes long.");
+
             hash = new Hash256(bytes);
             n = BitConverter.ToUInt32(bytes, 32);
         }

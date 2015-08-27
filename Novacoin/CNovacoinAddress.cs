@@ -1,23 +1,25 @@
 ﻿/**
- *  Novacoin classes library
- *  Copyright (C) 2015 Alex D. (balthazar.ad@gmail.com)
+*  Novacoin classes library
+*  Copyright (C) 2015 Alex D. (balthazar.ad@gmail.com)
 
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU Affero General Public License as
- *  published by the Free Software Foundation, either version 3 of the
- *  License, or (at your option) any later version.
+*  This program is free software: you can redistribute it and/or modify
+*  it under the terms of the GNU Affero General Public License as
+*  published by the Free Software Foundation, either version 3 of the
+*  License, or (at your option) any later version.
 
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Affero General Public License for more details.
+*  This program is distributed in the hope that it will be useful,
+*  but WITHOUT ANY WARRANTY; without even the implied warranty of
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*  GNU Affero General Public License for more details.
 
- *  You should have received a copy of the GNU Affero General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+*  You should have received a copy of the GNU Affero General Public License
+*  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 using System.Collections.Generic;
 using System.Linq;
+using System;
+using System.Diagnostics.Contracts;
 
 namespace Novacoin
 {
@@ -38,7 +40,7 @@ namespace Novacoin
     public class CNovacoinAddress
     {
         private byte nVersion;
-        private List<byte> addrData;
+        private byte[] addrData = new byte[20];
 
         /// <summary>
         /// Initialize with custom data and version
@@ -47,8 +49,10 @@ namespace Novacoin
         /// <param name="addrDataIn"></param>
         public CNovacoinAddress(byte nVersionIn, byte[] addrDataIn)
         {
+            Contract.Requires<ArgumentException>(addrDataIn.Length == 20, "Your data doesn't look like a valid hash160 of some value.");
+
             nVersion = nVersionIn;
-            addrData = new List<byte>(addrDataIn);
+            addrDataIn.CopyTo(addrData, 0);
         }
 
         /// <summary>
@@ -58,15 +62,7 @@ namespace Novacoin
         public CNovacoinAddress(CKeyID keyID)
         {
             nVersion = (byte)AddrType.PUBKEY_ADDRESS;
-            addrData = new List<byte>((byte[])keyID);
-        }
-
-        public CNovacoinAddress(string strNovacoinAddress)
-        {
-            addrData = AddressTools.Base58DecodeCheck(strNovacoinAddress).ToList();
-
-            nVersion = addrData[0];
-            addrData.RemoveAt(0);
+            addrData = keyID;
         }
 
         /// <summary>
@@ -76,15 +72,32 @@ namespace Novacoin
         public CNovacoinAddress(CScriptID scriptID)
         {
             nVersion = (byte)AddrType.SCRIPT_ADDRESS;
-            addrData = new List<byte>((byte[])scriptID);
+            addrData = scriptID;
+        }
+
+        /// <summary>
+        /// Initialize new instance from base58 string
+        /// </summary>
+        /// <param name="strNovacoinAddress"></param>
+        public CNovacoinAddress(string strNovacoinAddress)
+        {
+            var RawAddrData = AddressTools.Base58DecodeCheck(strNovacoinAddress);
+
+            if (RawAddrData.Length != 21)
+            {
+                throw new ArgumentException("Though you have provided a correct Base58 representation of some data, this data doesn't represent a valid Novacoin address.");
+            }
+
+            nVersion = RawAddrData[0];
+            Array.Copy(RawAddrData, 1, addrData, 0, 20);
         }
 
         /// <summary>
         /// 20 bytes, Hash160 of script or public key
         /// </summary>
-        public byte[] HashBytes
+        public static implicit operator byte[](CNovacoinAddress addr)
         {
-            get { return addrData.ToArray(); }
+            return addr.addrData;
         }
 
         /// <summary>
@@ -115,7 +128,7 @@ namespace Novacoin
                         return false;
                 }
 
-                return addrData.Count == nExpectedSize;
+                return addrData.Length == nExpectedSize;
             }
         }
 

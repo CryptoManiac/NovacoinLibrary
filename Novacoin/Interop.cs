@@ -22,23 +22,6 @@ using System.Text;
 
 namespace Novacoin
 {
-    public class InteropException : Exception
-    {
-        public InteropException()
-        {
-        }
-
-        public InteropException(string message)
-            : base(message)
-        {
-        }
-
-        public InteropException(string message, Exception inner)
-            : base(message, inner)
-        {
-        }
-    }
-
     /// <summary>
     /// Miscellaneous functions
     /// </summary>

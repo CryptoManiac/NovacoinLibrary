@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Numerics;
 using System.Text;
@@ -369,23 +370,18 @@ namespace Novacoin
         /// <returns>Small integer</returns>
         public static int DecodeOP_N(instruction opcode, bool AllowNegate = false)
         {
-            if (AllowNegate && opcode == instruction.OP_1NEGATE)
-            {
-                return -1;
-            }
-
-            if (opcode == instruction.OP_0)
-            {
-                return 0;
-            }
-
             // Only OP_n instructions are supported, throw exception otherwise.
-            if (opcode < instruction.OP_1 || opcode > instruction.OP_16)
-            {
-                throw new ArgumentException("Invalid integer instruction.");
-            }
+            Contract.Requires<ArgumentException>((opcode == instruction.OP_1NEGATE && AllowNegate) || (opcode >= instruction.OP_0 && opcode <= instruction.OP_16), "Invalid integer instruction.");
 
-            return (int)opcode - (int)(instruction.OP_1 - 1);
+            switch (opcode)
+            {
+                case instruction.OP_1NEGATE:
+                    return -1;
+                case instruction.OP_0:
+                    return 0;
+                default:
+                    return (int)opcode - (int)(instruction.OP_1 - 1);
+            }
         }
 
         /// <summary>
@@ -395,20 +391,18 @@ namespace Novacoin
         /// <returns>Corresponding instruction.</returns>
         public static instruction EncodeOP_N(int n, bool allowNegate = false)
         {
-            if (allowNegate && n == -1)
-            {
-                return instruction.OP_1NEGATE;
-            }
+            // The n value must be in the range of 1 to 16.
+            Contract.Requires<ArgumentException>((n == -1 && allowNegate) || (n >= 0 && n <= 16), "Invalid integer value.");
 
-            if (n == 0)
+            switch (n)
             {
-                return instruction.OP_0;
+                case -1:
+                    return instruction.OP_1NEGATE;
+                case 0:
+                    return instruction.OP_0;
+                default:
+                    return (instruction.OP_1 + n - 1);
             }
-
-            // The n value must be in the range of 0 to 16.
-            if (n < 0 || n > 16)
-                throw new ArgumentException("Invalid integer value.");
-            return (instruction.OP_1 + n - 1);
         }
 
         public static int ScriptSigArgsExpected(txnouttype t, IList<byte[]> solutions)
@@ -478,7 +472,7 @@ namespace Novacoin
         /// <returns>Result</returns>
         public static bool Solver(CScript scriptPubKey, out txnouttype typeRet, out IList<byte[]> solutions)
         {
-            var scriptBytes = ((byte[])scriptPubKey);
+            byte[] scriptBytes = scriptPubKey;
 
             solutions = new List<byte[]>();
 
@@ -562,12 +556,12 @@ namespace Novacoin
 
                 byte[] args1, args2;
 
-                int last1 = ((byte[])script1).Length -1;
+                int last1 = ((byte[])script1).Length - 1;
                 int last2 = ((byte[])script2).Length - 1;
 
                 while (true)
                 {
-                    if (bq1.CurrentIndex == last1 && bq2.CurrentIndex == last2)
+                    if (bq1.Index == last1 && bq2.Index == last2)
                     {
                         // Found a match
                         typeRet = templateTuple.Item1;
@@ -759,6 +753,7 @@ namespace Novacoin
         /// <summary>
         /// Script machine exception
         /// </summary>
+        [Serializable]
         public class StackMachineException : Exception
         {
             public StackMachineException()
@@ -784,7 +779,10 @@ namespace Novacoin
         {
             int nCount = stack.Count;
             if (nCount == 0)
-                throw new StackMachineException("popstack() : stack empty");
+            {
+                throw new StackMachineException("Stack is empty");
+            }
+
             stack.RemoveAt(nCount - 1);
         }
 
@@ -796,25 +794,10 @@ namespace Novacoin
         /// <returns>Byte sequence</returns>
         private static byte[] stacktop(ref List<byte[]> stack, int nDepth)
         {
-            int nStackElement = stack.Count + nDepth;
+            Contract.Requires<StackMachineException>(nDepth < 0, "Positive stack depth makes no sense.");
+            Contract.Requires<StackMachineException>(stack.Count + nDepth > 0, "Value exceeds real stack depth.");
 
-            if (nDepth >= 0)
-            {
-                StringBuilder sb = new StringBuilder();
-                sb.AppendFormat("stacktop() : positive depth ({0}) has no sense.", nDepth);
-
-                throw new StackMachineException(sb.ToString());
-            }
-
-            if (nStackElement < 0)
-            {
-                StringBuilder sb = new StringBuilder();
-                sb.AppendFormat("stacktop() : nDepth={0} exceeds real stack depth ({1})", nDepth, stack.Count);
-
-                throw new StackMachineException(sb.ToString());
-            }
-
-            return stack[nStackElement];
+            return stack[stack.Count + nDepth];
         }
 
         /// <summary>
@@ -848,10 +831,7 @@ namespace Novacoin
         /// <returns></returns>
         private static BigInteger CastToBigInteger(byte[] value)
         {
-            if (value.Length > 4)
-            {
-                throw new StackMachineException("CastToBigInteger() : overflow");
-            }
+            Contract.Requires<StackMachineException>(value.Length <= 4, "Size limit failed.");
 
             return new BigInteger(value);
         }
@@ -1558,7 +1538,7 @@ namespace Novacoin
                             case instruction.OP_CODESEPARATOR:
                                 {
                                     // Hash starts after the code separator
-                                    nCodeHashBegin = CodeQueue.CurrentIndex;
+                                    nCodeHashBegin = CodeQueue.Index;
                                 }
                                 break;
 

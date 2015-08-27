@@ -16,7 +16,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Generators;
 
 using System.Security.Cryptography;
@@ -27,21 +26,20 @@ using Org.BouncyCastle.Security;
 using System.Collections.Generic;
 using System.Linq;
 using System;
+using System.Diagnostics.Contracts;
 
 namespace Novacoin
 {
+
     public class CKeyPair : CKey
     {
         private ECPrivateKeyParameters _Private;
-        private RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
 
         /// <summary>
         /// Initialize new CKeyPair instance with random secret.
         /// </summary>
         public CKeyPair(bool Compressed = true)
         {
-
-
             var genParams = new ECKeyGenerationParameters(domain, new SecureRandom());
             var generator = new ECKeyPairGenerator("ECDSA");
             generator.Init(genParams);
@@ -49,29 +47,6 @@ namespace Novacoin
 
             _Private = (ECPrivateKeyParameters)ecKeyPair.Private;
             _Public = (ECPublicKeyParameters)ecKeyPair.Public;
-
-            /*
-              BigInteger D;
-              var buffer1 = new byte[32];
-              var buffer2 = new byte[32];
-
-              do
-              {
-                  rng.GetBytes(buffer1);
-                  rng.GetNonZeroBytes(buffer2);
-
-                  D = new BigInteger(Hash256.ComputeRaw256(ref buffer1, ref buffer2));
-
-                  if (D.BitLength < 249)
-                      System.Console.WriteLine(D.BitLength);
-              }
-              while (D.SignValue == -1);
-
-              var Q = curve.G.Multiply(D);
-
-              _Private = new ECPrivateKeyParameters(D, domain);
-              _Public = new ECPublicKeyParameters(Q, domain);
-            */
 
             if (Compressed)
             {
@@ -86,10 +61,7 @@ namespace Novacoin
         /// <param name="Compressed">Compression flag</param>
         public CKeyPair(byte[] secretBytes, bool Compressed=true)
         {
-            if (secretBytes.Length != 32)
-            {
-                throw new ArgumentException("Serialized secret key must be 32 bytes long.");
-            }
+            Contract.Requires<ArgumentException>(secretBytes.Length == 32, "Serialized secret key must be 32 bytes long.");
 
             // Deserialize secret value
             var D = new BigInteger(secretBytes);
@@ -127,7 +99,7 @@ namespace Novacoin
         {
             var rawSecretBytes = AddressTools.Base58DecodeCheck(strBase58);
 
-            if (rawSecretBytes.Length > 34 || rawSecretBytes.Length < 33)
+            if (rawSecretBytes.Length != 33 && rawSecretBytes.Length != 34)
             {
                 throw new ArgumentException("Though you have provided a correct Base58 representation of some data, this data doesn't represent a valid private key.");
             }

@@ -21,6 +21,7 @@ using SQLite.Net;
 using SQLite.Net.Attributes;
 using SQLite.Net.Interop;
 using SQLite.Net.Platform.Generic;
+using System;
 using System.IO;
 using System.Linq;
 
@@ -106,11 +107,11 @@ namespace Novacoin
     /// <summary>
     /// Key storage
     /// </summary>
-    public class CKeyStore
+    public class CKeyStore : IDisposable
     {
+        private bool disposed = false;
         private object LockObj = new object();
         private SQLiteConnection dbConn = null;
-
         private int nKeyPoolSize = 100;
 
         /// <summary>
@@ -139,12 +140,34 @@ namespace Novacoin
 
         ~CKeyStore()
         {
-            if (dbConn != null)
+            Dispose(false);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposed)
             {
-                dbConn.Close();
-                dbConn = null;
+                if (disposing)
+                {
+                    // Free other state (managed objects).
+                }
+
+                if (dbConn != null)
+                {
+                    dbConn.Close();
+                    dbConn = null;
+                }
+
+                disposed = true;
             }
         }
+
 
         /// <summary>
         /// Generate keys and insert them to key store.
