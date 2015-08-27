@@ -551,8 +551,8 @@ namespace Novacoin
                 instruction opcode1, opcode2;
 
                 // Compare
-                var bq1 = script1.GetByteQUeue();
-                var bq2 = script2.GetByteQUeue();
+                var bq1 = script1.GetByteQueue();
+                var bq2 = script2.GetByteQueue();
 
                 byte[] args1, args2;
 
@@ -863,7 +863,7 @@ namespace Novacoin
             var falseBytes = new byte[0];
             var trueBytes = new byte[] { 0x01 };
 
-            var CodeQueue = script.GetByteQUeue();
+            var CodeQueue = script.GetByteQueue();
             var altStack = new List<byte[]>();
 
             try
