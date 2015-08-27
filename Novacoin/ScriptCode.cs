@@ -478,6 +478,8 @@ namespace Novacoin
         /// <returns>Result</returns>
         public static bool Solver(CScript scriptPubKey, out txnouttype typeRet, out IList<byte[]> solutions)
         {
+            var scriptBytes = ((byte[])scriptPubKey);
+
             solutions = new List<byte[]>();
 
             // There are shortcuts for pay-to-script-hash and pay-to-pubkey-hash, which are more constrained than the other types.
@@ -488,7 +490,7 @@ namespace Novacoin
                 typeRet = txnouttype.TX_SCRIPTHASH;
 
                 // Take 20 bytes with offset of 2 bytes
-                var hashBytes = scriptPubKey.Bytes.Skip(2).Take(20);
+                var hashBytes = scriptBytes.Skip(2).Take(20);
                 solutions.Add(hashBytes.ToArray());
 
                 return true;
@@ -500,7 +502,7 @@ namespace Novacoin
                 typeRet = txnouttype.TX_PUBKEYHASH;
 
                 // Take 20 bytes with offset of 3 bytes
-                var hashBytes = scriptPubKey.Bytes.Skip(3).Take(20);
+                var hashBytes = scriptBytes.Skip(3).Take(20);
                 solutions.Add(hashBytes.ToArray());
 
                 return true;
@@ -560,8 +562,8 @@ namespace Novacoin
 
                 byte[] args1, args2;
 
-                int last1 = script1.Bytes.Count() -1;
-                int last2 = script2.Bytes.Count() - 1;
+                int last1 = ((byte[])script1).Length -1;
+                int last2 = ((byte[])script2).Length - 1;
 
                 while (true)
                 {
@@ -743,7 +745,7 @@ namespace Novacoin
             }
 
             // Concatenate and hash
-            var txBytes = txTmp.Bytes;
+            var txBytes = (byte[])txTmp;
             var nHashTypeBytes = BitConverter.GetBytes(nHashType);
 
             return Hash256.Compute256(ref txBytes, ref nHashTypeBytes);
@@ -866,7 +868,9 @@ namespace Novacoin
         /// <returns></returns>
         public static bool EvalScript(ref List<byte[]> stack, CScript script, CTransaction txTo, int nIn, int flags, int nHashType)
         {
-            if (script.Bytes.Count() > 10000)
+            var scriptBytes = ((byte[])script);
+
+            if (scriptBytes.Length > 10000)
             {
                 return false; // Size limit failed
             }
@@ -1547,7 +1551,7 @@ namespace Novacoin
                                             break;
                                     }
                                     popstack(ref stack);
-                                    stack.Add(hash.hashBytes);
+                                    stack.Add(hash);
                                 }
                                 break;
 
@@ -1571,7 +1575,7 @@ namespace Novacoin
                                     var pubkeyBytes = stacktop(ref stack, -1);
 
                                     // Subset of script starting at the most recent codeseparator
-                                    var scriptCode = new CScript(script.Bytes.Skip(nCodeHashBegin).ToArray());
+                                    var scriptCode = new CScript(scriptBytes.Skip(nCodeHashBegin).ToArray());
 
                                     // There's no way for a signature to sign itself
                                     scriptCode.RemovePattern(sigBytes);
@@ -1638,7 +1642,7 @@ namespace Novacoin
                                     }
 
                                     // Subset of script starting at the most recent codeseparator
-                                    var scriptCode = new CScript(script.Bytes.Skip(nCodeHashBegin).ToArray());
+                                    var scriptCode = new CScript(scriptBytes.Skip(nCodeHashBegin).ToArray());
 
                                     // There is no way for a signature to sign itself, so we need to drop the signatures
                                     for (int k = 0; k < nSigsCount; k++)

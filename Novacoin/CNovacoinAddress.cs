@@ -58,7 +58,7 @@ namespace Novacoin
         public CNovacoinAddress(CKeyID keyID)
         {
             nVersion = (byte)AddrType.PUBKEY_ADDRESS;
-            addrData = new List<byte>(keyID.hashBytes);
+            addrData = new List<byte>((byte[])keyID);
         }
 
         public CNovacoinAddress(string strNovacoinAddress)
@@ -76,7 +76,7 @@ namespace Novacoin
         public CNovacoinAddress(CScriptID scriptID)
         {
             nVersion = (byte)AddrType.SCRIPT_ADDRESS;
-            addrData = new List<byte>(scriptID.hashBytes);
+            addrData = new List<byte>((byte[])scriptID);
         }
 
         /// <summary>

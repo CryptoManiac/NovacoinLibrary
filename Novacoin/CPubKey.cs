@@ -67,7 +67,15 @@ namespace Novacoin
 
         public string ToHex()
         {
-            return Interop.ToHex(PublicBytes);
+            return Interop.ToHex((byte[])this);
+        }
+
+        /// <summary>
+        /// Public part of key pair
+        /// </summary>
+        public static implicit operator byte[] (CPubKey p)
+        {
+            return p._Public.Q.GetEncoded();
         }
 
         public override string ToString()
@@ -75,7 +83,7 @@ namespace Novacoin
             var r = new List<byte>();
 
             r.Add((byte)(AddrType.PUBKEY_ADDRESS));
-            r.AddRange(PublicBytes);
+            r.AddRange((byte[])this);
 
             return AddressTools.Base58EncodeCheck(r.ToArray());
         }

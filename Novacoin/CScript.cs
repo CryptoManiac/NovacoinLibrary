@@ -96,7 +96,7 @@ namespace Novacoin
         public void AddHash(Hash160 hash)
         {
             codeBytes.Add((byte)hash.hashSize);
-            codeBytes.AddRange(hash.hashBytes);
+            codeBytes.AddRange((byte[])hash);
         }
 
         /// <summary>
@@ -108,7 +108,7 @@ namespace Novacoin
         public void AddHash(Hash256 hash)
         {
             codeBytes.Add((byte)hash.hashSize);
-            codeBytes.AddRange(hash.hashBytes);
+            codeBytes.AddRange((byte[])hash);
         }
 
         /// <summary>
@@ -447,7 +447,7 @@ namespace Novacoin
         public void SetDestination(CPubKey pubKey)
         {
             codeBytes.Clear();
-            PushData(pubKey.PublicBytes);
+            PushData(pubKey);
             AddInstruction(instruction.OP_CHECKSIG);
         }
 
@@ -497,7 +497,7 @@ namespace Novacoin
 
             foreach (var key in keys)
             {
-                PushData(key.PublicBytes);
+                PushData(key);
             }
 
             AddInstruction(ScriptCode.EncodeOP_N(keys.Length));
@@ -507,9 +507,9 @@ namespace Novacoin
         /// <summary>
         /// Access to script code.
         /// </summary>
-        public byte[] Bytes
+        public static implicit operator byte[] (CScript script)
         {
-            get { return codeBytes.ToArray(); }
+            return script.codeBytes.ToArray();
         }
 
         public CScriptID ScriptID

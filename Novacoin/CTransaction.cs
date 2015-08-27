@@ -183,38 +183,35 @@ namespace Novacoin
         /// </summary>
         public Hash256 Hash
         {
-            get { return Hash256.Compute256(Bytes); }
+            get { return Hash256.Compute256(this); }
         }
 
         /// <summary>
         /// A sequence of bytes, which corresponds to the current state of CTransaction.
         /// </summary>
-        public byte[] Bytes
+        public static implicit operator byte[] (CTransaction tx)
         {
-            get
+            var resultBytes = new List<byte>();
+
+            resultBytes.AddRange(BitConverter.GetBytes(tx.nVersion));
+            resultBytes.AddRange(BitConverter.GetBytes(tx.nTime));
+            resultBytes.AddRange(VarInt.EncodeVarInt(tx.vin.LongLength));
+
+            foreach (var input in tx.vin)
             {
-                var resultBytes = new List<byte>();
-
-                resultBytes.AddRange(BitConverter.GetBytes(nVersion));
-                resultBytes.AddRange(BitConverter.GetBytes(nTime));
-                resultBytes.AddRange(VarInt.EncodeVarInt(vin.LongLength));
-
-                foreach (var input in vin)
-                {
-                    resultBytes.AddRange(input.Bytes);
-                }
-
-                resultBytes.AddRange(VarInt.EncodeVarInt(vout.LongLength));
-
-                foreach (var output in vout)
-                {
-                    resultBytes.AddRange(output.Bytes);
-                }
-
-                resultBytes.AddRange(BitConverter.GetBytes(nLockTime));
-
-                return resultBytes.ToArray();
+                resultBytes.AddRange((byte[])input);
             }
+
+            resultBytes.AddRange(VarInt.EncodeVarInt(tx.vout.LongLength));
+
+            foreach (var output in tx.vout)
+            {
+                resultBytes.AddRange((byte[])output);
+            }
+
+            resultBytes.AddRange(BitConverter.GetBytes(tx.nLockTime));
+
+            return resultBytes.ToArray();
         }
 
         public override string ToString()

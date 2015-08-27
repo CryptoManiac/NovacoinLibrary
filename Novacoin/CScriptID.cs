@@ -22,7 +22,7 @@ namespace Novacoin
     {
         public CScriptID(Hash160 scriptHash)
         {
-            _hashBytes = scriptHash.hashBytes;
+            _hashBytes = scriptHash;
         }
 
         public override string ToString()

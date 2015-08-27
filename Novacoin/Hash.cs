@@ -36,11 +36,6 @@ namespace Novacoin
             get; 
         }
 
-        public byte[] hashBytes
-        {
-            get { return _hashBytes; }
-        }
-
         /// <summary>
         /// Initializes an empty instance of the Hash class.
         /// </summary>
@@ -74,10 +69,10 @@ namespace Novacoin
             get { return !_hashBytes.Any(b => b != 0); }
         }
 
-        /*public static implicit operator BigInteger(Hash h)
+        public static implicit operator byte[](Hash h)
         {
-            return new BigInteger(h._hashBytes);
-        }*/
+            return h._hashBytes;
+        }
 
         public override string ToString()
         {

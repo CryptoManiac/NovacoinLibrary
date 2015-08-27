@@ -86,7 +86,7 @@ namespace Novacoin
         {
             var signer = SignerUtilities.GetSigner("NONEwithECDSA");
             signer.Init(false, _Public);
-            signer.BlockUpdate(sigHash.hashBytes, 0, sigHash.hashSize);
+            signer.BlockUpdate(sigHash, 0, sigHash.hashSize);
 
             return signer.VerifySignature(signature);
         }
@@ -97,15 +97,7 @@ namespace Novacoin
         /// <returns>New key ID</returns>
         public CKeyID KeyID
         {
-            get { return new CKeyID(Hash160.Compute160(PublicBytes)); }
-        }
-
-        /// <summary>
-        /// Public part of key pair
-        /// </summary>
-        public byte[] PublicBytes
-        {
-            get { return _Public.Q.GetEncoded(); }
+            get { return new CKeyID(Hash160.Compute160(_Public.Q.GetEncoded())); }
         }
 
         /// <summary>

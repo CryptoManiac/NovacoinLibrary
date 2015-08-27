@@ -82,20 +82,17 @@ namespace Novacoin
         /// Get raw bytes representation of our output.
         /// </summary>
         /// <returns>Byte sequence.</returns>
-        public IList<byte> Bytes
+        public static implicit operator byte[] (CTxOut output)
         {
-            get
-            {
                 var resultBytes = new List<byte>();
 
-                resultBytes.AddRange(BitConverter.GetBytes(nValue)); // txout value
+                resultBytes.AddRange(BitConverter.GetBytes(output.nValue)); // txout value
 
-                var s = scriptPubKey.Bytes;
+                var s = (byte[])output.scriptPubKey;
                 resultBytes.AddRange(VarInt.EncodeVarInt(s.Length)); // scriptPubKey length
                 resultBytes.AddRange(s); // scriptPubKey
 
-                return resultBytes;
-            }
+                return resultBytes.ToArray();
         }
 
         /// <summary>

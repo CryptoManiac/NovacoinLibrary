@@ -174,44 +174,41 @@ namespace Novacoin
         {
             var signer = SignerUtilities.GetSigner("NONEwithECDSA");
             signer.Init(true, _Private);
-            signer.BlockUpdate(sigHash.hashBytes, 0, sigHash.hashSize);
+            signer.BlockUpdate(sigHash, 0, sigHash.hashSize);
 
             return signer.GenerateSignature();
         }
 
         public CPubKey PubKey
         {
-            get { return new CPubKey(PublicBytes); }
+            get { return new CPubKey(_Public.Q.GetEncoded()); }
         }
 
         /// <summary>
         /// SecretBytes part of key pair
         /// </summary>
-        public byte[] SecretBytes
+        public static implicit operator byte[] (CKeyPair kp)
         {
-            get
+            var secretBytes = new List<byte>(kp._Private.D.ToByteArray());
+
+            if (secretBytes.Count == 33 && secretBytes[0] == 0x00)
             {
-                var secretBytes = new List<byte>(_Private.D.ToByteArray());
-
-                if (secretBytes.Count == 33 && secretBytes[0] == 0x00)
-                {
-                    // Remove sign
-                    secretBytes.RemoveAt(0);
-                }
-
-                if (IsCompressed)
-                {
-                    // Set compression flag
-                    secretBytes.Add(0x01);
-                }
-
-                return secretBytes.ToArray();
+                // Remove sign
+                secretBytes.RemoveAt(0);
             }
+
+            if (kp.IsCompressed)
+            {
+                // Set compression flag
+                secretBytes.Add(0x01);
+            }
+
+            return secretBytes.ToArray();
         }
 
         public string ToHex()
         {
-            return Interop.ToHex(SecretBytes);
+            return Interop.ToHex((byte[])this);
         }
 
         /// <summary>
@@ -223,7 +220,7 @@ namespace Novacoin
             var r = new List<byte>();
 
             r.Add((byte)(128 + AddrType.PUBKEY_ADDRESS)); // Key version
-            r.AddRange(SecretBytes); // Key data
+            r.AddRange((byte[])this); // Key data
 
             return AddressTools.Base58EncodeCheck(r.ToArray());
         }

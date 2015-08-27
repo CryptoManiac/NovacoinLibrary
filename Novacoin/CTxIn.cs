@@ -90,22 +90,20 @@ namespace Novacoin
         /// Get raw bytes representation of our input.
         /// </summary>
         /// <returns>Byte sequence.</returns>
-        public IList<byte> Bytes
+        public static implicit operator byte[] (CTxIn input)
         {
-            get
-            {
-                var inputBytes = new List<byte>();
+            var inputBytes = new List<byte>();
 
-                inputBytes.AddRange(prevout.Bytes); // prevout
+            inputBytes.AddRange((byte[])input.prevout); // prevout
 
-                var s = scriptSig.Bytes;
-                inputBytes.AddRange(VarInt.EncodeVarInt(s.Length)); // scriptSig length
-                inputBytes.AddRange(s); // scriptSig
-                inputBytes.AddRange(BitConverter.GetBytes(nSequence)); // Sequence
+            var s = (byte[])input.scriptSig;
+            inputBytes.AddRange(VarInt.EncodeVarInt(s.Length)); // scriptSig length
+            inputBytes.AddRange(s); // scriptSig
+            inputBytes.AddRange(BitConverter.GetBytes(input.nSequence)); // Sequence
 
-                return inputBytes;
-            }
+            return inputBytes.ToArray();
         }
+
 
         public bool IsFinal
         {
@@ -120,7 +118,7 @@ namespace Novacoin
 
             if(prevout.IsNull)
             {
-                sb.AppendFormat(", coinbase={0}", Interop.ToHex(scriptSig.Bytes));
+                sb.AppendFormat(", coinbase={0}", Interop.ToHex((byte[])scriptSig));
             }
             else
             {

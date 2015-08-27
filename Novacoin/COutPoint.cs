@@ -63,16 +63,13 @@ namespace Novacoin
             get { return hash.IsZero && n == uint.MaxValue; }
         }
 
-        public IList<byte> Bytes
+        public static implicit operator byte[] (COutPoint o)
         {
-            get
-            {
-                var r = new List<byte>();
-                r.AddRange(hash.hashBytes);
-                r.AddRange(BitConverter.GetBytes(n));
+            var r = new List<byte>();
+            r.AddRange((byte[])o.hash);
+            r.AddRange(BitConverter.GetBytes(o.n));
 
-                return r;
-            }
+            return r.ToArray();
         }
 
         public override string ToString()

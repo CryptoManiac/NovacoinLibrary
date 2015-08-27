@@ -163,9 +163,9 @@ namespace Novacoin
 
                     var res = dbConn.Insert(new KeyStorageItem()
                     {
-                        KeyID = keyPair.KeyID.hashBytes,
-                        PublicKey = keyPair.PublicBytes,
-                        PrivateKey = keyPair.SecretBytes,
+                        KeyID = keyPair.KeyID,
+                        PublicKey = keyPair.PubKey,
+                        PrivateKey = keyPair,
                         IsCompressed = keyPair.IsCompressed,
                         IsUsed = false,
                         nTime = Interop.GetTime()
@@ -189,9 +189,9 @@ namespace Novacoin
             {
                 var res = dbConn.Insert(new KeyStorageItem()
                 {
-                    KeyID = keyPair.KeyID.hashBytes,
-                    PublicKey = keyPair.PublicBytes,
-                    PrivateKey = keyPair.SecretBytes,
+                    KeyID = keyPair.KeyID,
+                    PublicKey = keyPair.PubKey,
+                    PrivateKey = keyPair,
                     IsCompressed = keyPair.IsCompressed,
                     IsUsed = true,
                     nTime = Interop.GetTime()
@@ -213,7 +213,7 @@ namespace Novacoin
         /// <returns>Checking result</returns>
         public bool HaveKey(CKeyID keyID)
         {
-            var QueryCount = dbConn.Query<NumQuery>("select count([ItemID]) from [KeyStorage] where [KeyID] = ?", keyID.hashBytes);
+            var QueryCount = dbConn.Query<NumQuery>("select count([ItemID]) from [KeyStorage] where [KeyID] = ?", (byte[])keyID);
 
             return QueryCount.First().Num == 1;
         }
@@ -226,7 +226,7 @@ namespace Novacoin
         /// <returns>Result</returns>
         public bool GetKey(CKeyID keyID, out CKeyPair keyPair)
         {
-            var QueryGet = dbConn.Query<KeyStorageItem>("select * from [KeyStorage] where [KeyID] = ?", keyID.hashBytes);
+            var QueryGet = dbConn.Query<KeyStorageItem>("select * from [KeyStorage] where [KeyID] = ?", (byte[])keyID);
 
             if (QueryGet.Count() == 1)
             {
@@ -249,8 +249,8 @@ namespace Novacoin
             {
                 var res = dbConn.Insert(new ScriptStorageItem()
                 {
-                    ScriptID = script.ScriptID.hashBytes,
-                    ScriptCode = script.Bytes
+                    ScriptID = script.ScriptID,
+                    ScriptCode = script
                 });
 
                 if (res == 0)
@@ -269,7 +269,7 @@ namespace Novacoin
         /// <returns>Checking result</returns>
         public bool HaveScript(CScriptID scriptID)
         {
-            var QueryGet = dbConn.Query<NumQuery>("select count([ItemID]) from [ScriptStorage] where [ScriptID] = ?", scriptID.hashBytes);
+            var QueryGet = dbConn.Query<NumQuery>("select count([ItemID]) from [ScriptStorage] where [ScriptID] = ?", (byte[])scriptID);
 
             return QueryGet.First().Num == 1;
         }
@@ -282,7 +282,7 @@ namespace Novacoin
         /// <returns>Result</returns>
         public bool GetScript(CScriptID scriptID, out CScript script)
         {
-            var QueryGet = dbConn.Query<ScriptStorageItem>("select * from [ScriptStorage] where [ScriptID] = ?", scriptID.hashBytes);
+            var QueryGet = dbConn.Query<ScriptStorageItem>("select * from [ScriptStorage] where [ScriptID] = ?", (byte[])scriptID);
 
             if (QueryGet.Count() == 1)
             {

@@ -143,28 +143,25 @@ namespace Novacoin
         }
 
         /// <summary>
-        /// Get current instance as sequence of bytes
+        /// Get instance as sequence of bytes
         /// </summary>
         /// <returns>Byte sequence</returns>
-        public IList<byte> Bytes 
+        public static implicit operator byte[] (CBlock b)
         {
-            get
+            var r = new List<byte>();
+
+            r.AddRange((byte[])b.header);
+            r.AddRange(VarInt.EncodeVarInt(b.vtx.LongLength)); // transactions count
+
+            foreach (var tx in b.vtx)
             {
-                var r = new List<byte>();
-
-                r.AddRange(header.Bytes);
-                r.AddRange(VarInt.EncodeVarInt(vtx.LongLength)); // transactions count
-
-                foreach (var tx in vtx)
-                {
-                    r.AddRange(tx.Bytes);
-                }
-
-                r.AddRange(VarInt.EncodeVarInt(signature.LongLength));
-                r.AddRange(signature);
-
-                return r;
+                r.AddRange((byte[])tx);
             }
+
+            r.AddRange(VarInt.EncodeVarInt(b.signature.LongLength));
+            r.AddRange(b.signature);
+
+            return r.ToArray();
         }
 
         /// <summary>
@@ -178,7 +175,7 @@ namespace Novacoin
 
                 foreach (var tx in vtx)
                 {
-                    merkleTree.AddRange(Hash256.ComputeRaw256(tx.Bytes));
+                    merkleTree.AddRange(Hash256.ComputeRaw256(tx));
                 }
 
                 int levelOffset = 0;

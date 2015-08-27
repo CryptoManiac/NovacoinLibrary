@@ -88,27 +88,24 @@ namespace Novacoin
         /// Convert current block header instance into sequence of bytes
         /// </summary>
         /// <returns>Byte sequence</returns>
-        public byte[] Bytes
+        public static implicit operator byte[] (CBlockHeader h)
         {
-            get
-            {
-                var r = new List<byte>();
+            var r = new List<byte>();
 
-                r.AddRange(BitConverter.GetBytes(nVersion));
-                r.AddRange(prevHash.hashBytes);
-                r.AddRange(merkleRoot.hashBytes);
-                r.AddRange(BitConverter.GetBytes(nTime));
-                r.AddRange(BitConverter.GetBytes(nBits));
-                r.AddRange(BitConverter.GetBytes(nNonce));
+            r.AddRange(BitConverter.GetBytes(h.nVersion));
+            r.AddRange((byte[])h.prevHash);
+            r.AddRange((byte[])h.merkleRoot);
+            r.AddRange(BitConverter.GetBytes(h.nTime));
+            r.AddRange(BitConverter.GetBytes(h.nBits));
+            r.AddRange(BitConverter.GetBytes(h.nNonce));
 
-                return r.ToArray();
-            }
+            return r.ToArray();
         }
 
         public ScryptHash256 Hash
         {
             get {
-                return ScryptHash256.Compute256(Bytes);
+                return ScryptHash256.Compute256(this);
             }
         }
 

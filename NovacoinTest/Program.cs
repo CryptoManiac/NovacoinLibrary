@@ -27,12 +27,12 @@ namespace NovacoinTest
             string strBlock1 = "0600000086e539d77573abc0d81feb7896e1aef41a866001bc78bd24f5fe1a0000000000f5822cea59d999f37d896f66899c86e01e764ed6014706f3ceb58281ed55d0e55ab7d155ada3001d0000000005010000005ab7d155010000000000000000000000000000000000000000000000000000000000000000ffffffff0e0363ff02026d05062f503253482fffffffff0100000000000000000000000000010000005ab7d15501a768f8ed022f4080e3c8866bbe8292c7610b826cd467c49a06a1d0ff2ef7cdd6000000006b483045022100dce689d8cda64ebaffd6b96321952f16df34494256c58d2fd83069db7bce40e5022016020f55dc747d845d2057547c650412aa27d7d628e72238579f72e572dafdfe012102916e12c72a41913a5307bf7477db80dd499ea20f1a6bd99a2bdae6229f5aa093ffffffff03000000000000000000d0f1440300000000232102916e12c72a41913a5307bf7477db80dd499ea20f1a6bd99a2bdae6229f5aa093acc23f450300000000232102916e12c72a41913a5307bf7477db80dd499ea20f1a6bd99a2bdae6229f5aa093ac000000000100000091b4d15502c252c9130b1fd1dc8ef59cdb550ed398c4fe12c7ebf3eb917076bbda039b769d010000004847304402204bee0faac004364cdf6483d492333d00ad6f7c925faa3750fef2c79a9065a28102204a5e2b970f776ea1af2c2c03e36e6381d3d69b529d90b512363ae44815a321c601ffffffffc252c9130b1fd1dc8ef59cdb550ed398c4fe12c7ebf3eb917076bbda039b769d02000000494830450221008bf152a838f6f14f0ed1b2afc27821717e43a528e27aec3569ab42fc82f468aa02202cf6c962ef97db6e5ba32ccdd235afdc9a3cbb7907bfe879f8109446485d66dc01ffffffff0116467210000000001976a914edbf189bece45d4afa9848276e949183936bf6a488ac000000000100000017b5d1550229c74fb0004d45fba5baaefed1d9c229a8f1c85c36590cedf3ce6635335963d5000000006a4730440220319a4dfcf1607682d493c6d90087dc35d778a8bfcebe3549bae0af69e8daecb902206e6622367be30d9ccd4fdd27ed09c2fbcc9e5c858b26dfcdd927a8aba637b327012103b103f5d7e9717bc37cc99984b23babc3fff4677728be6b9c1847f6ce78e557f5ffffffff24b91fa6e9c160cc8da306e485942ee76137117aa8adecf531f6af1aef4e9b680000000049483045022100c9b311b7a7f5adeb0e72f962fb81b4cc1d105e32cfd7b1a7641a0fcc014d67c50220527161371a17301448bae87a26df201598b46d00ff452893177e9aed665c357c01ffffffff028e380000000000001976a91400afc350f81916a642a88b5ce8f73508663b531188ac67f46b00000000001976a91420c10f267f55ff4e05a083a8e1f4e882fbca1f4988ac0000000001000000efb6d15501626835db281e1fe6271620b8f67999f2174bb96df0eb3935fc99771e4ff45acf000000006a47304402206c34deb9c07c5477c47d398eaf91dbdf74aff5229c448e82ed0c1d8e2ee30e2d02203fe609434844b3eee21e747e313bcbf98efa4326727db6d2efba7bb627d2e0ce0121030c86c72f59c66824297aa78e433fe7057fd064e03e44c62ec49201ee0184149bffffffff028be30300000000001976a91481fc5cfb7f41afb3baf4138626022b3081b84e1788ac6abd0000000000001976a91499346dcd8ddfa10326697d5387b7df765004f4e388ac0000000046304402205189911c97354edb2965b4a119e6d76281f4c5da8fcead19c97bf6bcc9990fe102200f56d9dd967b036627b32b1e3ef2f819deaaafcc3244332472df7acfe19f1aa5";
             var b1 = new CBlock(Interop.HexToArray(strBlock1));
 
-            string strBlock1Bytes = Interop.ToHex(b1.Bytes);
+            string strBlock1Bytes = Interop.ToHex((byte[])b1);
 
             string strBlock2 = "06000000eb5ab262c7382e7e009ad0b65c707131b8b6b846f8920a1a6697d929203a22f70e8cbd6bee1c0519a9d06b749b5eb6e599c154b12b732170807e603b6c326abbe0b7d15560e2211b15085b8f0101000000e0b7d155010000000000000000000000000000000000000000000000000000000000000000ffffffff270364ff02062f503253482f04c7b7d15508300000032b0000000d2f6e6f64655374726174756d2f0000000002f87d6b000000000023210287753c456abfc248d1bd155f44742d2ea72a2f29a5290c815fea0e9c55c4e2d0ac488a0000000000001976a914276cdbe21aaab75d58e151e01efea2860d3ef3d088ac0000000000";
             var b2 = new CBlock(Interop.HexToArray(strBlock2));
 
-            string strBlock2Bytes = Interop.ToHex(b2.Bytes);
+            string strBlock2Bytes = Interop.ToHex((byte[])b2);
 
             Console.WriteLine(b1.ToString());
             Console.WriteLine("OK: {0}\n", strBlock1 == strBlock1Bytes);
@@ -43,7 +43,7 @@ namespace NovacoinTest
             /// ECDSA keypair generation test
 
             var keyPair1 = new CKeyPair();
-            var keyPair2 = new CKeyPair(keyPair1.SecretBytes);
+            var keyPair2 = new CKeyPair((byte[])keyPair1);
             var pubKey = keyPair2.PubKey;
 
             string strPrivKeyBase58 = keyPair1.ToString();
@@ -62,7 +62,7 @@ namespace NovacoinTest
             /// Address generation test
 
             var keyID = keyPair1.KeyID;
-            Console.WriteLine("Key ID: {0}", Interop.ToHex(keyID.hashBytes));
+            Console.WriteLine("Key ID: {0}", Interop.ToHex((byte[])keyID));
             Console.WriteLine("Novacoin address: {0}\n", keyID.ToString());
 
             /// Privkey deserialization test
@@ -72,7 +72,7 @@ namespace NovacoinTest
             Console.WriteLine("Hard-Coded privkey: {0}\n", keyPair4.ToString());
 
             // Privkey hex deserialization test
-            CKeyPair keyPair5 = new CKeyPair(keyPair4.SecretBytes.ToArray());
+            CKeyPair keyPair5 = new CKeyPair((byte[])keyPair4);
             Console.WriteLine("Decoded privkey in Hex: {0}", keyPair5.ToHex());
             Console.WriteLine("Decoded privkey address: {0}\n", keyPair5.KeyID.ToString());
 
@@ -101,7 +101,7 @@ namespace NovacoinTest
             Console.WriteLine("Address reserialization is OK: {0}", donationAddress.ToString() == pubKeyTest.KeyID.ToString());
 
             /// Block header hashing test
-            var dataBytesForScrypt = b1.header.Bytes;
+            byte[] dataBytesForScrypt = b1.header;
             var scryptHash = ScryptHash256.Compute256(dataBytesForScrypt);
 
             Console.WriteLine("\nblock1 header hash: {0}", scryptHash.ToString());
@@ -244,7 +244,7 @@ namespace NovacoinTest
             watch.Stop();
             elapsedMs = watch.ElapsedMilliseconds;
             Console.WriteLine("Calculation time: {0} ms\n", elapsedMs);
-            Console.WriteLine("Merkle tree is OK: {0}", merkleroot.hashBytes.SequenceEqual(veryBigBlock.header.merkleRoot.hashBytes));
+            Console.WriteLine("Merkle tree is OK: {0}", ((byte[])merkleroot).SequenceEqual((byte[])veryBigBlock.header.merkleRoot));
 
             // Initialization of key store
 
@@ -255,7 +255,6 @@ namespace NovacoinTest
             Console.WriteLine("Initialization done in {0} ms, adding and querying new key pair.", watch.ElapsedMilliseconds);
             var kp1 = new CKeyPair();
             keyStore.AddKey(kp1);
-
 
             CKeyPair kp2;
             var queryRes = keyStore.GetKey(kp1.KeyID, out kp2);

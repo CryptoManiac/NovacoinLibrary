@@ -22,7 +22,7 @@ namespace Novacoin
     {
         public CKeyID(Hash160 pubKeyHash)
         {
-            _hashBytes = pubKeyHash.hashBytes;
+            _hashBytes = pubKeyHash;
         }
 
         internal CKeyID(byte[] hashBytes)
