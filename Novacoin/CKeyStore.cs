@@ -311,7 +311,7 @@ namespace Novacoin
         /// <returns>CKeyID instance</returns>
         public CKeyID SelectKey(out int nKeyIndex)
         {
-            var QueryGet = dbConn.Query<ReservedKey>("select ItemId, KeyID from [KeyStorage] where not IsUsed order by [nTime] asc limit 1");
+            var QueryGet = dbConn.Query<ReservedKey>("select ItemId, KeyID from [KeyStorage] where not [IsUsed] order by [nTime] asc limit 1");
 
             if (QueryGet.Count() == 1)
             {
@@ -362,7 +362,7 @@ namespace Novacoin
         {
             lock (LockObj)
             {
-                dbConn.Execute("delete from [KeyStorage] where [IsUsed] = false");
+                dbConn.Execute("delete from [KeyStorage] where not [IsUsed]");
                 GenerateKeys(nKeyPoolSize);
             }
         }
