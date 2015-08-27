@@ -96,51 +96,43 @@ namespace Novacoin
 
     /// <summary>
     /// select count(...) as Count from ... where ...
+    /// select number from ... where ...
     /// </summary>
-    class CountQuery
+    class NumQuery
     {
-        public int Count { get; set; }
+        public int Num { get; set; }
     }
 
+    /// <summary>
+    /// Key storage
+    /// </summary>
     public class CKeyStore
     {
         private object LockObj = new object();
         private SQLiteConnection dbConn = null;
 
-        public CKeyStore(string strDatabasePath="KeyStore.db")
+        private int nKeyPoolSize = 100;
+
+        /// <summary>
+        /// Initialize new instance of key store.
+        /// </summary>
+        /// <param name="strDatabasePath">Path to database file.</param>
+        /// <param name="KeyPoolSize">Number of reserved keys.</param>
+        public CKeyStore(string strDatabasePath="KeyStore.db", int KeyPoolSize = 100)
         {
-            bool firstInit = File.Exists(strDatabasePath);
+            bool firstInit = !File.Exists(strDatabasePath);
 
             dbConn = new SQLiteConnection(new SQLitePlatformGeneric(), strDatabasePath);
+            nKeyPoolSize = KeyPoolSize;
 
-            if (!firstInit)
+            if (firstInit)
             {
                 lock(LockObj)
                 {
                     dbConn.CreateTable<KeyStorageItem>(CreateFlags.AutoIncPK);
                     dbConn.CreateTable<ScriptStorageItem>(CreateFlags.AutoIncPK);
 
-                    dbConn.BeginTransaction();
-
-                    // Generate keys
-                    for (int i = 0; i < 1000; i++)
-                    {
-                        var keyPair = new CKeyPair();
-
-                        var res = dbConn.Insert(new KeyStorageItem()
-                        {
-                            KeyID = keyPair.KeyID.hashBytes,
-                            PublicKey = keyPair.PublicBytes,
-                            PrivateKey = keyPair.SecretBytes,
-                            IsCompressed = keyPair.IsCompressed,
-                            IsUsed = false,
-                            nTime = Interop.GetTime()
-                        });
-
-                        // TODO: Additional initialization
-                    }
-
-                    dbConn.Commit();
+                    GenerateKeys(nKeyPoolSize);
                 }
             }
         }
@@ -151,6 +143,38 @@ namespace Novacoin
             {
                 dbConn.Close();
                 dbConn = null;
+            }
+        }
+
+        /// <summary>
+        /// Generate keys and insert them to key store.
+        /// </summary>
+        /// <param name="n"></param>
+        private void GenerateKeys(int n)
+        {
+            lock (LockObj)
+            {
+                dbConn.BeginTransaction();
+
+                // Generate keys
+                for (int i = 0; i < n; i++)
+                {
+                    var keyPair = new CKeyPair();
+
+                    var res = dbConn.Insert(new KeyStorageItem()
+                    {
+                        KeyID = keyPair.KeyID.hashBytes,
+                        PublicKey = keyPair.PublicBytes,
+                        PrivateKey = keyPair.SecretBytes,
+                        IsCompressed = keyPair.IsCompressed,
+                        IsUsed = false,
+                        nTime = Interop.GetTime()
+                    });
+
+                    // TODO: Additional initialization
+                }
+
+                dbConn.Commit();
             }
         }
 
@@ -182,11 +206,16 @@ namespace Novacoin
             return true;
         }
 
+        /// <summary>
+        /// Check existance of item with provided KeyID
+        /// </summary>
+        /// <param name="scriptID">Hash160 of public key.</param>
+        /// <returns>Checking result</returns>
         public bool HaveKey(CKeyID keyID)
         {
-            var QueryCount = dbConn.Query<CountQuery>("select count([ItemID]) as [Count] from [KeyStorage] where [KeyID] = ?", keyID.hashBytes);
+            var QueryCount = dbConn.Query<NumQuery>("select count([ItemID]) from [KeyStorage] where [KeyID] = ?", keyID.hashBytes);
 
-            return QueryCount.First().Count == 1;
+            return QueryCount.First().Num == 1;
         }
 
         /// <summary>
@@ -209,6 +238,11 @@ namespace Novacoin
             return false;
         }
 
+        /// <summary>
+        /// Add redeem script to script store.
+        /// </summary>
+        /// <param name="script">CScript instance</param>
+        /// <returns>Result</returns>
         public bool AddScript(CScript script)
         {
             lock (LockObj)
@@ -228,13 +262,24 @@ namespace Novacoin
             return true;
         }
 
+        /// <summary>
+        /// Check existance of item with provided ScriptID
+        /// </summary>
+        /// <param name="scriptID">Hash160 of script code.</param>
+        /// <returns>Checking result</returns>
         public bool HaveScript(CScriptID scriptID)
         {
-            var QueryGet = dbConn.Query<CountQuery>("select count([ItemID]) from [ScriptStorage] where [ScriptID] = ?", scriptID.hashBytes);
+            var QueryGet = dbConn.Query<NumQuery>("select count([ItemID]) from [ScriptStorage] where [ScriptID] = ?", scriptID.hashBytes);
 
-            return QueryGet.First().Count == 1;
+            return QueryGet.First().Num == 1;
         }
 
+        /// <summary>
+        /// Get redeem script from database.
+        /// </summary>
+        /// <param name="scriptID">Script ID, evaluated as Hash160(script code).</param>
+        /// <param name="script">Instance of CScript</param>
+        /// <returns>Result</returns>
         public bool GetScript(CScriptID scriptID, out CScript script)
         {
             var QueryGet = dbConn.Query<ScriptStorageItem>("select * from [ScriptStorage] where [ScriptID] = ?", scriptID.hashBytes);
@@ -249,6 +294,90 @@ namespace Novacoin
             return false;
         }
 
+  
+        /// <summary>
+        /// SQLite return type for ReserveKey
+        /// </summary>                      
+        class ReservedKey
+        {
+            public int ItemId { get; set; }
+            public byte[] KeyID { get; set; }
+        }
 
+        /// <summary>
+        /// Reserve key from a list of unused keys.
+        /// </summary>
+        /// <param name="nKeyIndex">Internal index of key</param>
+        /// <returns>CKeyID instance</returns>
+        public CKeyID SelectKey(out int nKeyIndex)
+        {
+            var QueryGet = dbConn.Query<ReservedKey>("select ItemId, KeyID from [KeyStorage] where not IsUsed order by [nTime] asc limit 1");
+
+            if (QueryGet.Count() == 1)
+            {
+                var res = QueryGet.First();
+
+                nKeyIndex = res.ItemId;
+
+                return new CKeyID(res.KeyID);
+            }
+            else
+            {
+                // Generate new keys in case if keypool is exhausted.
+
+                GenerateKeys(nKeyPoolSize);
+
+                return SelectKey(out nKeyIndex);
+            }
+        }
+
+        /// <summary>
+        /// Mark key as used.
+        /// </summary>
+        /// <param name="nIndex">Internal index.</param>
+        public void MarkUsed(int nIndex)
+        {
+            lock (LockObj)
+            {
+                dbConn.Execute("update [KeyStorage] set [IsUsed] = true where [ItemId] = ?", nIndex);
+            }
+        }
+
+        /// <summary>
+        /// Mark key as unused.
+        /// </summary>
+        /// <param name="nIndex">Internal index.</param>
+        public void MarkUnused(int nIndex)
+        {
+            lock (LockObj)
+            {
+                dbConn.Execute("update [KeyStorage] set [IsUsed] = false where [ItemId] = ?", nIndex);
+            }
+        }
+
+        /// <summary>
+        /// Regenerate all unused keys. 
+        /// </summary>
+        public void ResetPool()
+        {
+            lock (LockObj)
+            {
+                dbConn.Execute("delete from [KeyStorage] where [IsUsed] = false");
+                GenerateKeys(nKeyPoolSize);
+            }
+        }
+
+        /// <summary>
+        /// Timestamp of oldest item in keystore.
+        /// </summary>
+        public int OldestTime
+        {
+            get
+            {
+                var QueryTime = dbConn.Query<NumQuery>("select [nTime] from [KeyStorage] where not [IsUsed] order by [ItemId] asc limit 1");
+
+                return QueryTime.First().Num;
+            }
+        }
     }
 }

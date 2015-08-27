@@ -25,6 +25,11 @@ namespace Novacoin
             _hashBytes = pubKeyHash.hashBytes;
         }
 
+        internal CKeyID(byte[] hashBytes)
+        {
+            _hashBytes = hashBytes;
+        }
+
         public override string ToString()
         {
             return (new CNovacoinAddress(this)).ToString();

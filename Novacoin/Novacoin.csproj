@@ -51,7 +51,6 @@
     <Compile Include="CKey.cs" />
     <Compile Include="CKeyID.cs" />
     <Compile Include="CKeyPair.cs" />
-    <Compile Include="CKeyPool.cs" />
     <Compile Include="IListExtensions.cs" />
     <Compile Include="CNovacoinAddress.cs" />
     <Compile Include="COutPoint.cs" />
