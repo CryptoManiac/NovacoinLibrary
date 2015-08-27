@@ -39,8 +39,16 @@ namespace Novacoin
         }
     }
 
+    /// <summary>
+    /// Miscellaneous functions
+    /// </summary>
     public class Interop
     {
+        /// <summary>
+        /// Reverse byte array
+        /// </summary>
+        /// <param name="source">Source array</param>
+        /// <returns>Result array</returns>
         public static byte[] ReverseBytes(byte[] source)
         {
             var b = new byte[source.Length];
@@ -50,22 +58,6 @@ namespace Novacoin
             Array.Reverse(b);
 
             return b;
-        }
-
-        public static byte[] LEBytes(uint[] values)
-        {
-            var result = new byte[values.Length * sizeof(uint)];
-            Buffer.BlockCopy(values, 0, result, 0, result.Length);
-
-            return result;
-        }
-
-        public static uint[] ToUInt32Array(byte[] bytes)
-        {
-            var result = new uint[bytes.Length / sizeof(uint)];
-            Buffer.BlockCopy(bytes, 0, result, 0, bytes.Length);
-
-            return result;
         }
 
         public static byte[] HexToArray(string hex)
@@ -89,6 +81,11 @@ namespace Novacoin
                 sb.AppendFormat("{0:x2}", b);
             }
             return sb.ToString();
+        }
+
+        public static int GetTime()
+        {
+            return (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds;
         }
     }
 }
