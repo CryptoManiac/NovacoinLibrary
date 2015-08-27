@@ -266,6 +266,11 @@ namespace NovacoinTest
                 Console.WriteLine("KeyID={0} is identical to inserted one: {1}", kp2.KeyID.ToString(), kp2.KeyID.ToString() == kp1.KeyID.ToString());
             }
 
+            watch = Stopwatch.StartNew();
+            Console.WriteLine("Resetting key store...");
+            keyStore.ResetPool();
+            Console.WriteLine("Done in {0} ms.", watch.ElapsedMilliseconds);
+
             Console.ReadLine();
         }
     }
