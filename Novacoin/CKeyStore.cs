@@ -63,6 +63,12 @@ namespace Novacoin
         /// </summary>
         [Indexed]
         public bool IsUsed { get; set; }
+
+        /// <summary>
+        /// Item creation time
+        /// </summary>
+        [Indexed]
+        public int nTime { get; set; }
     }
 
     /// <summary>
@@ -114,6 +120,8 @@ namespace Novacoin
                     dbConn.CreateTable<KeyStorageItem>(CreateFlags.AutoIncPK);
                     dbConn.CreateTable<ScriptStorageItem>(CreateFlags.AutoIncPK);
 
+                    dbConn.BeginTransaction();
+
                     // Generate keys
                     for (int i = 0; i < 1000; i++)
                     {
@@ -125,11 +133,14 @@ namespace Novacoin
                             PublicKey = keyPair.PublicBytes,
                             PrivateKey = keyPair.SecretBytes,
                             IsCompressed = keyPair.IsCompressed,
-                            IsUsed = false
+                            IsUsed = false,
+                            nTime = Interop.GetTime()
                         });
 
                         // TODO: Additional initialization
                     }
+
+                    dbConn.Commit();
                 }
             }
         }
@@ -158,7 +169,8 @@ namespace Novacoin
                     PublicKey = keyPair.PublicBytes,
                     PrivateKey = keyPair.SecretBytes,
                     IsCompressed = keyPair.IsCompressed,
-                    IsUsed = true
+                    IsUsed = true,
+                    nTime = Interop.GetTime()
                 });
 
                 if (res == 0)
