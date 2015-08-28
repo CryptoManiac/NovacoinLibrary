@@ -276,13 +276,13 @@ namespace NovacoinTest
             ScryptHash256 hash2 = b2.header.Hash;
             ScryptHash256 hash3 = veryBigBlock.header.Hash;
 
-            Console.WriteLine("{0} < {1} : {2}", hash1.ToString(), hash2.ToString(), hash1 < hash2);
-            Console.WriteLine("{0} > {1} : {2}", hash1.ToString(), hash2.ToString(), hash1 > hash2);
+            Console.WriteLine("{0} < {1} : {2}", hash1.ToString(), hash3.ToString(), hash1 < hash3);
+            Console.WriteLine("{0} > {1} : {2}", hash1.ToString(), hash3.ToString(), hash1 > hash3);
             Console.WriteLine("{0} <= {1} : {2}", hash1.ToString(), hash2.ToString(), hash1 <= hash2);
             Console.WriteLine("{0} >= {1} : {2}", hash1.ToString(), hash2.ToString(), hash1 >= hash2);
 
             Console.WriteLine("{0} != {1} : {2}", hash1.ToString(), hash2.ToString(), hash1 != hash2);
-            Console.WriteLine("{0} == {1} : {2}", hash3.ToString(), hash3.ToString(), hash3 == hash3);
+            Console.WriteLine("{0} == {1} : {2}", hash2.ToString(), hash3.ToString(), hash2 == hash3);
 
             /* 
             Console.WriteLine("Reading the block file...");

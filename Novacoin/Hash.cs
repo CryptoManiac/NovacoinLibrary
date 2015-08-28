@@ -82,17 +82,14 @@ namespace Novacoin
 
         public bool Equals(Hash item)
         {
-            if (item == null)
-            {
-                return false;
-            }
-
+            Contract.Requires<NullReferenceException>((object)item != null, "Null reference is not allowed.");
             return _hashBytes.SequenceEqual((byte[])item);
         }
 
         public override bool Equals(object o)
         {
-            throw new NotSupportedException();
+            Contract.Requires<NullReferenceException>(o != null, "Null reference is not allowed.");
+            return _hashBytes.SequenceEqual(((Hash)o)._hashBytes);
         }
 
         public override int GetHashCode()
@@ -102,8 +99,8 @@ namespace Novacoin
 
         public int CompareTo(Hash item)
         {
+            Contract.Requires<NullReferenceException>((object)item != null, "Null reference is not allowed.");
             Contract.Requires<ArgumentException>(item.hashSize == hashSize, "Hashes must have the same size.");
-            Contract.Requires<ArgumentException>(item != null, "Null reference is not allowed.");
 
             if (this > item)
             {
@@ -119,6 +116,7 @@ namespace Novacoin
 
         public static bool operator <(Hash a, Hash b)
         {
+            Contract.Requires<NullReferenceException>((object)a != null && (object)b != null, "Null references are not allowed.");
             Contract.Requires<ArgumentException>(a.hashSize == b.hashSize, "Hashes must have the same size.");
             
             for (int i = a.hashSize - 1; i >= 0; i--)
@@ -134,6 +132,7 @@ namespace Novacoin
 
         public static bool operator <=(Hash a, Hash b)
         {
+            Contract.Requires<NullReferenceException>((object)a != null && (object)b != null, "Null references are not allowed.");
             Contract.Requires<ArgumentException>(a.hashSize == b.hashSize, "Hashes must have the same size.");
 
             for (int i = a.hashSize - 1; i >= 0; i--)
@@ -149,6 +148,7 @@ namespace Novacoin
 
         public static bool operator >(Hash a, Hash b)
         {
+            Contract.Requires<NullReferenceException>((object)a != null && (object)b != null, "Null references are not allowed.");
             Contract.Requires<ArgumentException>(a.hashSize == b.hashSize, "Hashes must have the same size.");
 
             for (int i = a.hashSize - 1; i >= 0; i--)
@@ -164,6 +164,7 @@ namespace Novacoin
 
         public static bool operator >=(Hash a, Hash b)
         {
+            Contract.Requires<NullReferenceException>((object)a != null && (object)b != null, "Null references are not allowed.");
             Contract.Requires<ArgumentException>(a.hashSize == b.hashSize, "Hashes must have the same size.");
 
             for (int i = a.hashSize - 1; i >= 0; i--)
@@ -179,6 +180,7 @@ namespace Novacoin
 
         public static bool operator ==(Hash a, Hash b)
         {
+            Contract.Requires<NullReferenceException>((object)a != null && (object)b != null, "Null references are not allowed.");
             Contract.Requires<ArgumentException>(a.hashSize == b.hashSize, "Hashes must have the same size.");
 
             return a._hashBytes.SequenceEqual(b._hashBytes);
@@ -186,9 +188,10 @@ namespace Novacoin
 
         public static bool operator !=(Hash a, Hash b)
         {
+            Contract.Requires<NullReferenceException>((object)a != null && (object)b != null, "Null references are not allowed.");
             Contract.Requires<ArgumentException>(a.hashSize == b.hashSize, "Hashes must have the same size.");
 
-            return !a._hashBytes.SequenceEqual(b._hashBytes);
+            return !a.Equals(b);
         }
 
         public override string ToString()
