@@ -91,7 +91,7 @@ namespace Novacoin
         private object LockObj = new object();
         private SQLiteConnection dbConn = null;
 
-        private Dictionary<ScryptHash256, CChainNode> blockIndex = new Dictionary<ScryptHash256, CChainNode>();
+        private Dictionary<ScryptHash256, CChainNode> blockMap = new Dictionary<ScryptHash256, CChainNode>();
         
         /// <summary>
         /// Init the block storage manager.
@@ -108,6 +108,21 @@ namespace Novacoin
                 lock (LockObj)
                 {
                     dbConn.CreateTable<CBlockStoreItem>(CreateFlags.AutoIncPK);
+                }
+            }
+            else
+            {
+                var QueryGet = dbConn.Query<CBlockStoreItem>("select * from [BlockStorage] order by [ItemId] asc");
+
+                foreach (CBlockStoreItem si in QueryGet)
+                {
+                    blockMap.Add(
+                        new ScryptHash256(si.Hash),
+                        new CChainNode()
+                        {
+                            blockHeader = new CBlockHeader(si.BlockHeader),
+                            blockType = si.BlockTypeFlag
+                        });
                 }
             }
         }
@@ -165,17 +180,31 @@ namespace Novacoin
                 }
 
                 var block = new CBlock(buffer);
+                var headerHash = block.header.Hash;
 
                 if (nOffset % 1000 == 0)  // Commit on each 1000th block
                 {
-                    Console.WriteLine("Offset={0}, Hash: {1}", nOffset, block.header.Hash.ToString());
+                    Console.WriteLine("Offset={0}, Hash: {1}", nOffset, headerHash);
                     dbConn.Commit();
                     dbConn.BeginTransaction();
                 }
 
+                if (blockMap.ContainsKey(headerHash))
+                {
+                    Console.WriteLine("Duplicate block {0}", headerHash);
+                    continue;
+                }
+
+                blockMap.Add(
+                    headerHash,
+                    new CChainNode() {
+                        blockHeader = block.header,
+                        blockType = block.IsProofOfStake ? BlockType.PROOF_OF_STAKE : BlockType.PROOF_OF_WORK
+                    });
+
                 var result = dbConn.Insert(new CBlockStoreItem()
                 {
-                    Hash = block.header.Hash,
+                    Hash = headerHash,
                     BlockHeader = block.header,
                     BlockTypeFlag = block.IsProofOfStake ? BlockType.PROOF_OF_STAKE : BlockType.PROOF_OF_WORK,
                     nBlockPos = nOffset,
