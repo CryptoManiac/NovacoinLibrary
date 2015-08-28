@@ -82,6 +82,26 @@ namespace Novacoin
             return EncodeVarInt((ulong)n);
         }
 
+        public static int GetEncodedSize(long n)
+        {
+            if (n <= 0xfc)
+            {
+                return 1;
+            }
+            else if (n <= ushort.MaxValue)
+            {
+                return 3;
+            }
+            else if (n <= uint.MaxValue)
+            {
+                return 5;
+            }
+            else
+            {
+                return 9;
+            }
+        }
+
         /// <summary>
         /// Decodes integer value from compact representation
         /// 
