@@ -270,6 +270,12 @@ namespace NovacoinTest
             keyStore.ResetPool();
             Console.WriteLine("Done in {0} ms.", watch.ElapsedMilliseconds);
 
+            /* 
+            Console.WriteLine("Reading the block file...");
+            var bs = new CBlockStore();
+            bs.ParseBlockFile();
+            */
+
             Console.ReadLine();
         }
     }
