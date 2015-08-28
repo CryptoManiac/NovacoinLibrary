@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Collections.Generic;
 
 using SQLite.Net;
 using SQLite.Net.Attributes;
@@ -9,6 +10,14 @@ using SQLite.Net.Platform.Generic;
 
 namespace Novacoin
 {
+    public enum BlockType
+    {
+        PROOF_OF_WORK,
+        PROOF_OF_WORK_MODIFIER,
+        PROOF_OF_STAKE,
+        PROOF_OF_STAKE_MODIFIER
+    };
+
     [Table("BlockStorage")]
     class CBlockStoreItem
     {
@@ -22,12 +31,22 @@ namespace Novacoin
         /// PBKDF2+Salsa20 of block hash
         /// </summary>
         [Unique]
-        public byte[] ScryptHash { get; set; }
+        public byte[] Hash { get; set; }
+
+        /// <summary>
+        /// Next block hash
+        /// </summary>
+        public byte[] NextHash { get; set; }
 
         /// <summary>
         /// Serialized representation of block header
         /// </summary>
         public byte[] BlockHeader { get; set; }
+
+        /// <summary>
+        /// Block type flags
+        /// </summary>
+        public BlockType BlockTypeFlag { get; set; }
 
         /// <summary>
         /// Block position in file
@@ -40,11 +59,39 @@ namespace Novacoin
         public int nBlockSize { get; set; }
     }
 
+    /// <summary>
+    /// Block chain node
+    /// </summary>
+    public class CChainNode
+    {
+        /// <summary>
+        /// Block number
+        /// </summary>
+        public int nDepth;
+
+        /// <summary>
+        /// Block header
+        /// </summary>
+        public CBlockHeader blockHeader;
+
+        /// <summary>
+        /// Block type flag
+        /// </summary>
+        public BlockType blockType;
+
+        /// <summary>
+        /// Next block hash
+        /// </summary>
+        public ScryptHash256 hashNextBlock;
+    }
+
     public class CBlockStore : IDisposable
     {
         private bool disposed = false;
         private object LockObj = new object();
         private SQLiteConnection dbConn = null;
+
+        private Dictionary<ScryptHash256, CChainNode> blockIndex = new Dictionary<ScryptHash256, CChainNode>();
         
         /// <summary>
         /// Init the block storage manager.
@@ -128,8 +175,9 @@ namespace Novacoin
 
                 var result = dbConn.Insert(new CBlockStoreItem()
                 {
-                    ScryptHash = block.header.Hash,
+                    Hash = block.header.Hash,
                     BlockHeader = block.header,
+                    BlockTypeFlag = block.IsProofOfStake ? BlockType.PROOF_OF_STAKE : BlockType.PROOF_OF_WORK,
                     nBlockPos = nOffset,
                     nBlockSize = nBlockSize
                 });
