@@ -82,13 +82,20 @@ namespace Novacoin
 
         public bool Equals(Hash item)
         {
-            Contract.Requires<NullReferenceException>((object)item != null, "Null reference is not allowed.");
+            if ((object)item == null)
+            {
+                return false;
+            }
             return _hashBytes.SequenceEqual((byte[])item);
         }
 
         public override bool Equals(object o)
         {
-            Contract.Requires<NullReferenceException>(o != null, "Null reference is not allowed.");
+            if (o == null)
+            {
+                return false;
+            }
+
             return _hashBytes.SequenceEqual(((Hash)o)._hashBytes);
         }
 
@@ -107,9 +114,6 @@ namespace Novacoin
 
         public int CompareTo(Hash item)
         {
-            Contract.Requires<NullReferenceException>((object)item != null, "Null reference is not allowed.");
-            Contract.Requires<ArgumentException>(item.hashSize == hashSize, "Hashes must have the same size.");
-
             if (this > item)
             {
                 return 1;
@@ -130,9 +134,13 @@ namespace Novacoin
             for (int i = a.hashSize - 1; i >= 0; i--)
             {
                 if (a._hashBytes[i] < b._hashBytes[i])
+                {
                     return true;
+                }
                 else if (a._hashBytes[i] > b._hashBytes[i])
+                {
                     return false;
+                }
             }
 
             return false;
@@ -146,9 +154,13 @@ namespace Novacoin
             for (int i = a.hashSize - 1; i >= 0; i--)
             {
                 if (a._hashBytes[i] < b._hashBytes[i])
+                {
                     return true;
+                }
                 else if (a._hashBytes[i] > b._hashBytes[i])
+                {
                     return false;
+                }
             }
 
             return false;
@@ -162,9 +174,13 @@ namespace Novacoin
             for (int i = a.hashSize - 1; i >= 0; i--)
             {
                 if (a._hashBytes[i] > b._hashBytes[i])
+                {
                     return true;
+                }
                 else if (a._hashBytes[i] < b._hashBytes[i])
+                {
                     return false;
+                }
             }
 
             return false;
@@ -178,9 +194,13 @@ namespace Novacoin
             for (int i = a.hashSize - 1; i >= 0; i--)
             {
                 if (a._hashBytes[i] > b._hashBytes[i])
+                {
                     return true;
+                }
                 else if (a._hashBytes[i] < b._hashBytes[i])
+                {
                     return false;
+                }
             }
 
             return true;
@@ -196,10 +216,7 @@ namespace Novacoin
 
         public static bool operator !=(Hash a, Hash b)
         {
-            Contract.Requires<NullReferenceException>((object)a != null && (object)b != null, "Null references are not allowed.");
-            Contract.Requires<ArgumentException>(a.hashSize == b.hashSize, "Hashes must have the same size.");
-
-            return !a.Equals(b);
+            return !(a == b);
         }
 
         public override string ToString()
