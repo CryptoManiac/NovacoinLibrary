@@ -94,8 +94,15 @@ namespace Novacoin
 
         public override int GetHashCode()
         {
-            // It's a hash already, so any idea of trying to get its hashcode doesn't make any sense to me
-            throw new NotSupportedException();
+            int hash = 17;
+            unchecked
+            {
+                foreach (var element in _hashBytes)
+                {
+                    hash = hash * 31 + element.GetHashCode();
+                }
+            }
+            return hash;
         }
 
         public int CompareTo(Hash item)
