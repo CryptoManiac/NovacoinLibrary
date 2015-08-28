@@ -90,6 +90,16 @@ namespace Novacoin
             return _hashBytes.SequenceEqual((byte[])item);
         }
 
+        public override bool Equals(object o)
+        {
+            throw new NotSupportedException();
+        }
+
+        public override int GetHashCode()
+        {
+            throw new NotSupportedException();
+        }
+
         public int CompareTo(Hash item)
         {
             Contract.Requires<ArgumentException>(item.hashSize == hashSize, "Hashes must have the same size.");
@@ -111,7 +121,7 @@ namespace Novacoin
         {
             Contract.Requires<ArgumentException>(a.hashSize == b.hashSize, "Hashes must have the same size.");
             
-            for (int i = a.hashSize; i >= 0; i--)
+            for (int i = a.hashSize - 1; i >= 0; i--)
             {
                 if (a._hashBytes[i] < b._hashBytes[i])
                     return true;
@@ -126,7 +136,7 @@ namespace Novacoin
         {
             Contract.Requires<ArgumentException>(a.hashSize == b.hashSize, "Hashes must have the same size.");
 
-            for (int i = a.hashSize; i >= 0; i--)
+            for (int i = a.hashSize - 1; i >= 0; i--)
             {
                 if (a._hashBytes[i] < b._hashBytes[i])
                     return true;
@@ -141,7 +151,7 @@ namespace Novacoin
         {
             Contract.Requires<ArgumentException>(a.hashSize == b.hashSize, "Hashes must have the same size.");
 
-            for (int i = a.hashSize; i >= 0; i--)
+            for (int i = a.hashSize - 1; i >= 0; i--)
             {
                 if (a._hashBytes[i] > b._hashBytes[i])
                     return true;
@@ -156,7 +166,7 @@ namespace Novacoin
         {
             Contract.Requires<ArgumentException>(a.hashSize == b.hashSize, "Hashes must have the same size.");
 
-            for (int i = a.hashSize; i >= 0; i--)
+            for (int i = a.hashSize - 1; i >= 0; i--)
             {
                 if (a._hashBytes[i] > b._hashBytes[i])
                     return true;
@@ -165,6 +175,20 @@ namespace Novacoin
             }
 
             return true;
+        }
+
+        public static bool operator ==(Hash a, Hash b)
+        {
+            Contract.Requires<ArgumentException>(a.hashSize == b.hashSize, "Hashes must have the same size.");
+
+            return a._hashBytes.SequenceEqual(b._hashBytes);
+        }
+
+        public static bool operator !=(Hash a, Hash b)
+        {
+            Contract.Requires<ArgumentException>(a.hashSize == b.hashSize, "Hashes must have the same size.");
+
+            return !a._hashBytes.SequenceEqual(b._hashBytes);
         }
 
         public override string ToString()
