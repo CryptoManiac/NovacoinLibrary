@@ -87,6 +87,20 @@ namespace Novacoin
         }
 
         /// <summary>
+        /// Serialized size
+        /// </summary>
+        public int Size
+        {
+            get {
+                int nSize = 40; // COutPoint, nSequence
+                nSize += VarInt.GetEncodedSize(scriptSig.Size);
+                nSize += scriptSig.Size;
+
+                return nSize;
+            }
+        }
+
+        /// <summary>
         /// Get raw bytes representation of our input.
         /// </summary>
         /// <returns>Byte sequence.</returns>

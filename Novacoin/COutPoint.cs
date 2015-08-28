@@ -35,6 +35,11 @@ namespace Novacoin
         /// </summary>
         public uint n;
 
+        /// <summary>
+        /// Out reference is always 36 bytes long.
+        /// </summary>
+        public const int Size = 36;
+
         public COutPoint()
         {
             hash = new Hash256();

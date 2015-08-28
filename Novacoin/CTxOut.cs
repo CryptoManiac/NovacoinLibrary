@@ -88,7 +88,7 @@ namespace Novacoin
 
                 resultBytes.AddRange(BitConverter.GetBytes(output.nValue)); // txout value
 
-                var s = (byte[])output.scriptPubKey;
+                byte[] s = output.scriptPubKey;
                 resultBytes.AddRange(VarInt.EncodeVarInt(s.Length)); // scriptPubKey length
                 resultBytes.AddRange(s); // scriptPubKey
 
@@ -123,7 +123,19 @@ namespace Novacoin
            get { return nValue == 0 && scriptPubKey.IsNull; }
         }
 
-		public override string ToString ()
+        /// <summary>
+        /// Serialized size
+        /// </summary>
+        public int Size
+        {
+            get
+            {
+                var nScriptSize = scriptPubKey.Size;
+                return 8 + VarInt.GetEncodedSize(nScriptSize) + nScriptSize;
+            }
+        }
+
+        public override string ToString ()
 		{
 			var sb = new StringBuilder ();
 			sb.AppendFormat ("CTxOut(nValue={0}, scriptPubKey={1})", nValue, scriptPubKey.ToString());

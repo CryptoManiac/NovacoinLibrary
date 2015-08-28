@@ -493,6 +493,14 @@ namespace Novacoin
             return script.codeBytes.ToArray();
         }
 
+        /// <summary>
+        /// Script size
+        /// </summary>
+        public int Size
+        {
+            get { return codeBytes.Count; }
+        }
+
         public CScriptID ScriptID
         {
             get { return new CScriptID(Hash160.Compute160(codeBytes.ToArray())); }

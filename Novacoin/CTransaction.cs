@@ -102,7 +102,7 @@ namespace Novacoin
             nVersion = BitConverter.ToUInt32(wBytes.Get(4), 0);
             nTime = BitConverter.ToUInt32(wBytes.Get(4), 0);
 
-            int nInputs = (int)(int)wBytes.GetVarInt();
+            int nInputs = (int)wBytes.GetVarInt();
             vin = new CTxIn[nInputs];
 
             for (int nCurrentInput = 0; nCurrentInput < nInputs; nCurrentInput++)
@@ -132,6 +132,32 @@ namespace Novacoin
             }
 
             nLockTime = BitConverter.ToUInt32(wBytes.Get(4), 0);
+        }
+
+        /// <summary>
+        /// Serialized size
+        /// </summary>
+        public int Size
+        {
+            get
+            {
+                int nSize = 12; // nVersion, nTime, nLockLime
+
+                nSize += VarInt.GetEncodedSize(vin.Length);
+                nSize += VarInt.GetEncodedSize(vout.Length);
+
+                foreach (var input in vin)
+                {
+                    nSize += input.Size;
+                }
+
+                foreach (var output in vout)
+                {
+                    nSize += output.Size;
+                }
+
+                return nSize;
+            }
         }
 
         /// <summary>
