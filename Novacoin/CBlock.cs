@@ -47,6 +47,7 @@ namespace Novacoin
         public CBlock(CBlock b)
         {
             header = new CBlockHeader(b.header);
+            vtx = new CTransaction[b.vtx.Length];
 
             for (int i = 0; i < b.vtx.Length; i++)
             {
