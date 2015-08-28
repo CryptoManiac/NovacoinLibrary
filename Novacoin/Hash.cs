@@ -17,11 +17,12 @@
  */
 
 using System;
+using System.Diagnostics.Contracts;
 using System.Linq;
 
 namespace Novacoin
 {
-    public abstract class Hash
+    public abstract class Hash : IEquatable<Hash>, IComparable<Hash>
     {
         /// <summary>
         /// Array of digest bytes.
@@ -77,6 +78,93 @@ namespace Novacoin
         public static implicit operator byte[](Hash h)
         {
             return h._hashBytes;
+        }
+
+        public bool Equals(Hash item)
+        {
+            if (item == null)
+            {
+                return false;
+            }
+
+            return _hashBytes.SequenceEqual((byte[])item);
+        }
+
+        public int CompareTo(Hash item)
+        {
+            Contract.Requires<ArgumentException>(item.hashSize == hashSize, "Hashes must have the same size.");
+            Contract.Requires<ArgumentException>(item != null, "Null reference is not allowed.");
+
+            if (this > item)
+            {
+                return 1;
+            }
+            else if (this < item)
+            {
+                return -1;
+            }
+
+            return 0;
+        }
+
+        public static bool operator <(Hash a, Hash b)
+        {
+            Contract.Requires<ArgumentException>(a.hashSize == b.hashSize, "Hashes must have the same size.");
+            
+            for (int i = a.hashSize; i >= 0; i--)
+            {
+                if (a._hashBytes[i] < b._hashBytes[i])
+                    return true;
+                else if (a._hashBytes[i] > b._hashBytes[i])
+                    return false;
+            }
+
+            return false;
+        }
+
+        public static bool operator <=(Hash a, Hash b)
+        {
+            Contract.Requires<ArgumentException>(a.hashSize == b.hashSize, "Hashes must have the same size.");
+
+            for (int i = a.hashSize; i >= 0; i--)
+            {
+                if (a._hashBytes[i] < b._hashBytes[i])
+                    return true;
+                else if (a._hashBytes[i] > b._hashBytes[i])
+                    return false;
+            }
+
+            return false;
+        }
+
+        public static bool operator >(Hash a, Hash b)
+        {
+            Contract.Requires<ArgumentException>(a.hashSize == b.hashSize, "Hashes must have the same size.");
+
+            for (int i = a.hashSize; i >= 0; i--)
+            {
+                if (a._hashBytes[i] > b._hashBytes[i])
+                    return true;
+                else if (a._hashBytes[i] < b._hashBytes[i])
+                    return false;
+            }
+
+            return false;
+        }
+
+        public static bool operator >=(Hash a, Hash b)
+        {
+            Contract.Requires<ArgumentException>(a.hashSize == b.hashSize, "Hashes must have the same size.");
+
+            for (int i = a.hashSize; i >= 0; i--)
+            {
+                if (a._hashBytes[i] > b._hashBytes[i])
+                    return true;
+                else if (a._hashBytes[i] < b._hashBytes[i])
+                    return false;
+            }
+
+            return true;
         }
 
         public override string ToString()
