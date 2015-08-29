@@ -250,20 +250,15 @@ namespace Novacoin
         public static bool GetOp(ref ByteQueue codeBytes, out instruction opcodeRet, out byte[] bytesRet)
         {
             bytesRet = new byte[0];
-            opcodeRet = instruction.OP_INVALIDOPCODE;
+            instruction opcode = opcodeRet = instruction.OP_INVALIDOPCODE;
 
-            instruction opcode;
-
-            try
+            // Read instruction
+            byte opVal = 0xff;
+            if (!codeBytes.TryGet(ref opVal))
             {
-                // Read instruction
-                opcode = (instruction)codeBytes.Get();
-            }
-            catch (ByteQueueException)
-            {
-                // No instruction found there
                 return false;
             }
+            opcode = (instruction)opVal;
 
             // Immediate operand
             if (opcode <= instruction.OP_PUSHDATA4)
@@ -305,13 +300,8 @@ namespace Novacoin
 
                 if (nSize > 0)
                 {
-                    // If nSize is greater than zero then there is some data available
-                    try
-                    {
-                        // Read found number of bytes into list of OP_PUSHDATAn arguments.
-                        bytesRet = codeBytes.Get(nSize);
-                    }
-                    catch (ByteQueueException)
+                    // Trying to read found number of bytes into list of OP_PUSHDATAn arguments.
+                    if (!codeBytes.TryGet(nSize, ref bytesRet))
                     {
                         // Unable to read data
                         return false;
@@ -668,12 +658,7 @@ namespace Novacoin
         /// <returns></returns>
         public static Hash256 SignatureHash(CScript script, CTransaction txTo, int nIn, int nHashType)
         {
-            if (nIn >= txTo.vin.Length)
-            {
-                var sb = new StringBuilder();
-                sb.AppendFormat("ERROR: SignatureHash() : nIn={0} out of range\n", nIn);
-                throw new ArgumentOutOfRangeException("nIn", sb.ToString());
-            }
+            Contract.Requires<ArgumentOutOfRangeException>(nIn < txTo.vin.Length, "nIn out of range.");
 
             // Init a copy of transaction
             var txTmp = new CTransaction(txTo);
@@ -777,13 +762,9 @@ namespace Novacoin
         /// <param name="stack">Stack reference</param>
         private static void popstack(ref List<byte[]> stack)
         {
-            int nCount = stack.Count;
-            if (nCount == 0)
-            {
-                throw new StackMachineException("Stack is empty");
-            }
+            Contract.Requires<StackMachineException>(stack.Count > 0, "Stack is empty.");
 
-            stack.RemoveAt(nCount - 1);
+            stack.RemoveAt(stack.Count - 1);
         }
 
         /// <summary>
