@@ -30,12 +30,12 @@ namespace Novacoin
         /// <summary>
         /// Version of transaction schema.
         /// </summary>
-        public uint nVersion = 1;
+        public uint nVersion;
 
         /// <summary>
         /// Transaction timestamp.
         /// </summary>
-        public uint nTime = 0;
+        public uint nTime;
 
         /// <summary>
         /// Array of transaction inputs
@@ -50,7 +50,7 @@ namespace Novacoin
         /// <summary>
         /// Block height or timestamp when transaction is final
         /// </summary>
-        public uint nLockTime = 0;
+        public uint nLockTime;
 
         /// <summary>
         /// Initialize an empty instance
@@ -60,8 +60,11 @@ namespace Novacoin
             // Initialize empty input and output arrays. Please note that such 
             // configuration is not valid for real transaction, you have to supply 
             // at least one input and one output.
+            nVersion = 1;
+            nTime = 0;
             vin = new CTxIn[0];
             vout = new CTxOut[0];
+            nLockTime = 0;
         }
 
         /// <summary>

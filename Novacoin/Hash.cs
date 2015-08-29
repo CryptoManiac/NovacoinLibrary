@@ -27,7 +27,7 @@ namespace Novacoin
         /// <summary>
         /// Array of digest bytes.
         /// </summary>
-        protected byte[] _hashBytes = null;
+        protected byte[] _hashBytes;
 
         /// <summary>
         /// Hash size, must be overriden
