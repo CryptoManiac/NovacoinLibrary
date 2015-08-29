@@ -199,7 +199,7 @@ namespace Novacoin
 
             for (int i = 0; i < nTx; i++)
             {
-                nOffset += vtx[nTx].Size;
+                nOffset += vtx[i].Size;
             }
 
             return nOffset;
