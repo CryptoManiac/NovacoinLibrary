@@ -794,8 +794,8 @@ namespace Novacoin
         /// <returns>Byte sequence</returns>
         private static byte[] stacktop(ref List<byte[]> stack, int nDepth)
         {
-            Contract.Requires<StackMachineException>(nDepth < 0, "Positive stack depth makes no sense.");
-            Contract.Requires<StackMachineException>(stack.Count + nDepth > 0, "Value exceeds real stack depth.");
+            Contract.Requires<StackMachineException>(nDepth < 0, "Positive or zero stack depth makes no sense.");
+            Contract.Requires<StackMachineException>(stack.Count + nDepth >= 0, "Value exceeds real stack depth.");
 
             return stack[stack.Count + nDepth];
         }
@@ -866,8 +866,10 @@ namespace Novacoin
             var CodeQueue = script.GetByteQueue();
             var altStack = new List<byte[]>();
 
+#if !DEBUG
             try
             {
+#endif
                 instruction opcode;
                 byte[] pushArg;
 
@@ -1703,12 +1705,14 @@ namespace Novacoin
                         return false;
                     }
                 }
+#if !DEBUG
             }
             catch (Exception)
             {
                 // If there are any exceptions then just return false.
                 return false;
             }
+#endif
 
             if (vfExec.Count() != 0)
             {
