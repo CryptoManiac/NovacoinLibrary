@@ -84,6 +84,18 @@ namespace Novacoin
             return _Elements[_Index++];
         }
 
+        public bool TryGet(ref byte Element)
+        {
+            if (_Elements.Count <= _Index)
+            {
+                return false;
+            }
+
+            Element = _Elements[_Index++];
+
+            return true;
+        }
+
         public byte GetCurrent()
         {
             return _Elements[_Index];
@@ -99,6 +111,19 @@ namespace Novacoin
             return result;
         }
 
+        public bool TryGet(int nCount, ref byte[] Elements)
+        {
+            if (Count - Index < nCount)
+            {
+                return false;
+            }
+
+            Elements = _Elements.GetRange(_Index, nCount).ToArray();
+            _Index += nCount;
+
+            return true;
+        }
+
         public byte[] GetCurrent(int nCount)
         {
             Contract.Requires<ArgumentException>(Count - Index >= nCount, "nCount is greater than amount of elements.");
@@ -106,6 +131,18 @@ namespace Novacoin
             var result = _Elements.GetRange(_Index, nCount).ToArray();
 
             return result;
+        }
+
+        public bool TryGetCurrent(int nCount, ref byte[] Elements)
+        {
+            if (Count - Index < nCount)
+            {
+                return false;
+            }
+
+            Elements = _Elements.GetRange(_Index, nCount).ToArray();
+
+            return true;
         }
 
         /// <summary>
