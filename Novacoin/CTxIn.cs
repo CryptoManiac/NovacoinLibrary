@@ -22,10 +22,28 @@ using System.Collections.Generic;
 
 namespace Novacoin
 {
-	/// <summary>
-	/// Transaction input.
-	/// </summary>
-	public class CTxIn
+    [Serializable]
+    public class TxInConstructorException : Exception
+    {
+        public TxInConstructorException()
+        {
+        }
+
+        public TxInConstructorException(string message)
+                : base(message)
+        {
+        }
+
+        public TxInConstructorException(string message, Exception inner)
+                : base(message, inner)
+        {
+        }
+    }
+
+    /// <summary>
+    /// Transaction input.
+    /// </summary>
+    public class CTxIn
 	{
         /// <summary>
         /// Previous input data
@@ -69,21 +87,28 @@ namespace Novacoin
         /// <returns>Inputs array</returns>
         public static CTxIn[] ReadTxInList(ref ByteQueue wBytes)
         {
-            // Get amount
-            int nInputs = (int)wBytes.GetVarInt();
-            var vin = new CTxIn[nInputs];
-
-            for (int nIndex = 0; nIndex < nInputs; nIndex++)
+            try
             {
-                // Fill inputs array
-                vin[nIndex] = new CTxIn();
-                vin[nIndex].prevout = new COutPoint(wBytes.Get(36));
-                vin[nIndex].scriptSig = new CScript(wBytes.Get((int)wBytes.GetVarInt()));
-                vin[nIndex].nSequence = BitConverter.ToUInt32(wBytes.Get(4), 0);
-            }
+                // Get amount
+                int nInputs = (int)wBytes.GetVarInt();
+                var vin = new CTxIn[nInputs];
 
-            // Return inputs array
-            return vin;
+                for (int nIndex = 0; nIndex < nInputs; nIndex++)
+                {
+                    // Fill inputs array
+                    vin[nIndex] = new CTxIn();
+                    vin[nIndex].prevout = new COutPoint(wBytes.Get(36));
+                    vin[nIndex].scriptSig = new CScript(wBytes.Get((int)wBytes.GetVarInt()));
+                    vin[nIndex].nSequence = BitConverter.ToUInt32(wBytes.Get(4), 0);
+                }
+
+                // Return inputs array
+                return vin;
+            }
+            catch (Exception e)
+            {
+                throw new TxInConstructorException("Deserealization failed.", e);
+            }
         }
 
         /// <summary>
@@ -152,4 +177,3 @@ namespace Novacoin
 
 	}
 }
-

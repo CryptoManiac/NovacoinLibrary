@@ -17,18 +17,34 @@
  */
 
 using System;
-using System.Linq;
 using System.Text;
 using System.Collections.Generic;
-using System.Security.Cryptography;
 using System.Diagnostics.Contracts;
 
 namespace Novacoin
 {
-	/// <summary>
-	/// Represents the block. Block consists of header, transaction array and header signature.
-	/// </summary>
-	public class CBlock
+    [Serializable]
+    public class BlockConstructorException : Exception
+    {
+        public BlockConstructorException()
+        {
+        }
+
+        public BlockConstructorException(string message)
+                : base(message)
+        {
+        }
+
+        public BlockConstructorException(string message, Exception inner)
+                : base(message, inner)
+        {
+        }
+    }
+
+    /// <summary>
+    /// Represents the block. Block consists of header, transaction array and header signature.
+    /// </summary>
+    public class CBlock
 	{
 		/// <summary>
 		/// Block header.
@@ -45,6 +61,10 @@ namespace Novacoin
         /// </summary>
         public byte[] signature = new byte[0];
 
+        /// <summary>
+        /// Copy constructor.
+        /// </summary>
+        /// <param name="b">CBlock instance.</param>
         public CBlock(CBlock b)
         {
             header = new CBlockHeader(b.header);
@@ -61,19 +81,26 @@ namespace Novacoin
         /// <summary>
         /// Parse byte sequence and initialize new block instance
         /// </summary>
-        /// <param name="blockBytes"></param>
+        /// <param name="blockBytes">Bytes sequence.</param>
 		public CBlock (byte[] blockBytes)
 		{
-            ByteQueue wBytes = new ByteQueue(blockBytes);
+            try
+            {
+                ByteQueue wBytes = new ByteQueue(blockBytes);
 
-            // Fill the block header fields
-            header = new CBlockHeader(wBytes.Get(80));
+                // Fill the block header fields
+                header = new CBlockHeader(wBytes.Get(80));
 
-            // Parse transactions list
-            vtx = CTransaction.ReadTransactionsList(ref wBytes);
+                // Parse transactions list
+                vtx = CTransaction.ReadTransactionsList(ref wBytes);
 
-            // Read block signature
-            signature = wBytes.Get((int)wBytes.GetVarInt());
+                // Read block signature
+                signature = wBytes.Get((int)wBytes.GetVarInt());
+            }
+            catch (Exception e)
+            {
+                throw new BlockConstructorException("Deserealization failed", e);
+            }
 		}
 
         public CBlock()

@@ -22,6 +22,24 @@ using System.Collections.Generic;
 
 namespace Novacoin
 {
+    [Serializable]
+    public class TransactionConstructorException : Exception
+    {
+        public TransactionConstructorException()
+        {
+        }
+
+        public TransactionConstructorException(string message)
+                : base(message)
+        {
+        }
+
+        public TransactionConstructorException(string message, Exception inner)
+                : base(message, inner)
+        {
+        }
+    }
+    
     /// <summary>
     /// Represents the transaction. Any transaction must provide one input and one output at least.
     /// </summary>
@@ -93,6 +111,27 @@ namespace Novacoin
             nLockTime = tx.nLockTime;
         }
 
+        public bool VerifyScripts()
+        {
+            if (IsCoinBase)
+            {
+                return true;
+            }
+
+            CTransaction txPrev = null;
+            for (int i = 0; i < vin.Length; i++)
+            {
+                var outpoint = vin[i].prevout;
+
+                if (!CBlockStore.Instance.GetTransaction(outpoint.hash, ref txPrev))
+                    return false;
+
+                if (!ScriptCode.VerifyScript(vin[i].scriptSig, txPrev.vout[outpoint.n].scriptPubKey, this, i, (int)scriptflag.SCRIPT_VERIFY_P2SH, 0))
+                    return false;
+            }
+
+            return true;
+        }
 
         /// <summary>
         /// Parse byte sequence and initialize new instance of CTransaction
@@ -100,41 +139,48 @@ namespace Novacoin
         /// <param name="txBytes">Byte sequence</param>
 		public CTransaction(byte[] txBytes)
         {
-            var wBytes = new ByteQueue(txBytes);
-
-            nVersion = BitConverter.ToUInt32(wBytes.Get(4), 0);
-            nTime = BitConverter.ToUInt32(wBytes.Get(4), 0);
-
-            int nInputs = (int)wBytes.GetVarInt();
-            vin = new CTxIn[nInputs];
-
-            for (int nCurrentInput = 0; nCurrentInput < nInputs; nCurrentInput++)
+            try
             {
-                // Fill inputs array
-                vin[nCurrentInput] = new CTxIn();
-                
-                vin[nCurrentInput].prevout = new COutPoint(wBytes.Get(36));
+                var wBytes = new ByteQueue(txBytes);
 
-                int nScriptSigLen = (int)wBytes.GetVarInt();
-                vin[nCurrentInput].scriptSig = new CScript(wBytes.Get(nScriptSigLen));
+                nVersion = BitConverter.ToUInt32(wBytes.Get(4), 0);
+                nTime = BitConverter.ToUInt32(wBytes.Get(4), 0);
 
-                vin[nCurrentInput].nSequence = BitConverter.ToUInt32(wBytes.Get(4), 0);
+                int nInputs = (int)wBytes.GetVarInt();
+                vin = new CTxIn[nInputs];
+
+                for (int nCurrentInput = 0; nCurrentInput < nInputs; nCurrentInput++)
+                {
+                    // Fill inputs array
+                    vin[nCurrentInput] = new CTxIn();
+
+                    vin[nCurrentInput].prevout = new COutPoint(wBytes.Get(36));
+
+                    int nScriptSigLen = (int)wBytes.GetVarInt();
+                    vin[nCurrentInput].scriptSig = new CScript(wBytes.Get(nScriptSigLen));
+
+                    vin[nCurrentInput].nSequence = BitConverter.ToUInt32(wBytes.Get(4), 0);
+                }
+
+                int nOutputs = (int)wBytes.GetVarInt();
+                vout = new CTxOut[nOutputs];
+
+                for (int nCurrentOutput = 0; nCurrentOutput < nOutputs; nCurrentOutput++)
+                {
+                    // Fill outputs array
+                    vout[nCurrentOutput] = new CTxOut();
+                    vout[nCurrentOutput].nValue = BitConverter.ToUInt64(wBytes.Get(8), 0);
+
+                    int nScriptPKLen = (int)wBytes.GetVarInt();
+                    vout[nCurrentOutput].scriptPubKey = new CScript(wBytes.Get(nScriptPKLen));
+                }
+
+                nLockTime = BitConverter.ToUInt32(wBytes.Get(4), 0);
             }
-
-            int nOutputs = (int)wBytes.GetVarInt();
-            vout = new CTxOut[nOutputs];
-
-            for (int nCurrentOutput = 0; nCurrentOutput < nOutputs; nCurrentOutput++)
+            catch (Exception e)
             {
-                // Fill outputs array
-                vout[nCurrentOutput] = new CTxOut();
-                vout[nCurrentOutput].nValue = BitConverter.ToInt64(wBytes.Get(8), 0);
-
-                int nScriptPKLen = (int)wBytes.GetVarInt();
-                vout[nCurrentOutput].scriptPubKey = new CScript(wBytes.Get(nScriptPKLen));
+                throw new TransactionConstructorException("Deserialization failed", e);
             }
-
-            nLockTime = BitConverter.ToUInt32(wBytes.Get(4), 0);
         }
 
         /// <summary>
@@ -170,28 +216,36 @@ namespace Novacoin
         /// <returns>Transactions array</returns>
         public static CTransaction[] ReadTransactionsList(ref ByteQueue wTxBytes)
         {
-            // Read amount of transactions
-            int nTransactions = (int)wTxBytes.GetVarInt();
-            var tx = new CTransaction[nTransactions];
-
-            for (int nTx = 0; nTx < nTransactions; nTx++)
+            try
             {
-                // Fill the transactions array
-                tx[nTx] = new CTransaction();
+                // Read amount of transactions
+                int nTransactions = (int)wTxBytes.GetVarInt();
+                var tx = new CTransaction[nTransactions];
 
-                tx[nTx].nVersion = BitConverter.ToUInt32(wTxBytes.Get(4), 0);
-                tx[nTx].nTime = BitConverter.ToUInt32(wTxBytes.Get(4), 0);
+                for (int nTx = 0; nTx < nTransactions; nTx++)
+                {
+                    // Fill the transactions array
+                    tx[nTx] = new CTransaction();
 
-                // Inputs array
-                tx[nTx].vin = CTxIn.ReadTxInList(ref wTxBytes);
+                    tx[nTx].nVersion = BitConverter.ToUInt32(wTxBytes.Get(4), 0);
+                    tx[nTx].nTime = BitConverter.ToUInt32(wTxBytes.Get(4), 0);
 
-                // outputs array
-                tx[nTx].vout = CTxOut.ReadTxOutList(ref wTxBytes);
+                    // Inputs array
+                    tx[nTx].vin = CTxIn.ReadTxInList(ref wTxBytes);
 
-                tx[nTx].nLockTime = BitConverter.ToUInt32(wTxBytes.Get(4), 0);
+                    // outputs array
+                    tx[nTx].vout = CTxOut.ReadTxOutList(ref wTxBytes);
+
+                    tx[nTx].nLockTime = BitConverter.ToUInt32(wTxBytes.Get(4), 0);
+                }
+
+                return tx;
+
             }
-
-            return tx;
+            catch (Exception e)
+            {
+                throw new TransactionConstructorException("Deserealization failed", e);
+            }
         }
 
         public bool IsCoinBase

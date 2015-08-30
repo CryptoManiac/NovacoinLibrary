@@ -79,7 +79,7 @@ namespace NovacoinTest
             /// ECDSA keypair signing test
 
             var data = "Превед!";
-            var sigHash =  Hash256.Compute256(Encoding.UTF8.GetBytes(data));
+            var sigHash = Hash256.Compute256(Encoding.UTF8.GetBytes(data));
             var signature = keyPair1.Sign(sigHash);
 
             Console.WriteLine("Signature: {0}", Interop.ToHex(signature));
@@ -122,7 +122,7 @@ namespace NovacoinTest
             /// Some SetDestination tests
             var scriptDestinationTest = new CScript();
 
-            
+
             Console.WriteLine("Creating and decoding new destination with {0} as public key.\n", keyPair1.PubKey.ToString());
 
             Console.WriteLine("Pay-to-Pubkey:");
@@ -276,15 +276,24 @@ namespace NovacoinTest
             ScryptHash256 hash2 = b2.header.Hash;
             ScryptHash256 hash3 = veryBigBlock.header.Hash;
 
-            Console.WriteLine("{0} < {1} : {2}", hash1.ToString(), hash3.ToString(), hash1 < hash3);
+            Console.WriteLine("\n{0} < {1} : {2}", hash1.ToString(), hash3.ToString(), hash1 < hash3);
             Console.WriteLine("{0} > {1} : {2}", hash1.ToString(), hash3.ToString(), hash1 > hash3);
             Console.WriteLine("{0} <= {1} : {2}", hash1.ToString(), hash2.ToString(), hash1 <= hash2);
             Console.WriteLine("{0} >= {1} : {2}", hash1.ToString(), hash2.ToString(), hash1 >= hash2);
 
             Console.WriteLine("{0} != {1} : {2}", hash1.ToString(), hash2.ToString(), hash1 != hash2);
-            Console.WriteLine("{0} == {1} : {2}", hash2.ToString(), hash3.ToString(), hash2 == hash3);
+            Console.WriteLine("{0} == {1} : {2}\n", hash2.ToString(), hash3.ToString(), hash2 == hash3);
 
-            /* 
+            /*
+            /// Pre-09854c5 revisions were affected by integer overflow bug, this issue was caused by incorrect deserialization of input value. Below you can see an example, broken transaction and its normal version.
+
+            var txBrokenByBug = new CTransaction(Interop.HexToArray("010000007a0f195109057f38eecc438221e7c53158e9ee7ce501818d2b4c14e41269b86e799624c6af010000006c493046022100dcaee50bc231857860f5e0a50f02bb43fd688a69c6b2b91e30f4ea44cb931bf30221008adb50edce6277ee030e3ac0c9f2f62b8b074d68c44a9a306d58eebf08473f65012103c84e4d660e1e637fd17d6b764d4300c4dd04b8dc9ddac31ac820b5eface4e152ffffffffb1cec18b7d68b4c527cefb8e0495ec68de67f960a83b650e54cd7deed76c5667000000004847304402206e0641d7973539a0da5e014232726e900aafcb86737375632226bdf94fcce836022014b855f588b1694806148157245f56dc3396f7dc6816fb4838ddd48bd73de3d901ffffffffc682526404ea8bd6f7dcf0a0003d755621b5868ee8d36c6bb4b9c859f537d053000000004847304402206dabd11d6c65cb1d53b6574f1ec171a7f81f201975cd8ebedb84abf352fb73a0022056880ca946eb3900561fc3f07b3e4e9647d83b032ea0291469d63f54b8020a0a01ffffffffd9c953ad35321a9fb600482e10baafd5f549deccc3414f70e04368ce1ee6a8a3010000006c493046022100c6431d3d7803772e5930cbde7bf7f5d20aba20534cbe3fb694cd5d3dbd8fdef002210082f7c787a80f94956fec2cd55ade6a32328f044dba3b5d3cdfb165e6b25c69d5012103c84e4d660e1e637fd17d6b764d4300c4dd04b8dc9ddac31ac820b5eface4e152ffffffffdea32fcf61c6d6ed95803e63b22f1395d5306ae87eb42beeb78f2b5389e19af2010000006b4830450221009e2f4c9b87094a1a8ce1d00f1a45dadb2a4fe3fa61da08c1f98e65b76770e05e02201f3a90c8c998b02efe58f583c1902646844ac658ce2b5767e00f84f54df1a9c4012103c84e4d660e1e637fd17d6b764d4300c4dd04b8dc9ddac31ac820b5eface4e152ffffffffeef4abc62727f3e52fadb952fa943c478b740a3d4f66a6626e380804875dab5c000000004a493046022100b70793134908ebf74dcab33a5f60fa91453cf3266c1714921f7f656dee36adaf022100d121892a94bf3caac713bc2e157cb8f5e032b0d77fa6173bb9626ebd645fd35501fffffffffbb6d8c93d4bbc2f05442778c31a4fa651659acdeaf980fef0a4aa4b163a590e010000006c493046022100ce375b454f80f35afad4d07187bd2a60fb4016b070d1d5c64ffbc1a7a4aef0d7022100ae876f1d30233900db5c532b1eecb4effade843de7414c1f5c11a3a94a810e35012103c84e4d660e1e637fd17d6b764d4300c4dd04b8dc9ddac31ac820b5eface4e152fffffffffe4ac77a8918638c1e470b049ef8b75fc3a109e56a1bcbb7fddf39b4d0fa1f4b010000006c493046022100a2b33c2e1ce08e1883f35bde4c444bf82eb07210e764146a538e3026d68cc177022100e8e0fa3971078d5d917701c53b4bca70391ff48ea2fc64ad53ed90a345cbdccc012103c84e4d660e1e637fd17d6b764d4300c4dd04b8dc9ddac31ac820b5eface4e152ffffffff3835596d05c57f778729b391f98ff34358b72e5cc0812849f3548ac995dfde18000000004847304402205d17a90cbb1b2ed79e8ff7ecf6e851f750991d7b544ac897ee5195b34c51fe8d02207eb6f420423f680a9e0e4cb463b8bffe255648bbc96a707dfaf045f28dc6fa1601ffffffff0210270000000000001976a91466447313fd3230e5f8adfd5425bef17c96d9917288ac00f2052a000000001976a914e04cad5597da08b244b59be6b881f8934537eb4d88ac00000000"));
+            var txNoBug = new CTransaction(Interop.HexToArray("010000007a0f195109057f38eecc438221e7c53158e9ee7ce501818d2b4c14e41269b86e799624c6af010000006c493046022100dcaee50bc231857860f5e0a50f02bb43fd688a69c6b2b91e30f4ea44cb931bf30221008adb50edce6277ee030e3ac0c9f2f62b8b074d68c44a9a306d58eebf08473f65012103c84e4d660e1e637fd17d6b764d4300c4dd04b8dc9ddac31ac820b5eface4e152ffffffffb1cec18b7d68b4c527cefb8e0495ec68de67f960a83b650e54cd7deed76c5667000000004847304402206e0641d7973539a0da5e014232726e900aafcb86737375632226bdf94fcce836022014b855f588b1694806148157245f56dc3396f7dc6816fb4838ddd48bd73de3d901ffffffffc682526404ea8bd6f7dcf0a0003d755621b5868ee8d36c6bb4b9c859f537d053000000004847304402206dabd11d6c65cb1d53b6574f1ec171a7f81f201975cd8ebedb84abf352fb73a0022056880ca946eb3900561fc3f07b3e4e9647d83b032ea0291469d63f54b8020a0a01ffffffffd9c953ad35321a9fb600482e10baafd5f549deccc3414f70e04368ce1ee6a8a3010000006c493046022100c6431d3d7803772e5930cbde7bf7f5d20aba20534cbe3fb694cd5d3dbd8fdef002210082f7c787a80f94956fec2cd55ade6a32328f044dba3b5d3cdfb165e6b25c69d5012103c84e4d660e1e637fd17d6b764d4300c4dd04b8dc9ddac31ac820b5eface4e152ffffffffdea32fcf61c6d6ed95803e63b22f1395d5306ae87eb42beeb78f2b5389e19af2010000006b4830450221009e2f4c9b87094a1a8ce1d00f1a45dadb2a4fe3fa61da08c1f98e65b76770e05e02201f3a90c8c998b02efe58f583c1902646844ac658ce2b5767e00f84f54df1a9c4012103c84e4d660e1e637fd17d6b764d4300c4dd04b8dc9ddac31ac820b5eface4e152ffffffffeef4abc62727f3e52fadb952fa943c478b740a3d4f66a6626e380804875dab5c000000004a493046022100b70793134908ebf74dcab33a5f60fa91453cf3266c1714921f7f656dee36adaf022100d121892a94bf3caac713bc2e157cb8f5e032b0d77fa6173bb9626ebd645fd35501fffffffffbb6d8c93d4bbc2f05442778c31a4fa651659acdeaf980fef0a4aa4b163a590e010000006c493046022100ce375b454f80f35afad4d07187bd2a60fb4016b070d1d5c64ffbc1a7a4aef0d7022100ae876f1d30233900db5c532b1eecb4effade843de7414c1f5c11a3a94a810e35012103c84e4d660e1e637fd17d6b764d4300c4dd04b8dc9ddac31ac820b5eface4e152fffffffffe4ac77a8918638c1e470b049ef8b75fc3a109e56a1bcbb7fddf39b4d0fa1f4b010000006c493046022100a2b33c2e1ce08e1883f35bde4c444bf82eb07210e764146a538e3026d68cc177022100e8e0fa3971078d5d917701c53b4bca70391ff48ea2fc64ad53ed90a345cbdccc012103c84e4d660e1e637fd17d6b764d4300c4dd04b8dc9ddac31ac820b5eface4e152ffffffff3835596d05c57f778729b391f98ff34358b72e5cc0812849f3548ac995dfde18000000004847304402205d17a90cbb1b2ed79e8ff7ecf6e851f750991d7b544ac897ee5195b34c51fe8d02207eb6f420423f680a9e0e4cb463b8bffe255648bbc96a707dfaf045f28dc6fa1601ffffffff0210270000000000001976a91466447313fd3230e5f8adfd5425bef17c96d9917288ac00f2052a010000001976a914e04cad5597da08b244b59be6b881f8934537eb4d88ac00000000"));
+            Console.WriteLine(txBrokenByBug);
+            Console.WriteLine(txNoBug);
+            */
+
+            /*
             Console.WriteLine("Reading the block file...");
             var bs = new CBlockStore();
             bs.ParseBlockFile();

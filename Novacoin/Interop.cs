@@ -56,7 +56,7 @@ namespace Novacoin
             return bytes;
         }
 
-        public static string ToHex(IEnumerable<byte> bytes)
+        public static string ToHex(byte[] bytes)
         {
             var sb = new StringBuilder();
             foreach (var b in bytes)
