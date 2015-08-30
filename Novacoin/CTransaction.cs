@@ -128,7 +128,7 @@ namespace Novacoin
             {
                 // Fill outputs array
                 vout[nCurrentOutput] = new CTxOut();
-                vout[nCurrentOutput].nValue = BitConverter.ToInt64(wBytes.Get(8), 0);
+                vout[nCurrentOutput].nValue = BitConverter.ToUInt64(wBytes.Get(8), 0);
 
                 int nScriptPKLen = (int)wBytes.GetVarInt();
                 vout[nCurrentOutput].scriptPubKey = new CScript(wBytes.Get(nScriptPKLen));
