@@ -30,7 +30,7 @@ namespace Novacoin
 		/// <summary>
 		/// Input value.
 		/// </summary>
-        public long nValue = -1;
+        public ulong nValue = ulong.MaxValue;
 
 		/// <summary>
 		/// Second half of script which contains spending instructions.
@@ -69,7 +69,7 @@ namespace Novacoin
             {
                 // Fill outputs array
                 vout[nIndex] = new CTxOut();
-                vout[nIndex].nValue = BitConverter.ToUInt32(wBytes.Get(8), 0);
+                vout[nIndex].nValue = BitConverter.ToUInt64(wBytes.Get(8), 0);
 
                 int nScriptPKLen = (int)wBytes.GetVarInt();
                 vout[nIndex].scriptPubKey = new CScript(wBytes.Get(nScriptPKLen));
@@ -100,7 +100,7 @@ namespace Novacoin
         /// </summary>
         public void SetNull()
         {
-            nValue = -1;
+            nValue = ulong.MaxValue;
             scriptPubKey = new CScript();
         }
 
@@ -115,7 +115,7 @@ namespace Novacoin
 
         public bool IsNull
         {
-            get { return (nValue == -1); }
+            get { return (nValue == ulong.MaxValue); }
         }
 
         public bool IsEmpty
