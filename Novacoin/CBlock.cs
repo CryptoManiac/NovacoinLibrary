@@ -99,7 +99,7 @@ namespace Novacoin
             }
             catch (Exception e)
             {
-                throw new BlockConstructorException("Deserealization failed", e);
+                throw new BlockConstructorException("Deserialization failed", e);
             }
 		}
 

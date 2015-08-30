@@ -107,7 +107,7 @@ namespace Novacoin
             }
             catch (Exception e)
             {
-                throw new TxInConstructorException("Deserealization failed.", e);
+                throw new TxInConstructorException("Desirealization failed.", e);
             }
         }
 
