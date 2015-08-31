@@ -20,6 +20,7 @@ using System;
 using System.Text;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.IO;
 
 namespace Novacoin
 {
@@ -31,38 +32,44 @@ namespace Novacoin
 		/// <summary>
 		/// Version of block schema.
 		/// </summary>
-		public uint nVersion = 6;
+		public uint nVersion;
 
 		/// <summary>
 		/// Previous block hash.
 		/// </summary>
-		public ScryptHash256 prevHash = new ScryptHash256();
+		public ScryptHash256 prevHash;
 
 		/// <summary>
 		/// Merkle root hash.
 		/// </summary>
-		public Hash256 merkleRoot = new Hash256();
+		public Hash256 merkleRoot;
 
 		/// <summary>
 		/// Block timestamp.
 		/// </summary>
-		public uint nTime = 0;
+		public uint nTime;
 
 		/// <summary>
 		/// Compressed difficulty representation.
 		/// </summary>
-		public uint nBits = 0;
+		public uint nBits;
 
 		/// <summary>
 		/// Nonce counter.
 		/// </summary>
-		public uint nNonce = 0;
+		public uint nNonce;
 
         /// <summary>
         /// Initialize an empty instance
         /// </summary>
 		public CBlockHeader ()
 		{
+            nVersion = 6;
+            prevHash = new ScryptHash256();
+            merkleRoot = new Hash256();
+            nTime = Interop.GetTime();
+            nBits = 0;
+            nNonce = 0;
 		}
 
         public CBlockHeader(CBlockHeader h)
@@ -75,16 +82,25 @@ namespace Novacoin
             nNonce = h.nNonce;
         }
 
+        /// <summary>
+        /// Init block header with bytes.
+        /// </summary>
+        /// <param name="bytes">Byte array.</param>
         public CBlockHeader(byte[] bytes)
         {
             Contract.Requires<ArgumentException>(bytes.Length == 80, "Any valid block header is exactly 80 bytes long.");
 
-            nVersion = BitConverter.ToUInt32(bytes, 0);
-            prevHash = new ScryptHash256(bytes, 4);
-            merkleRoot = new Hash256(bytes, 36);
-            nTime = BitConverter.ToUInt32(bytes, 68);
-            nBits = BitConverter.ToUInt32(bytes, 72);
-            nNonce = BitConverter.ToUInt32(bytes, 76);
+            var stream = new MemoryStream(bytes);
+            var reader = new BinaryReader(stream);
+
+            nVersion = reader.ReadUInt32();
+            prevHash = new ScryptHash256(reader.ReadBytes(32));
+            merkleRoot = new Hash256(reader.ReadBytes(32));
+            nTime = reader.ReadUInt32();
+            nBits = reader.ReadUInt32();
+            nNonce = reader.ReadUInt32();
+
+            reader.Close();
         }
 
         /// <summary>
@@ -93,16 +109,21 @@ namespace Novacoin
         /// <returns>Byte sequence</returns>
         public static implicit operator byte[] (CBlockHeader h)
         {
-            var r = new List<byte>();
+            var stream = new MemoryStream();
+            var writer = new BinaryWriter(stream);
 
-            r.AddRange(BitConverter.GetBytes(h.nVersion));
-            r.AddRange((byte[])h.prevHash);
-            r.AddRange((byte[])h.merkleRoot);
-            r.AddRange(BitConverter.GetBytes(h.nTime));
-            r.AddRange(BitConverter.GetBytes(h.nBits));
-            r.AddRange(BitConverter.GetBytes(h.nNonce));
+            writer.Write(h.nVersion);
+            writer.Write(h.prevHash);
+            writer.Write(h.merkleRoot);
+            writer.Write(h.nTime);
+            writer.Write(h.nBits);
+            writer.Write(h.nNonce);
 
-            return r.ToArray();
+            var resultBytes = stream.ToArray();
+
+            writer.Close();
+
+            return resultBytes;
         }
 
         public ScryptHash256 Hash

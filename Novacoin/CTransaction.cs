@@ -422,9 +422,7 @@ namespace Novacoin
             }
 
             writer.Write(tx.nLockTime);
-
             var resultBytes = stream.ToArray();
-
             writer.Close();
 
             return resultBytes;

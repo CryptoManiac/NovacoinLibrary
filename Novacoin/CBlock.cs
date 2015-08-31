@@ -20,6 +20,7 @@ using System;
 using System.Text;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.IO;
 
 namespace Novacoin
 {
@@ -328,20 +329,25 @@ namespace Novacoin
         /// <returns>Byte sequence</returns>
         public static implicit operator byte[] (CBlock b)
         {
-            var r = new List<byte>();
+            var stream = new MemoryStream();
+            var writer = new BinaryWriter(stream);
 
-            r.AddRange((byte[])b.header);
-            r.AddRange(VarInt.EncodeVarInt(b.vtx.LongLength)); // transactions count
+            writer.Write(b.header);
+            writer.Write(VarInt.EncodeVarInt(b.vtx.LongLength));
 
             foreach (var tx in b.vtx)
             {
-                r.AddRange((byte[])tx);
+                writer.Write(tx);
             }
 
-            r.AddRange(VarInt.EncodeVarInt(b.signature.LongLength));
-            r.AddRange(b.signature);
+            writer.Write(VarInt.EncodeVarInt(b.signature.LongLength));
+            writer.Write(b.signature);
 
-            return r.ToArray();
+            var resultBytes = stream.ToArray();
+
+            writer.Close();
+
+            return resultBytes;
         }
 
         /// <summary>
