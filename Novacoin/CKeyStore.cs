@@ -69,7 +69,7 @@ namespace Novacoin
         /// Item creation time
         /// </summary>
         [Indexed]
-        public int nTime { get; set; }
+        public uint nTime { get; set; }
     }
 
     /// <summary>

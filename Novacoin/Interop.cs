@@ -66,9 +66,9 @@ namespace Novacoin
             return sb.ToString();
         }
 
-        public static int GetTime()
+        public static uint GetTime()
         {
-            return (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds;
+            return (uint)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds;
         }
     }
 }

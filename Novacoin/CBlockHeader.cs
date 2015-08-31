@@ -36,7 +36,7 @@ namespace Novacoin
 		/// <summary>
 		/// Previous block hash.
 		/// </summary>
-		public Hash256 prevHash = new Hash256();
+		public ScryptHash256 prevHash = new ScryptHash256();
 
 		/// <summary>
 		/// Merkle root hash.
@@ -68,7 +68,7 @@ namespace Novacoin
         public CBlockHeader(CBlockHeader h)
         {
             nVersion = h.nVersion;
-            prevHash = new Hash256(h.prevHash);
+            prevHash = new ScryptHash256(h.prevHash);
             merkleRoot = new Hash256(h.merkleRoot);
             nTime = h.nTime;
             nBits = h.nBits;
@@ -80,7 +80,7 @@ namespace Novacoin
             Contract.Requires<ArgumentException>(bytes.Length == 80, "Any valid block header is exactly 80 bytes long.");
 
             nVersion = BitConverter.ToUInt32(bytes, 0);
-            prevHash = new Hash256(bytes, 4);
+            prevHash = new ScryptHash256(bytes, 4);
             merkleRoot = new Hash256(bytes, 36);
             nTime = BitConverter.ToUInt32(bytes, 68);
             nBits = BitConverter.ToUInt32(bytes, 72);

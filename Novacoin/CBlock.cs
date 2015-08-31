@@ -24,18 +24,18 @@ using System.Diagnostics.Contracts;
 namespace Novacoin
 {
     [Serializable]
-    public class BlockConstructorException : Exception
+    public class BlockException : Exception
     {
-        public BlockConstructorException()
+        public BlockException()
         {
         }
 
-        public BlockConstructorException(string message)
+        public BlockException(string message)
                 : base(message)
         {
         }
 
-        public BlockConstructorException(string message, Exception inner)
+        public BlockException(string message, Exception inner)
                 : base(message, inner)
         {
         }
@@ -75,6 +75,7 @@ namespace Novacoin
                 vtx[i] = new CTransaction(b.vtx[i]);
             }
 
+            signature = new byte[b.signature.Length];
             b.signature.CopyTo(signature, 0);
         }
 
@@ -99,7 +100,7 @@ namespace Novacoin
             }
             catch (Exception e)
             {
-                throw new BlockConstructorException("Deserialization failed", e);
+                throw new BlockException("Deserialization failed", e);
             }
 		}
 
@@ -109,6 +110,156 @@ namespace Novacoin
             // configuration is not valid real block since it has to provide 
             // at least one transaction.
             vtx = new CTransaction[0];
+        }
+
+        public bool CheckBlock(bool fCheckPOW = true, bool fCheckMerkleRoot = true, bool fCheckSig = true)
+        {
+            var uniqueTX = new List<Hash256>(); // tx hashes
+            uint nSigOps = 0; // total sigops
+
+            // Basic sanity checkings
+            if (vtx.Length == 0 || Size > 1000000)
+            {
+                return false;
+            }
+
+            bool fProofOfStake = IsProofOfStake;
+
+            // First transaction must be coinbase, the rest must not be
+            if (!vtx[0].IsCoinBase)
+            {
+                return false;
+            }
+
+            if (!vtx[0].CheckTransaction())
+            {
+                return false;
+            }
+
+            uniqueTX.Add(vtx[0].Hash);
+            nSigOps += vtx[0].LegacySigOpCount;
+
+            if (fProofOfStake)
+            {
+                // Proof-of-STake related checkings. Note that we know here that 1st transactions is coinstake. We don't need 
+                //   check the type of 1st transaction because it's performed earlier by IsProofOfStake()
+
+                // nNonce must be zero for proof-of-stake blocks
+                if (header.nNonce != 0)
+                {
+                    return false;
+                }
+
+                // Coinbase output should be empty if proof-of-stake block
+                if (vtx[0].vout.Length != 1 || !vtx[0].vout[0].IsEmpty)
+                {
+                    return false;
+                }
+
+                // Check coinstake timestamp
+                if (header.nTime != vtx[1].nTime)
+                {
+                    return false;
+                }
+
+                // Check proof-of-stake block signature
+                if (fCheckSig && !SignatureOK)
+                {
+                    return false;
+                }
+
+                if (!vtx[1].CheckTransaction())
+                {
+                    return false;
+                }
+
+                uniqueTX.Add(vtx[1].Hash);
+                nSigOps += vtx[1].LegacySigOpCount;
+            }
+            else
+            {
+                // Check proof of work matches claimed amount
+                if (fCheckPOW && !CheckProofOfWork(header.Hash, header.nBits))
+                {
+                    return false;
+                }
+
+                // Check timestamp
+                if (header.nTime > NetUtils.FutureDrift(NetUtils.GetAdjustedTime()))
+                {
+                    return false;
+                }
+
+                // Check coinbase timestamp
+                if (header.nTime < NetUtils.PastDrift(vtx[0].nTime))
+                {
+                    return false;
+                }
+            }
+
+            // Iterate all transactions starting from second for proof-of-stake block 
+            //    or first for proof-of-work block
+            for (int i = fProofOfStake ? 2 : 1; i < vtx.Length; i++)
+            {
+                var tx = vtx[i];
+
+                // Reject coinbase transactions at non-zero index
+                if (tx.IsCoinBase)
+                {
+                    return false;
+                }
+
+                // Reject coinstake transactions at index != 1
+                if (tx.IsCoinStake)
+                {
+                    return false;
+                }
+
+                // Check transaction timestamp
+                if (header.nTime < tx.nTime)
+                {
+                    return false;
+                }
+
+                // Check transaction consistency
+                if (!tx.CheckTransaction())
+                {
+                    return false;
+                }
+
+                // Add transaction hash into list of unique transaction IDs
+                uniqueTX.Add(tx.Hash);
+
+                // Calculate sigops count
+                nSigOps += tx.LegacySigOpCount;
+            }
+
+            // Check for duplicate txids. 
+            if (uniqueTX.Count != vtx.Length)
+            {
+                return false;
+            }
+
+            // Reject block if validation would consume too much resources.
+            if (nSigOps > 50000)
+            {
+                return false;
+            }
+
+            // Check merkle root
+            if (fCheckMerkleRoot && hashMerkleRoot != header.merkleRoot)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool CheckProofOfWork(ScryptHash256 hash, uint nBits)
+        {
+            // TODO: stub!
+
+            return true;
         }
 
         /// <summary>

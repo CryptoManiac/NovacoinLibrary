@@ -352,14 +352,14 @@ namespace Novacoin
         /// </summary>
         /// <param name="fAccurate">Legacy mode flag</param>
         /// <returns>Amount of sigops</returns>
-        public int GetSigOpCount(bool fAccurate)
+        public uint GetSigOpCount(bool fAccurate)
         {
             var wCodeBytes = new ByteQueue(codeBytes);
 
             instruction opcode; // Current instruction
             byte[] pushArgs; // OP_PUSHDATAn argument
 
-            int nCount = 0;
+            uint nCount = 0;
             var lastOpcode = instruction.OP_INVALIDOPCODE;
 
             // Scan instructions sequence
@@ -373,7 +373,7 @@ namespace Novacoin
                 {
                     if (fAccurate && lastOpcode >= instruction.OP_1 && lastOpcode <= instruction.OP_16)
                     {
-                        nCount += ScriptCode.DecodeOP_N(lastOpcode);
+                        nCount += (uint)ScriptCode.DecodeOP_N(lastOpcode);
                     }
                     else
                     {
@@ -391,7 +391,7 @@ namespace Novacoin
         /// </summary>
         /// <param name="scriptSig">pay-to-script-hash scriptPubKey</param>
         /// <returns>SigOps count</returns>
-        public int GetSigOpCount(CScript scriptSig)
+        public uint GetSigOpCount(CScript scriptSig)
         {
             if (!IsPayToScriptHash)
             {
@@ -402,12 +402,19 @@ namespace Novacoin
             // get the last item that the scriptSig
             // pushes onto the stack:
             ByteQueue wScriptSig = scriptSig.GetByteQueue();
+            int nScriptSigSize = scriptSig.Size;
 
             instruction opcode; // Current instruction
-            byte[] pushArgs; // OP_PUSHDATAn argument
+            byte[] pushArgs = new byte[0]; // OP_PUSHDATAn argument
 
-            while (ScriptCode.GetOp(ref wScriptSig, out opcode, out pushArgs))
+
+            while (wScriptSig.Index < nScriptSigSize)
             {
+                if (!ScriptCode.GetOp(ref wScriptSig, out opcode, out pushArgs))
+                {
+                    return 0;
+                }
+
                 if (opcode > instruction.OP_16)
                 {
                     return 0;

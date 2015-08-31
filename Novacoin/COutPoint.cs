@@ -23,7 +23,7 @@ using System.Text;
 
 namespace Novacoin
 {
-    public class COutPoint
+    public class COutPoint : IComparable<COutPoint>, IEquatable<COutPoint>
     {
         /// <summary>
         /// Hash of parent transaction.
@@ -88,7 +88,35 @@ namespace Novacoin
             return sb.ToString();
         }
 
-        
+        /// <summary>
+        /// Compare this outpoint with some other.
+        /// </summary>
+        /// <param name="o">Other outpoint.</param>
+        /// <returns>Result of comparison.</returns>
+        public int CompareTo(COutPoint o)
+        {
+            if (n > o.n)
+            {
+                return 1;
+            }
+            else if (n < o.n)
+            {
+                return -1;
+            }
+
+            return 0;
+
+        }
+
+        /// <summary>
+        /// Equality comparer for outpoints.
+        /// </summary>
+        /// <param name="o">Other outpoint.</param>
+        /// <returns>Result of comparison.</returns>
+        public bool Equals(COutPoint o)
+        {
+            return (o.n == n) && (o.hash == hash);
+        }
     }
 
 }

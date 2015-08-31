@@ -142,8 +142,7 @@ namespace Novacoin
 
             return inputBytes.ToArray();
         }
-
-
+        
         public bool IsFinal
         {
             get { return (nSequence == uint.MaxValue); }

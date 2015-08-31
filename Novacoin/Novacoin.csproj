@@ -117,6 +117,7 @@
     <Compile Include="CScriptID.cs" />
     <Compile Include="Hash.cs" />
     <Compile Include="Interop.cs" />
+    <Compile Include="NetUtils.cs" />
     <Compile Include="RIPEMD160.cs" />
     <Compile Include="ScryptHash256.cs" />
     <Compile Include="SHA1.cs" />

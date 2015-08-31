@@ -39,12 +39,21 @@ namespace Novacoin
         {
         }
     }
-    
+
     /// <summary>
     /// Represents the transaction. Any transaction must provide one input and one output at least.
     /// </summary>
     public class CTransaction
     {
+        /// <summary>
+        /// One coin = 1000000 satoshis.
+        /// </summary>
+        public const ulong nCoin = 1000000;
+        /// <summary>
+        /// Sanity checking threshold.
+        /// </summary>
+        public const ulong nMaxMoney = 2000000000 * nCoin;
+
         /// <summary>
         /// Version of transaction schema.
         /// </summary>
@@ -111,6 +120,10 @@ namespace Novacoin
             nLockTime = tx.nLockTime;
         }
 
+        /// <summary>
+        /// Attempts to execute all transaction scripts and validate the results.
+        /// </summary>
+        /// <returns>Checking result.</returns>
         public bool VerifyScripts()
         {
             if (IsCoinBase)
@@ -134,10 +147,124 @@ namespace Novacoin
         }
 
         /// <summary>
+        /// Calculate amount of signature operations without trying to properly evaluate P2SH scripts.
+        /// </summary>
+        public uint LegacySigOpCount
+        {
+            get
+            {
+                uint nSigOps = 0;
+                foreach (var txin in vin)
+                {
+                    nSigOps += txin.scriptSig.GetSigOpCount(false);
+                }
+                foreach (var txout in vout)
+                {
+                    nSigOps += txout.scriptPubKey.GetSigOpCount(false);
+                }
+
+                return nSigOps;
+            }
+        }
+
+        /// <summary>
+        /// Basic sanity checkings
+        /// </summary>
+        /// <returns>Checking result</returns>
+        public bool CheckTransaction()
+        {
+            if (Size > 250000 || vin.Length == 0 || vout.Length == 0)
+            {
+                return false;
+            }
+
+            // Check for empty or overflow output values
+            ulong nValueOut = 0;
+            for (int i = 0; i < vout.Length; i++)
+            {
+                CTxOut txout = vout[i];
+                if (txout.IsEmpty && !IsCoinBase && !IsCoinStake)
+                {
+                    // Empty outputs aren't allowed for user transactions.
+                    return false;
+                }
+
+                nValueOut += txout.nValue;
+                if (!MoneyRange(nValueOut))
+                {
+                    return false;
+                }
+            }
+
+            // Check for duplicate inputs
+            var InOutPoints = new List<COutPoint>();
+            foreach (var txin in vin)
+            {
+                if (InOutPoints.IndexOf(txin.prevout) != -1)
+                {
+                    // Duplicate input.
+                    return false;
+                }
+                InOutPoints.Add(txin.prevout);
+            }
+
+            if (IsCoinBase)
+            {
+                if (vin[0].scriptSig.Size < 2 || vin[0].scriptSig.Size > 100)
+                {
+                    // Script size is invalid
+                    return false;
+                }
+            }
+            else
+            {
+                foreach (var txin in vin)
+                {
+                    if (txin.prevout.IsNull)
+                    {
+                        // Null input in non-coinbase transaction.
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        public bool IsFinal(uint nBlockHeight = 0, uint nBlockTime = 0)
+        {
+            // Time based nLockTime
+            if (nLockTime == 0)
+            {
+                return true;
+            }
+            if (nBlockHeight == 0)
+            {
+                nBlockHeight = uint.MaxValue; // TODO: stupid stub here, should be best height instead.
+            }
+            if (nBlockTime == 0)
+            {
+                nBlockTime = NetUtils.GetAdjustedTime();
+            }
+            if (nLockTime < (nLockTime < NetUtils.nLockTimeThreshold ? nBlockHeight : nBlockTime))
+            {
+                return true;
+            }
+            foreach (var txin in vin)
+            {
+                if (!txin.IsFinal)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+        
+        /// <summary>
         /// Parse byte sequence and initialize new instance of CTransaction
         /// </summary>
         /// <param name="txBytes">Byte sequence</param>
-		public CTransaction(byte[] txBytes)
+        public CTransaction(byte[] txBytes)
         {
             try
             {
@@ -317,5 +444,7 @@ namespace Novacoin
 
             return sb.ToString();
         }
-	}
+
+        public static bool MoneyRange(ulong nValue) { return (nValue <= nMaxMoney); }
+    }
 }
