@@ -92,13 +92,7 @@ namespace Novacoin
                 var reader = new BinaryReader(stream);
 
                 // Fill the block header fields
-                header = new CBlockHeader();
-                header.nVersion = reader.ReadUInt32();
-                header.prevHash = new ScryptHash256(reader.ReadBytes(32));
-                header.merkleRoot = new Hash256(reader.ReadBytes(32));
-                header.nTime = reader.ReadUInt32();
-                header.nBits = reader.ReadUInt32();
-                header.nNonce = reader.ReadUInt32();                
+                header = new CBlockHeader(ref reader);               
 
                 // Parse transactions list
                 vtx = CTransaction.ReadTransactionsList(ref reader);

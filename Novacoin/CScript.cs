@@ -52,9 +52,9 @@ namespace Novacoin
         /// Return a new instance of ByteQueue object for current code bytes
         /// </summary>
         /// <returns></returns>
-        public ByteQueue GetByteQueue()
+        public InstructionQueue GetInstructionQueue()
         {
-             return new ByteQueue(ref codeBytes);
+             return new InstructionQueue(ref codeBytes);
         }
 
         /// <summary>
@@ -157,7 +157,7 @@ namespace Novacoin
             }
 
             var count = 0;
-            var bq1 = new ByteQueue(ref codeBytes);
+            var bq1 = new InstructionQueue(ref codeBytes);
 
             byte[] pushData;
             instruction opcode;
@@ -203,7 +203,7 @@ namespace Novacoin
 
             var count = 0;
             var newScript = new CScript();
-            var bq1 = new ByteQueue(ref codeBytes);
+            var bq1 = new InstructionQueue(ref codeBytes);
 
             while (ScriptCode.GetOp(ref bq1, out opcode, out pushData))
             {
@@ -239,7 +239,7 @@ namespace Novacoin
         {
             get
             {
-                var wCodeBytes = new ByteQueue(ref codeBytes);
+                var wCodeBytes = new InstructionQueue(ref codeBytes);
 
                 instruction opcode; // Current instruction
                 byte[] pushArgs; // OP_PUSHDATAn argument
@@ -265,7 +265,7 @@ namespace Novacoin
         {
             get
             {
-                var wCodeBytes = new ByteQueue(ref codeBytes);
+                var wCodeBytes = new InstructionQueue(ref codeBytes);
 
                 byte[] pushArgs; // OP_PUSHDATAn argument
                 instruction opcode; // Current instruction
@@ -354,7 +354,7 @@ namespace Novacoin
         /// <returns>Amount of sigops</returns>
         public uint GetSigOpCount(bool fAccurate)
         {
-            var wCodeBytes = new ByteQueue(ref codeBytes);
+            var wCodeBytes = new InstructionQueue(ref codeBytes);
 
             instruction opcode; // Current instruction
             byte[] pushArgs; // OP_PUSHDATAn argument
@@ -401,7 +401,7 @@ namespace Novacoin
             // This is a pay-to-script-hash scriptPubKey;
             // get the last item that the scriptSig
             // pushes onto the stack:
-            ByteQueue wScriptSig = scriptSig.GetByteQueue();
+            InstructionQueue wScriptSig = scriptSig.GetInstructionQueue();
             int nScriptSigSize = scriptSig.Size;
 
             instruction opcode; // Current instruction
@@ -520,7 +520,7 @@ namespace Novacoin
 		public override string ToString()
 		{
 			var sb = new StringBuilder();
-            var wCodeBytes = new ByteQueue(ref codeBytes);
+            var wCodeBytes = new InstructionQueue(ref codeBytes);
 
             instruction opcode; // Current instruction
             byte[] pushArgs; // OP_PUSHDATAn argument

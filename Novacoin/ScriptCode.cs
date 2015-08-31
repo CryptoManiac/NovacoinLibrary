@@ -247,7 +247,7 @@ namespace Novacoin
         /// <param name="opcodeRet">Found instruction.</param>
         /// <param name="bytesRet">IEnumerable out param which is used to get the push arguments.</param>
         /// <returns>Result of operation</returns>
-        public static bool GetOp(ref ByteQueue codeBytes, out instruction opcodeRet, out byte[] bytesRet)
+        public static bool GetOp(ref InstructionQueue codeBytes, out instruction opcodeRet, out byte[] bytesRet)
         {
             bytesRet = new byte[0];
             instruction opcode = opcodeRet = instruction.OP_INVALIDOPCODE;
@@ -292,7 +292,7 @@ namespace Novacoin
                         nSize = BitConverter.ToInt32(codeBytes.Get(4), 0);
                     }
                 }
-                catch (ByteQueueException)
+                catch (InstructionQueueException)
                 {
                     // Unable to read operand length
                     return false;
@@ -541,8 +541,8 @@ namespace Novacoin
                 instruction opcode1, opcode2;
 
                 // Compare
-                var bq1 = script1.GetByteQueue();
-                var bq2 = script2.GetByteQueue();
+                var bq1 = script1.GetInstructionQueue();
+                var bq2 = script2.GetInstructionQueue();
 
                 byte[] args1, args2;
 
@@ -844,7 +844,7 @@ namespace Novacoin
             var falseBytes = new byte[0];
             var trueBytes = new byte[] { 0x01 };
 
-            var CodeQueue = script.GetByteQueue();
+            var CodeQueue = script.GetInstructionQueue();
             var altStack = new List<byte[]>();
 
 #if !DEBUG

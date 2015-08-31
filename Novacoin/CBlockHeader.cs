@@ -82,6 +82,16 @@ namespace Novacoin
             nNonce = h.nNonce;
         }
 
+        internal CBlockHeader(ref BinaryReader reader)
+        {
+            nVersion = reader.ReadUInt32();
+            prevHash = new ScryptHash256(reader.ReadBytes(32));
+            merkleRoot = new Hash256(reader.ReadBytes(32));
+            nTime = reader.ReadUInt32();
+            nBits = reader.ReadUInt32();
+            nNonce = reader.ReadUInt32();
+        }
+
         /// <summary>
         /// Init block header with bytes.
         /// </summary>

@@ -107,7 +107,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AddressTools.cs" />
-    <Compile Include="ByteQueue.cs" />
+    <Compile Include="InstructionQueue.cs" />
     <Compile Include="CBlockStore.cs" />
     <Compile Include="CKey.cs" />
     <Compile Include="CKeyID.cs" />

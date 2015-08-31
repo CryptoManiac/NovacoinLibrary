@@ -24,62 +24,47 @@ using System.IO;
 namespace Novacoin
 {
     [Serializable]
-    public class ByteQueueException : Exception
+    public class InstructionQueueException : Exception
     {
-        public ByteQueueException()
+        public InstructionQueueException()
         {
         }
 
-        public ByteQueueException(string message)
+        public InstructionQueueException(string message)
             : base(message)
         {
         }
 
-        public ByteQueueException(string message, Exception inner)
+        public InstructionQueueException(string message, Exception inner)
             : base(message, inner)
         {
         }
     }
 
     /// <summary>
-    /// Stream of bytes.
-    /// 
-    /// TODO: rewrite using MemoryStream
+    /// Stream of instructions.
     /// </summary>
-    public class ByteQueue : IDisposable
+    public class InstructionQueue : IDisposable
     {
         private bool disposed = false;
 
         private MemoryStream _Stream;
         private BinaryReader _Reader;
 
-        public ByteQueue(ref byte[] buffer, int Start)
-        {
-            _Stream = new MemoryStream(buffer);
-            _Stream.Seek(Start, SeekOrigin.Begin);
-            _Reader = new BinaryReader(_Stream);
-        }
-
-        public ByteQueue(ref byte[] buffer)
-        {
-            _Stream = new MemoryStream(buffer);
-            _Reader = new BinaryReader(_Stream);
-        }
-
-        public ByteQueue(ref List<byte> List, int Start)
+        public InstructionQueue(ref List<byte> List, int Start)
         {
             _Stream = new MemoryStream(List.ToArray());
             _Stream.Seek(Start, SeekOrigin.Begin);
             _Reader = new BinaryReader(_Stream);
         }
 
-        public ByteQueue(ref List<byte> List)
+        public InstructionQueue(ref List<byte> List)
         {
             _Stream = new MemoryStream(List.ToArray());
             _Reader = new BinaryReader(_Stream);
         }
 
-        ~ByteQueue()
+        ~InstructionQueue()
         {
             Dispose(false);
         }
@@ -108,7 +93,7 @@ namespace Novacoin
         {
             if (_Stream.Position == _Stream.Length)
             {
-                throw new ByteQueueException("No elements left.");
+                throw new InstructionQueueException("No instructions left.");
             }
 
             return _Reader.ReadByte();
@@ -128,7 +113,7 @@ namespace Novacoin
 
         public byte[] Get(int nCount)
         {
-            Contract.Requires<ArgumentException>(Count - Index >= nCount, "nCount is greater than amount of elements.");
+            Contract.Requires<ArgumentException>(Count - Index >= nCount, "nCount is greater than amount of instructions.");
 
             return _Reader.ReadBytes(nCount);
         }
@@ -147,33 +132,12 @@ namespace Novacoin
             get { return (int)_Stream.Position; }
         }
 
+        /// <summary>
+        /// Stream length
+        /// </summary>
         public int Count
         {
             get { return (int)_Stream.Length; }
-        }
-
-        public ulong GetVarInt()
-        {
-            try
-            {
-                byte prefix = _Reader.ReadByte();
-
-                switch (prefix)
-                {
-                    case 0xfd: // ushort
-                        return _Reader.ReadUInt16();
-                    case 0xfe: // uint
-                        return _Reader.ReadUInt32();
-                    case 0xff: // ulong
-                        return _Reader.ReadUInt64();
-                    default:
-                        return prefix;
-                }
-            }
-            catch (EndOfStreamException e)
-            {
-                throw new ByteQueueException("No elements left.", e);
-            }
         }
     }
 }

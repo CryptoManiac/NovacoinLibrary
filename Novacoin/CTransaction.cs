@@ -429,8 +429,6 @@ namespace Novacoin
             return resultBytes;
         }
 
-
-
         public override string ToString()
         {
             var sb = new StringBuilder();
