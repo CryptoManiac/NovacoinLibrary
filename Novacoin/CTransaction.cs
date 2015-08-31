@@ -244,9 +244,9 @@ namespace Novacoin
             }
             if (nBlockTime == 0)
             {
-                nBlockTime = NetUtils.GetAdjustedTime();
+                nBlockTime = NetInfo.GetAdjustedTime();
             }
-            if (nLockTime < (nLockTime < NetUtils.nLockTimeThreshold ? nBlockHeight : nBlockTime))
+            if (nLockTime < (nLockTime < NetInfo.nLockTimeThreshold ? nBlockHeight : nBlockTime))
             {
                 return true;
             }

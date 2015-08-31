@@ -185,13 +185,13 @@ namespace Novacoin
                 }
 
                 // Check timestamp
-                if (header.nTime > NetUtils.FutureDrift(NetUtils.GetAdjustedTime()))
+                if (header.nTime > NetInfo.FutureDrift(NetInfo.GetAdjustedTime()))
                 {
                     return false;
                 }
 
                 // Check coinbase timestamp
-                if (header.nTime < NetUtils.PastDrift(vtx[0].nTime))
+                if (header.nTime < NetInfo.PastDrift(vtx[0].nTime))
                 {
                     return false;
                 }

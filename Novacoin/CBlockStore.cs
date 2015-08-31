@@ -189,13 +189,13 @@ namespace Novacoin
                 // Seek to the end and then append magic bytes there.
                 writer.Seek(0, SeekOrigin.End);
                 writer.Write(magicBytes, 0, magicBytes.Length);
+                writer.Write(blkLenBytes, 0, blkLenBytes.Length);
 
                 // Save block size and current position in the block cursor fields.
                 nBlockPos = writer.Position;
                 nBlockSize = blockBytes.Length;                
 
                 // Write block and flush the stream.
-                writer.Write(blkLenBytes, 0, blkLenBytes.Length);
                 writer.Write(blockBytes, 0, blockBytes.Length);
                 writer.Flush();
 
@@ -389,9 +389,9 @@ namespace Novacoin
             bool firstInit = !File.Exists(strDbFile);
             dbConn = new SQLiteConnection(new SQLitePlatformGeneric(), strDbFile);
 
-            var fStreamReadWrite = File.Open(strBlockFile, FileMode.OpenOrCreate, FileAccess.ReadWrite);
-            writer = new BinaryWriter(fStreamReadWrite).BaseStream;
+            var fStreamReadWrite = File.Open(strBlockFile, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
             reader = new BinaryReader(fStreamReadWrite).BaseStream;
+            writer = new BinaryWriter(fStreamReadWrite).BaseStream;
 
             if (firstInit)
             {
@@ -472,6 +472,11 @@ namespace Novacoin
             {
                 // Handle trasactions
 
+                if (!block.vtx[i].VerifyScripts())
+                {
+                    return false;
+                }
+
                 var nTxOffset = itemTemplate.nBlockPos + block.GetTxOffset(i);
                 TxType txnType = TxType.TX_USER;
 
@@ -522,7 +527,7 @@ namespace Novacoin
             uint nHeight = prevBlockCursor.nHeight + 1;
 
             // Check timestamp against prev
-            if (NetUtils.FutureDrift(block.header.nTime) < prevBlockHeader.nTime)
+            if (NetInfo.FutureDrift(block.header.nTime) < prevBlockHeader.nTime)
             {
                 // block's timestamp is too early
                 return false;
@@ -743,7 +748,7 @@ namespace Novacoin
                     // Free other state (managed objects).
 
                     reader.Dispose();
-                    writer.Dispose();
+                    reader.Dispose();
                 }
 
                 if (dbConn != null)
