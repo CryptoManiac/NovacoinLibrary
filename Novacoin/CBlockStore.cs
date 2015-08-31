@@ -189,13 +189,13 @@ namespace Novacoin
                 // Seek to the end and then append magic bytes there.
                 writer.Seek(0, SeekOrigin.End);
                 writer.Write(magicBytes, 0, magicBytes.Length);
+                writer.Write(blkLenBytes, 0, blkLenBytes.Length);
 
                 // Save block size and current position in the block cursor fields.
                 nBlockPos = writer.Position;
                 nBlockSize = blockBytes.Length;                
 
                 // Write block and flush the stream.
-                writer.Write(blkLenBytes, 0, blkLenBytes.Length);
                 writer.Write(blockBytes, 0, blockBytes.Length);
                 writer.Flush();
 
