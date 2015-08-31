@@ -88,16 +88,25 @@ namespace Novacoin
 		{
             try
             {
-                ByteQueue wBytes = new ByteQueue(ref blockBytes);
+                var stream = new MemoryStream(blockBytes);
+                var reader = new BinaryReader(stream);
 
                 // Fill the block header fields
-                header = new CBlockHeader(wBytes.Get(80));
+                header = new CBlockHeader();
+                header.nVersion = reader.ReadUInt32();
+                header.prevHash = new ScryptHash256(reader.ReadBytes(32));
+                header.merkleRoot = new Hash256(reader.ReadBytes(32));
+                header.nTime = reader.ReadUInt32();
+                header.nBits = reader.ReadUInt32();
+                header.nNonce = reader.ReadUInt32();                
 
                 // Parse transactions list
-                vtx = CTransaction.ReadTransactionsList(ref wBytes);
+                vtx = CTransaction.ReadTransactionsList(ref reader);
 
                 // Read block signature
-                signature = wBytes.Get((int)wBytes.GetVarInt());
+                signature = reader.ReadBytes((int)VarInt.ReadVarInt(ref reader));
+
+                reader.Close();
             }
             catch (Exception e)
             {

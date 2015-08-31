@@ -59,21 +59,21 @@ namespace Novacoin
         /// <summary>
         /// Read vout list from byte sequence.
         /// </summary>
-        /// <param name="wBytes">Reference to byte sequence</param>
+        /// <param name="wBytes">Reference to binary reader</param>
         /// <returns>Outputs array</returns>
-        public static CTxOut[] ReadTxOutList(ref ByteQueue wBytes)
+        internal static CTxOut[] ReadTxOutList(ref BinaryReader reader)
         {
-            int nOutputs = (int)wBytes.GetVarInt();
+            int nOutputs = (int)VarInt.ReadVarInt(ref reader);
             var vout =new CTxOut[nOutputs];
 
             for (int nIndex = 0; nIndex < nOutputs; nIndex++)
             {
                 // Fill outputs array
                 vout[nIndex] = new CTxOut();
-                vout[nIndex].nValue = BitConverter.ToUInt64(wBytes.Get(8), 0);
+                vout[nIndex].nValue = reader.ReadUInt64();
 
-                int nScriptPKLen = (int)wBytes.GetVarInt();
-                vout[nIndex].scriptPubKey = new CScript(wBytes.Get(nScriptPKLen));
+                int nScriptPKLen = (int)VarInt.ReadVarInt(ref reader);
+                vout[nIndex].scriptPubKey = new CScript(reader.ReadBytes(nScriptPKLen));
             }
 
             return vout;

@@ -84,23 +84,23 @@ namespace Novacoin
         /// <summary>
         /// Read vin list from byte sequence.
         /// </summary>
-        /// <param name="wBytes">Reference to byte sequence</param>
+        /// <param name="wBytes">Reference to binary reader</param>
         /// <returns>Inputs array</returns>
-        public static CTxIn[] ReadTxInList(ref ByteQueue wBytes)
+        internal static CTxIn[] ReadTxInList(ref BinaryReader reader)
         {
             try
             {
                 // Get amount
-                int nInputs = (int)wBytes.GetVarInt();
+                int nInputs = (int)VarInt.ReadVarInt(ref reader);
                 var vin = new CTxIn[nInputs];
 
                 for (int nIndex = 0; nIndex < nInputs; nIndex++)
                 {
                     // Fill inputs array
                     vin[nIndex] = new CTxIn();
-                    vin[nIndex].prevout = new COutPoint(wBytes.Get(36));
-                    vin[nIndex].scriptSig = new CScript(wBytes.Get((int)wBytes.GetVarInt()));
-                    vin[nIndex].nSequence = BitConverter.ToUInt32(wBytes.Get(4), 0);
+                    vin[nIndex].prevout = new COutPoint(reader.ReadBytes(36));
+                    vin[nIndex].scriptSig = new CScript(reader.ReadBytes((int)VarInt.ReadVarInt(ref reader)));
+                    vin[nIndex].nSequence = reader.ReadUInt32();
                 }
 
                 // Return inputs array

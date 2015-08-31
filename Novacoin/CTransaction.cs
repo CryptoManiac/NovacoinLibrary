@@ -342,12 +342,12 @@ namespace Novacoin
         /// </summary>
         /// <param name="wTxBytes">Bytes sequence</param>
         /// <returns>Transactions array</returns>
-        public static CTransaction[] ReadTransactionsList(ref ByteQueue wTxBytes)
+        internal static CTransaction[] ReadTransactionsList(ref BinaryReader reader)
         {
             try
             {
                 // Read amount of transactions
-                int nTransactions = (int)wTxBytes.GetVarInt();
+                int nTransactions = (int)VarInt.ReadVarInt(ref reader);
                 var tx = new CTransaction[nTransactions];
 
                 for (int nTx = 0; nTx < nTransactions; nTx++)
@@ -355,16 +355,16 @@ namespace Novacoin
                     // Fill the transactions array
                     tx[nTx] = new CTransaction();
 
-                    tx[nTx].nVersion = BitConverter.ToUInt32(wTxBytes.Get(4), 0);
-                    tx[nTx].nTime = BitConverter.ToUInt32(wTxBytes.Get(4), 0);
+                    tx[nTx].nVersion = reader.ReadUInt32();
+                    tx[nTx].nTime = reader.ReadUInt32();
 
                     // Inputs array
-                    tx[nTx].vin = CTxIn.ReadTxInList(ref wTxBytes);
+                    tx[nTx].vin = CTxIn.ReadTxInList(ref reader);
 
                     // outputs array
-                    tx[nTx].vout = CTxOut.ReadTxOutList(ref wTxBytes);
+                    tx[nTx].vout = CTxOut.ReadTxOutList(ref reader);
 
-                    tx[nTx].nLockTime = BitConverter.ToUInt32(wTxBytes.Get(4), 0);
+                    tx[nTx].nLockTime = reader.ReadUInt32();
                 }
 
                 return tx;
