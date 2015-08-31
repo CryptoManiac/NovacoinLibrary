@@ -748,7 +748,7 @@ namespace Novacoin
                     // Free other state (managed objects).
 
                     reader.Dispose();
-                    reader.Dispose();
+                    writer.Dispose();
                 }
 
                 if (dbConn != null)
