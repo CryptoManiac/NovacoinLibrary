@@ -54,7 +54,7 @@ namespace Novacoin
         /// <returns></returns>
         public ByteQueue GetByteQueue()
         {
-             return new ByteQueue(codeBytes);
+             return new ByteQueue(ref codeBytes);
         }
 
         /// <summary>
@@ -157,7 +157,7 @@ namespace Novacoin
             }
 
             var count = 0;
-            var bq1 = new ByteQueue(codeBytes);
+            var bq1 = new ByteQueue(ref codeBytes);
 
             byte[] pushData;
             instruction opcode;
@@ -203,7 +203,7 @@ namespace Novacoin
 
             var count = 0;
             var newScript = new CScript();
-            var bq1 = new ByteQueue(codeBytes);
+            var bq1 = new ByteQueue(ref codeBytes);
 
             while (ScriptCode.GetOp(ref bq1, out opcode, out pushData))
             {
@@ -239,7 +239,7 @@ namespace Novacoin
         {
             get
             {
-                var wCodeBytes = new ByteQueue(codeBytes);
+                var wCodeBytes = new ByteQueue(ref codeBytes);
 
                 instruction opcode; // Current instruction
                 byte[] pushArgs; // OP_PUSHDATAn argument
@@ -265,7 +265,7 @@ namespace Novacoin
         {
             get
             {
-                var wCodeBytes = new ByteQueue(codeBytes);
+                var wCodeBytes = new ByteQueue(ref codeBytes);
 
                 byte[] pushArgs; // OP_PUSHDATAn argument
                 instruction opcode; // Current instruction
@@ -354,7 +354,7 @@ namespace Novacoin
         /// <returns>Amount of sigops</returns>
         public uint GetSigOpCount(bool fAccurate)
         {
-            var wCodeBytes = new ByteQueue(codeBytes);
+            var wCodeBytes = new ByteQueue(ref codeBytes);
 
             instruction opcode; // Current instruction
             byte[] pushArgs; // OP_PUSHDATAn argument
@@ -520,7 +520,7 @@ namespace Novacoin
 		public override string ToString()
 		{
 			var sb = new StringBuilder();
-            var wCodeBytes = new ByteQueue(codeBytes);
+            var wCodeBytes = new ByteQueue(ref codeBytes);
 
             instruction opcode; // Current instruction
             byte[] pushArgs; // OP_PUSHDATAn argument

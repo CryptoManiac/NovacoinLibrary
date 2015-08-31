@@ -19,6 +19,7 @@
 using System;
 using System.Text;
 using System.Collections.Generic;
+using System.IO;
 
 namespace Novacoin
 {
@@ -244,9 +245,9 @@ namespace Novacoin
             }
             if (nBlockTime == 0)
             {
-                nBlockTime = NetInfo.GetAdjustedTime();
+                nBlockTime = NetUtils.GetAdjustedTime();
             }
-            if (nLockTime < (nLockTime < NetInfo.nLockTimeThreshold ? nBlockHeight : nBlockTime))
+            if (nLockTime < (nLockTime < NetUtils.nLockTimeThreshold ? nBlockHeight : nBlockTime))
             {
                 return true;
             }
@@ -268,7 +269,7 @@ namespace Novacoin
         {
             try
             {
-                var wBytes = new ByteQueue(txBytes);
+                var wBytes = new ByteQueue(ref txBytes);
 
                 nVersion = BitConverter.ToUInt32(wBytes.Get(4), 0);
                 nTime = BitConverter.ToUInt32(wBytes.Get(4), 0);
@@ -401,28 +402,35 @@ namespace Novacoin
         /// </summary>
         public static implicit operator byte[] (CTransaction tx)
         {
-            var resultBytes = new List<byte>();
+            var stream = new MemoryStream();
+            var writer = new BinaryWriter(stream);
 
-            resultBytes.AddRange(BitConverter.GetBytes(tx.nVersion));
-            resultBytes.AddRange(BitConverter.GetBytes(tx.nTime));
-            resultBytes.AddRange(VarInt.EncodeVarInt(tx.vin.LongLength));
+            writer.Write(tx.nVersion);
+            writer.Write(tx.nTime);
+            writer.Write(VarInt.EncodeVarInt(tx.vin.LongLength));
 
             foreach (var input in tx.vin)
             {
-                resultBytes.AddRange((byte[])input);
+                writer.Write(input);
             }
 
-            resultBytes.AddRange(VarInt.EncodeVarInt(tx.vout.LongLength));
+            writer.Write(VarInt.EncodeVarInt(tx.vout.LongLength));
 
             foreach (var output in tx.vout)
             {
-                resultBytes.AddRange((byte[])output);
+                writer.Write(output);
             }
 
-            resultBytes.AddRange(BitConverter.GetBytes(tx.nLockTime));
+            writer.Write(tx.nLockTime);
 
-            return resultBytes.ToArray();
+            var resultBytes = stream.ToArray();
+
+            writer.Close();
+
+            return resultBytes;
         }
+
+
 
         public override string ToString()
         {

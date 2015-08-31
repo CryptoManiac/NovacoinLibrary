@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.IO;
 
 namespace Novacoin
 {
@@ -45,104 +46,97 @@ namespace Novacoin
     /// 
     /// TODO: rewrite using MemoryStream
     /// </summary>
-    public class ByteQueue
+    public class ByteQueue : IDisposable
     {
-        private int _Index;
-        private List<byte> _Elements;
+        private bool disposed = false;
 
-        public ByteQueue(byte[] List, int Start)
+        private MemoryStream _Stream;
+        private BinaryReader _Reader;
+
+        public ByteQueue(ref byte[] buffer, int Start)
         {
-            _Elements = new List<byte>(List);
-            _Index = Start;
+            _Stream = new MemoryStream(buffer);
+            _Stream.Seek(Start, SeekOrigin.Begin);
+            _Reader = new BinaryReader(_Stream);
         }
 
-        public ByteQueue(byte[] List)
+        public ByteQueue(ref byte[] buffer)
         {
-            _Elements = new List<byte>(List);
-            _Index = 0;
+            _Stream = new MemoryStream(buffer);
+            _Reader = new BinaryReader(_Stream);
         }
 
-        public ByteQueue(List<byte> List, int Start)
+        public ByteQueue(ref List<byte> List, int Start)
         {
-            _Elements = new List<byte>(List);
-            _Index = Start;
+            _Stream = new MemoryStream(List.ToArray());
+            _Stream.Seek(Start, SeekOrigin.Begin);
+            _Reader = new BinaryReader(_Stream);
         }
 
-        public ByteQueue(List<byte> List)
+        public ByteQueue(ref List<byte> List)
         {
-            _Elements = new List<byte>(List);
-            _Index = 0;
+            _Stream = new MemoryStream(List.ToArray());
+            _Reader = new BinaryReader(_Stream);
+        }
+
+        ~ByteQueue()
+        {
+            Dispose(false);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposed)
+            {
+                if (disposing)
+                {
+                    _Reader.Dispose();
+                    _Stream.Dispose();
+                }
+
+                disposed = true;
+            }
         }
 
         public byte Get()
         {
-            if (_Elements.Count <= _Index)
+            if (_Stream.Position == _Stream.Length)
             {
                 throw new ByteQueueException("No elements left.");
             }
 
-            return _Elements[_Index++];
+            return _Reader.ReadByte();
         }
 
         public bool TryGet(ref byte Element)
         {
-            if (_Elements.Count <= _Index)
+            if (_Stream.Position == _Stream.Length)
             {
                 return false;
             }
 
-            Element = _Elements[_Index++];
+            Element = _Reader.ReadByte();
 
             return true;
-        }
-
-        public byte GetCurrent()
-        {
-            return _Elements[_Index];
         }
 
         public byte[] Get(int nCount)
         {
             Contract.Requires<ArgumentException>(Count - Index >= nCount, "nCount is greater than amount of elements.");
 
-            var result = _Elements.GetRange(_Index, nCount).ToArray();
-            _Index += nCount;
-
-            return result;
+            return _Reader.ReadBytes(nCount);
         }
 
         public bool TryGet(int nCount, ref byte[] Elements)
         {
-            if (Count - Index < nCount)
-            {
-                return false;
-            }
-
-            Elements = _Elements.GetRange(_Index, nCount).ToArray();
-            _Index += nCount;
-
-            return true;
-        }
-
-        public byte[] GetCurrent(int nCount)
-        {
-            Contract.Requires<ArgumentException>(Count - Index >= nCount, "nCount is greater than amount of elements.");
-
-            var result = _Elements.GetRange(_Index, nCount).ToArray();
-
-            return result;
-        }
-
-        public bool TryGetCurrent(int nCount, ref byte[] Elements)
-        {
-            if (Count - Index < nCount)
-            {
-                return false;
-            }
-
-            Elements = _Elements.GetRange(_Index, nCount).ToArray();
-
-            return true;
+            Elements = _Reader.ReadBytes(nCount);
+            return (Elements.Length == nCount);
         }
 
         /// <summary>
@@ -150,29 +144,38 @@ namespace Novacoin
         /// </summary>
         public int Index
         {
-            get { return _Index; }
+            get { return (int)_Stream.Position; }
         }
 
         public int Count
         {
-            get { return _Elements.Count; }
+            get { return (int)_Stream.Length; }
         }
 
         public ulong GetVarInt()
         {
-            byte prefix = Get();
-
-            switch (prefix)
+            try
             {
-                case 0xfd: // ushort
-                    return BitConverter.ToUInt16(Get(2), 0);
-                case 0xfe: // uint
-                    return BitConverter.ToUInt32(Get(4), 0);
-                case 0xff: // ulong
-                    return BitConverter.ToUInt64(Get(8), 0);
-                default:
-                    return prefix;
+                byte prefix = _Reader.ReadByte();
+
+                switch (prefix)
+                {
+                    case 0xfd: // ushort
+                        return _Reader.ReadUInt16();
+                    case 0xfe: // uint
+                        return _Reader.ReadUInt32();
+                    case 0xff: // ulong
+                        return _Reader.ReadUInt64();
+                    default:
+                        return prefix;
+                }
+            }
+            catch (EndOfStreamException e)
+            {
+                throw new ByteQueueException("No elements left.", e);
             }
         }
     }
 }
+
+

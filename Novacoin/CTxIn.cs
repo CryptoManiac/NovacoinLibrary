@@ -19,6 +19,7 @@
 using System;
 using System.Text;
 using System.Collections.Generic;
+using System.IO;
 
 namespace Novacoin
 {
@@ -131,18 +132,19 @@ namespace Novacoin
         /// <returns>Byte sequence.</returns>
         public static implicit operator byte[] (CTxIn input)
         {
-            var inputBytes = new List<byte>();
+            var stream = new MemoryStream();
+            var writer = new BinaryWriter(stream);
 
-            inputBytes.AddRange((byte[])input.prevout); // prevout
+            writer.Write(input.prevout); // prevout
+            writer.Write(VarInt.EncodeVarInt(input.scriptSig.Size)); // scriptSig length
+            writer.Write(input.scriptSig); // scriptSig
+            writer.Write(input.nSequence); // nSequence
 
-            var s = (byte[])input.scriptSig;
-            inputBytes.AddRange(VarInt.EncodeVarInt(s.Length)); // scriptSig length
-            inputBytes.AddRange(s); // scriptSig
-            inputBytes.AddRange(BitConverter.GetBytes(input.nSequence)); // Sequence
-
-            return inputBytes.ToArray();
+            var inputBytes = stream.ToArray();
+            writer.Close();
+            return inputBytes;
         }
-        
+
         public bool IsFinal
         {
             get { return (nSequence == uint.MaxValue); }

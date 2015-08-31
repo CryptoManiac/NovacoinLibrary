@@ -189,13 +189,13 @@ namespace Novacoin
                 // Seek to the end and then append magic bytes there.
                 writer.Seek(0, SeekOrigin.End);
                 writer.Write(magicBytes, 0, magicBytes.Length);
-                writer.Write(blkLenBytes, 0, blkLenBytes.Length);
 
                 // Save block size and current position in the block cursor fields.
                 nBlockPos = writer.Position;
                 nBlockSize = blockBytes.Length;                
 
                 // Write block and flush the stream.
+                writer.Write(blkLenBytes, 0, blkLenBytes.Length);
                 writer.Write(blockBytes, 0, blockBytes.Length);
                 writer.Flush();
 
@@ -369,12 +369,7 @@ namespace Novacoin
         /// <summary>
         /// Block file stream with read access
         /// </summary>
-        private Stream reader;
-
-        /// <summary>
-        /// Block file stream with write access
-        /// </summary>
-        private Stream writer;
+        private Stream fStreamReadWrite;
 
         /// <summary>
         /// Init the block storage manager.
@@ -389,9 +384,7 @@ namespace Novacoin
             bool firstInit = !File.Exists(strDbFile);
             dbConn = new SQLiteConnection(new SQLitePlatformGeneric(), strDbFile);
 
-            var fStreamReadWrite = File.Open(strBlockFile, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
-            reader = new BinaryReader(fStreamReadWrite).BaseStream;
-            writer = new BinaryWriter(fStreamReadWrite).BaseStream;
+            fStreamReadWrite = File.Open(strBlockFile, FileMode.OpenOrCreate, FileAccess.ReadWrite);
 
             if (firstInit)
             {
@@ -431,6 +424,7 @@ namespace Novacoin
 
         public bool GetTransaction(Hash256 TxID, ref CTransaction tx)
         {
+            var reader = new BinaryReader(fStreamReadWrite).BaseStream;
             var QueryTx = dbConn.Query<CTransactionStoreItem>("select * from [TransactionStorage] where [TransactionHash] = ?", (byte[])TxID);
 
             if (QueryTx.Count == 1)
@@ -445,6 +439,7 @@ namespace Novacoin
 
         private bool AddItemToIndex(ref CBlockStoreItem itemTemplate, ref CBlock block)
         {
+            var writer = new BinaryWriter(fStreamReadWrite).BaseStream;
             var blockHash = new ScryptHash256(itemTemplate.Hash);
 
             if (blockMap.ContainsKey(blockHash))
@@ -527,7 +522,7 @@ namespace Novacoin
             uint nHeight = prevBlockCursor.nHeight + 1;
 
             // Check timestamp against prev
-            if (NetInfo.FutureDrift(block.header.nTime) < prevBlockHeader.nTime)
+            if (NetUtils.FutureDrift(block.header.nTime) < prevBlockHeader.nTime)
             {
                 // block's timestamp is too early
                 return false;
@@ -562,6 +557,8 @@ namespace Novacoin
 
         public bool GetBlock(ScryptHash256 blockHash, ref CBlock block)
         {
+            var reader = new BinaryReader(fStreamReadWrite).BaseStream;
+
             var QueryBlock = dbConn.Query<CBlockStoreItem>("select * from [BlockStorage] where [Hash] = ?", (byte[])blockHash);
 
             if (QueryBlock.Count == 1)
@@ -747,8 +744,7 @@ namespace Novacoin
                 {
                     // Free other state (managed objects).
 
-                    reader.Dispose();
-                    reader.Dispose();
+                    fStreamReadWrite.Dispose();
                 }
 
                 if (dbConn != null)

@@ -87,7 +87,7 @@ namespace Novacoin
 		{
             try
             {
-                ByteQueue wBytes = new ByteQueue(blockBytes);
+                ByteQueue wBytes = new ByteQueue(ref blockBytes);
 
                 // Fill the block header fields
                 header = new CBlockHeader(wBytes.Get(80));
@@ -185,13 +185,13 @@ namespace Novacoin
                 }
 
                 // Check timestamp
-                if (header.nTime > NetInfo.FutureDrift(NetInfo.GetAdjustedTime()))
+                if (header.nTime > NetUtils.FutureDrift(NetUtils.GetAdjustedTime()))
                 {
                     return false;
                 }
 
                 // Check coinbase timestamp
-                if (header.nTime < NetInfo.PastDrift(vtx[0].nTime))
+                if (header.nTime < NetUtils.PastDrift(vtx[0].nTime))
                 {
                     return false;
                 }

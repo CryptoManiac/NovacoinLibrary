@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace Novacoin
 {
@@ -128,5 +129,23 @@ namespace Novacoin
                     return prefix;
             }
         }
+
+        public static ulong ReadVarInt(ref BinaryReader reader)
+        {
+            byte prefix = reader.ReadByte();
+
+            switch (prefix)
+            {
+                case 0xfd: // ushort
+                    return reader.ReadUInt16();
+                case 0xfe: // uint
+                    return reader.ReadUInt32();
+                case 0xff: // ulong
+                    return reader.ReadUInt64();
+                default:
+                    return prefix;
+            }
+        }
+
     }
 }

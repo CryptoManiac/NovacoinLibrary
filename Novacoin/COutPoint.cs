@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.IO;
 using System.Text;
 
 namespace Novacoin
@@ -73,11 +74,17 @@ namespace Novacoin
 
         public static implicit operator byte[] (COutPoint o)
         {
-            var r = new List<byte>();
-            r.AddRange((byte[])o.hash);
-            r.AddRange(BitConverter.GetBytes(o.n));
+            var stream = new MemoryStream();
+            var writer = new BinaryWriter(stream);
 
-            return r.ToArray();
+            writer.Write(o.hash);
+            writer.Write(o.n);
+
+            var outBytes = stream.ToArray();
+
+            writer.Close();
+
+            return outBytes;
         }
 
         public override string ToString()

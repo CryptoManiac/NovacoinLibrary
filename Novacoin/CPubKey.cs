@@ -67,7 +67,7 @@ namespace Novacoin
 
         public string ToHex()
         {
-            return Interop.ToHex((byte[])this);
+            return Interop.ToHex(this);
         }
 
         /// <summary>
