@@ -269,12 +269,13 @@ namespace Novacoin
         {
             try
             {
-                var wBytes = new ByteQueue(ref txBytes);
+                var stream = new MemoryStream(txBytes);
+                var reader = new BinaryReader(stream);
 
-                nVersion = BitConverter.ToUInt32(wBytes.Get(4), 0);
-                nTime = BitConverter.ToUInt32(wBytes.Get(4), 0);
+                nVersion = reader.ReadUInt32();
+                nTime = reader.ReadUInt32();
 
-                int nInputs = (int)wBytes.GetVarInt();
+                int nInputs = (int)VarInt.ReadVarInt(ref reader);
                 vin = new CTxIn[nInputs];
 
                 for (int nCurrentInput = 0; nCurrentInput < nInputs; nCurrentInput++)
@@ -282,28 +283,28 @@ namespace Novacoin
                     // Fill inputs array
                     vin[nCurrentInput] = new CTxIn();
 
-                    vin[nCurrentInput].prevout = new COutPoint(wBytes.Get(36));
+                    vin[nCurrentInput].prevout = new COutPoint(reader.ReadBytes(36));
 
-                    int nScriptSigLen = (int)wBytes.GetVarInt();
-                    vin[nCurrentInput].scriptSig = new CScript(wBytes.Get(nScriptSigLen));
+                    int nScriptSigLen = (int)VarInt.ReadVarInt(ref reader);
+                    vin[nCurrentInput].scriptSig = new CScript(reader.ReadBytes(nScriptSigLen));
 
-                    vin[nCurrentInput].nSequence = BitConverter.ToUInt32(wBytes.Get(4), 0);
+                    vin[nCurrentInput].nSequence = reader.ReadUInt32();
                 }
 
-                int nOutputs = (int)wBytes.GetVarInt();
+                int nOutputs = (int)VarInt.ReadVarInt(ref reader);
                 vout = new CTxOut[nOutputs];
 
                 for (int nCurrentOutput = 0; nCurrentOutput < nOutputs; nCurrentOutput++)
                 {
                     // Fill outputs array
                     vout[nCurrentOutput] = new CTxOut();
-                    vout[nCurrentOutput].nValue = BitConverter.ToUInt64(wBytes.Get(8), 0);
+                    vout[nCurrentOutput].nValue = reader.ReadUInt64();
 
-                    int nScriptPKLen = (int)wBytes.GetVarInt();
-                    vout[nCurrentOutput].scriptPubKey = new CScript(wBytes.Get(nScriptPKLen));
+                    int nScriptPKLen = (int)VarInt.ReadVarInt(ref reader);
+                    vout[nCurrentOutput].scriptPubKey = new CScript(reader.ReadBytes(nScriptPKLen));
                 }
 
-                nLockTime = BitConverter.ToUInt32(wBytes.Get(4), 0);
+                nLockTime = reader.ReadUInt32();
             }
             catch (Exception e)
             {
