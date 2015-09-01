@@ -45,7 +45,7 @@ namespace Novacoin
             var V = new uint[(131072 + 63) / sizeof(uint)];
 
             var keyBytes1 = CryptoUtils.PBKDF2_Sha256(128, (byte[])inputBytes, (byte[])inputBytes, 1);
-            var X = ToUInt32Array(keyBytes1);
+            var X = Interop.ToUInt32Array(keyBytes1);
 
             for (var i = 0; i < 1024; i++)
             {
@@ -65,7 +65,7 @@ namespace Novacoin
                 xor_salsa8(ref X, 16, ref X, 0);
             }
 
-            var xBytes = LEBytes(X);
+            var xBytes = Interop.LEBytes(X);
             var keyBytes2 = CryptoUtils.PBKDF2_Sha256(32, (byte[])inputBytes, xBytes, 1);
 
             return new ScryptHash256(keyBytes2);
@@ -141,32 +141,5 @@ namespace Novacoin
             B[indexB + 14] += x14;
             B[indexB + 15] += x15;
         }
-
-        /// <summary>
-        /// Convert array of unsigned integers to array of bytes.
-        /// </summary>
-        /// <param name="values">Array of unsigned integer values.</param>
-        /// <returns>Byte array</returns>
-        private static byte[] LEBytes(uint[] values)
-        {
-            var result = new byte[values.Length * sizeof(uint)];
-            Buffer.BlockCopy(values, 0, result, 0, result.Length);
-
-            return result;
-        }
-
-        /// <summary>
-        /// Convert byte array to array of unsigned integers.
-        /// </summary>
-        /// <param name="bytes">Byte array.</param>
-        /// <returns>Array of integers</returns>
-        private static uint[] ToUInt32Array(byte[] bytes)
-        {
-            var result = new uint[bytes.Length / sizeof(uint)];
-            Buffer.BlockCopy(bytes, 0, result, 0, bytes.Length);
-
-            return result;
-        }
-
     }
 }

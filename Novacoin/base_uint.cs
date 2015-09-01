@@ -18,12 +18,16 @@
 
 
 using System;
+using System.Diagnostics.Contracts;
 
 namespace Novacoin
 {
+    /// <summary>
+    /// Base class for uint256 and uint160.
+    /// </summary>
     public class base_uint : IComparable<base_uint>, IEquatable<base_uint>
     {
-        protected int nWidth;
+        protected readonly int nWidth;
         protected uint[] pn;
 
         public double getDouble()
@@ -58,7 +62,6 @@ namespace Novacoin
             }
         }
 
-
         public static bool operator !(base_uint a)
         {
             for (int i = 0; i < a.nWidth; i++)
@@ -71,98 +74,6 @@ namespace Novacoin
             return true;
         }
 
-        public static base_uint operator ~(base_uint a)
-        {
-            var ret = new base_uint();
-            for (int i = 0; i < a.nWidth; i++)
-            {
-                ret.pn[i] = ~a.pn[i];
-            }
-            return ret;
-        }
-
-        public static base_uint operator -(base_uint a)
-        {
-            var ret = new base_uint();
-            for (int i = 0; i < a.nWidth; i++)
-            {
-                ret.pn[i] = ~a.pn[i];
-            }
-            ret++;
-            return ret;
-        }
-
-
-        public static base_uint operator ++(base_uint a)
-        {
-            int i = 0;
-            while (++a.pn[i] == 0 && i < a.nWidth - 1)
-            {
-                i++;
-            }
-            return a;
-        }
-
-        public static base_uint operator --(base_uint a)
-        {
-            int i = 0;
-            while (--a.pn[i] == uint.MaxValue && i < a.nWidth - 1)
-            {
-                i++;
-            }
-            return a;
-        }
-
-        public static base_uint operator ^(base_uint a, base_uint b)
-        {
-            var result = new base_uint();
-            result.pn = new uint[a.nWidth];
-            for (int i = 0; i < result.nWidth; i++)
-            {
-                result.pn[i] = a.pn[i] ^ b.pn[i];
-            }
-            return result;
-        }
-
-        public static base_uint operator +(base_uint a, base_uint b)
-        {
-            var result = new base_uint();
-            ulong carry = 0;
-            for (int i = 0; i < result.nWidth; i++)
-            {
-                ulong n = carry + a.pn[i] + b.pn[i];
-                result.pn[i] = (uint)(n & 0xffffffff);
-                carry = n >> 32;
-            }
-            return result;
-        }
-
-        public static base_uint operator -(base_uint a, base_uint b)
-        {
-            return a + (-b);
-        }
-
-        public static base_uint operator &(base_uint a, base_uint b)
-        {
-            var result = new base_uint();
-            result.pn = new uint[a.nWidth];
-            for (int i = 0; i < result.nWidth; i++)
-            {
-                result.pn[i] = a.pn[i] & b.pn[i];
-            }
-            return result;
-        }
-
-        public static base_uint operator |(base_uint a, base_uint b)
-        {
-            var result = new base_uint();
-            result.pn = new uint[a.nWidth];
-            for (int i = 0; i < result.nWidth; i++)
-            {
-                result.pn[i] = a.pn[i] | b.pn[i];
-            }
-            return result;
-        }
 
         public static bool operator <(base_uint a, base_uint b)
         {
@@ -251,10 +162,12 @@ namespace Novacoin
             {
                 return false;
             }
+
             if (a.pn[1] != (uint)(b >> 32))
             {
                 return false;
             }
+
             for (int i = 2; i < a.nWidth; i++)
             {
                 if (a.pn[i] != 0)
@@ -287,20 +200,13 @@ namespace Novacoin
 
         public static implicit operator byte[] (base_uint a)
         {
-            var result = new byte[a.nWidth];
-            for (int i = 0; i < a.nWidth; i++)
-            {
-                Buffer.BlockCopy(BitConverter.GetBytes(a.pn[i]), 0, result, 4 * i, 4);
-            }
-            return result;
+            return Interop.LEBytes(a.pn);
         }
 
         private static bool ArraysEqual(uint[] a, uint[] b)
         {
-            if (a.Length != b.Length)
-            {
-                return false;
-            }
+            Contract.Requires<ArgumentException>(a.Length == b.Length, "Array length mismatch.");
+
             for (int i = 0; i < a.Length; i++)
             {
                 if (a[i] != b[i])
@@ -351,6 +257,11 @@ namespace Novacoin
         public override bool Equals(object o)
         {
             return Equals(o as base_uint);
+        }
+
+        public override string ToString()
+        {
+            return Interop.ToHex(Interop.ReverseBytes(this));
         }
     }
 }

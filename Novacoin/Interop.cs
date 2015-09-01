@@ -28,6 +28,32 @@ namespace Novacoin
     public class Interop
     {
         /// <summary>
+        /// Convert array of unsigned integers to array of bytes.
+        /// </summary>
+        /// <param name="values">Array of unsigned integer values.</param>
+        /// <returns>Byte array</returns>
+        public static byte[] LEBytes(uint[] values)
+        {
+            var result = new byte[values.Length * sizeof(uint)];
+            Buffer.BlockCopy(values, 0, result, 0, result.Length);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Convert byte array to array of unsigned integers.
+        /// </summary>
+        /// <param name="bytes">Byte array.</param>
+        /// <returns>Array of integers</returns>
+        public static uint[] ToUInt32Array(byte[] bytes)
+        {
+            var result = new uint[bytes.Length / sizeof(uint)];
+            Buffer.BlockCopy(bytes, 0, result, 0, bytes.Length);
+
+            return result;
+        }
+
+        /// <summary>
         /// Reverse byte array
         /// </summary>
         /// <param name="source">Source array</param>

@@ -283,7 +283,7 @@ namespace NovacoinTest
 
             Console.WriteLine("{0} != {1} : {2}", hash1.ToString(), hash2.ToString(), hash1 != hash2);
             Console.WriteLine("{0} == {1} : {2}\n", hash2.ToString(), hash3.ToString(), hash2 == hash3);
-            
+
 
             /*
             /// Pre-09854c5 revisions were affected by integer overflow bug, this issue was caused by incorrect deserialization of input value. Below you can see an example, broken transaction and its normal version.
@@ -294,11 +294,36 @@ namespace NovacoinTest
             Console.WriteLine(txNoBug);
             */
 
-            
+            /*
+            var test1 = new uint256("0000000000021173331e7742b51afe6c853158a8881f7ad871f4391a7ddcfa4e");
+            var test2 = new uint256("0000000000093bf84cea580ede01206c3ffc75487ec46771e533e38d9bda972d");
+
+            Console.WriteLine(test1 < test2);
+            Console.WriteLine(test1 > test2);
+            Console.WriteLine(test1 == test2);
+            Console.WriteLine(test1 != test2);
+
+            Console.WriteLine(test1 - 1);
+            Console.WriteLine(test1 + 1);
+
+            Console.WriteLine(test1 << 32);
+            Console.WriteLine(test1 >> 32);
+
+            Output:
+
+            False
+            False
+            True
+            False
+            0000000000021173331e7742b51afe6c853158a8881f7ad871f4391a7ddcfa4d
+            0000000000021173331e7742b51afe6c853158a8881f7ad871f4391a7ddcfa4f
+            00021173331e7742b51afe6c853158a8881f7ad871f4391a7ddcfa4e00000000
+            000000000000000000021173331e7742b51afe6c853158a8881f7ad871f4391a
+            */
+
             Console.WriteLine("Reading the block file...");
             var bs = new CBlockStore();
             bs.ParseBlockFile();
-            
 
             Console.ReadLine();
         }
