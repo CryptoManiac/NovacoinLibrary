@@ -42,7 +42,7 @@ namespace Novacoin
     }
 
     /// <summary>
-    /// Represents the transaction. Any transaction must provide one input and one output at least.
+    /// Represents the transaction.
     /// </summary>
     public class CTransaction
     {
@@ -437,12 +437,12 @@ namespace Novacoin
 
             foreach (var txin in vin)
             {
-                sb.AppendFormat(" {0},\n", txin.ToString());
+                sb.AppendFormat(" {0},\n", txin);
             }
 
             foreach (var txout in vout)
             {
-                sb.AppendFormat(" {0},\n", txout.ToString());
+                sb.AppendFormat(" {0},\n", txout);
             }
 
             sb.AppendFormat("\nnLockTime={0}\n)", nLockTime);

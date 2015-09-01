@@ -90,7 +90,7 @@ namespace Novacoin
         public override string ToString()
         {
             var sb = new StringBuilder();
-            sb.AppendFormat("COutPoint({0}, {1})", hash.ToString(), n);
+            sb.AppendFormat("COutPoint({0}, {1})", hash, n);
 
             return sb.ToString();
         }

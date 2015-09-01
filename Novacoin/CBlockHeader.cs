@@ -72,14 +72,14 @@ namespace Novacoin
             nNonce = 0;
 		}
 
-        public CBlockHeader(CBlockHeader h)
+        public CBlockHeader(CBlockHeader header)
         {
-            nVersion = h.nVersion;
-            prevHash = new ScryptHash256(h.prevHash);
-            merkleRoot = new Hash256(h.merkleRoot);
-            nTime = h.nTime;
-            nBits = h.nBits;
-            nNonce = h.nNonce;
+            nVersion = header.nVersion;
+            prevHash = new ScryptHash256(header.prevHash);
+            merkleRoot = new Hash256(header.merkleRoot);
+            nTime = header.nTime;
+            nBits = header.nBits;
+            nNonce = header.nNonce;
         }
 
         internal CBlockHeader(ref BinaryReader reader)
@@ -117,17 +117,17 @@ namespace Novacoin
         /// Convert current block header instance into sequence of bytes
         /// </summary>
         /// <returns>Byte sequence</returns>
-        public static implicit operator byte[] (CBlockHeader h)
+        public static implicit operator byte[] (CBlockHeader header)
         {
             var stream = new MemoryStream();
             var writer = new BinaryWriter(stream);
 
-            writer.Write(h.nVersion);
-            writer.Write(h.prevHash);
-            writer.Write(h.merkleRoot);
-            writer.Write(h.nTime);
-            writer.Write(h.nBits);
-            writer.Write(h.nNonce);
+            writer.Write(header.nVersion);
+            writer.Write(header.prevHash);
+            writer.Write(header.merkleRoot);
+            writer.Write(header.nTime);
+            writer.Write(header.nBits);
+            writer.Write(header.nNonce);
 
             var resultBytes = stream.ToArray();
 
@@ -146,7 +146,7 @@ namespace Novacoin
         public override string ToString()
         {
             var sb = new StringBuilder();
-            sb.AppendFormat("CBlockHeader(nVersion={0}, prevHash={1}, merkleRoot={2}, nTime={3}, nBits={4}, nNonce={5})", nVersion, prevHash.ToString(), merkleRoot.ToString(), nTime, nBits, nNonce);
+            sb.AppendFormat("CBlockHeader(nVersion={0}, prevHash={1}, merkleRoot={2}, nTime={3}, nBits={4}, nNonce={5})", nVersion, prevHash, merkleRoot, nTime, nBits, nNonce);
             return sb.ToString();
         }
 	}

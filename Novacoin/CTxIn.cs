@@ -162,7 +162,7 @@ namespace Novacoin
             }
             else
             {
-                sb.AppendFormat(", scriptsig={0}", scriptSig.ToString());
+                sb.AppendFormat(", scriptsig={0}", scriptSig);
             }
 
             if (nSequence != uint.MaxValue)
