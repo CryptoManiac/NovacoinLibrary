@@ -52,6 +52,11 @@ namespace Novacoin
         /// </summary>
         public const uint nMaxBlockSize = 1000000;
 
+        /// <summary>
+        /// Sanity threshold for amount of sigops.
+        /// </summary>
+        public const uint nMaxSigOps = 20000;
+
 		/// <summary>
 		/// Block header.
 		/// </summary>
@@ -250,7 +255,7 @@ namespace Novacoin
             }
 
             // Reject block if validation would consume too much resources.
-            if (nSigOps > 50000)
+            if (nSigOps > nMaxSigOps)
             {
                 return false;
             }
