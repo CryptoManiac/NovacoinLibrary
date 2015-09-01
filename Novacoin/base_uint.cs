@@ -347,5 +347,10 @@ namespace Novacoin
 
             return ArraysEqual(pn, a.pn);
         }
+
+        public override bool Equals(object o)
+        {
+            return Equals(o as base_uint);
+        }
     }
 }
