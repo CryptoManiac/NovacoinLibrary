@@ -56,6 +56,11 @@ namespace Novacoin
         public const ulong nMaxMoney = 2000000000 * nCoin;
 
         /// <summary>
+        /// Maximum transaction size is 250Kb
+        /// </summary>
+        public const uint nMaxTxSize = 250000;
+
+        /// <summary>
         /// Version of transaction schema.
         /// </summary>
         public uint nVersion;
@@ -174,7 +179,7 @@ namespace Novacoin
         /// <returns>Checking result</returns>
         public bool CheckTransaction()
         {
-            if (Size > 250000 || vin.Length == 0 || vout.Length == 0)
+            if (Size > nMaxTxSize || vin.Length == 0 || vout.Length == 0)
             {
                 return false;
             }

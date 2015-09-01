@@ -273,7 +273,7 @@ namespace Novacoin
         /// <returns>Result</returns>
         public bool ReadFromFile(ref Stream reader, out CTransaction tx)
         {
-            var buffer = new byte[250000]; // Max transaction size is 250kB
+            var buffer = new byte[CTransaction.nMaxTxSize];
             tx = null;
 
             try
@@ -661,7 +661,7 @@ namespace Novacoin
 
             var nOffset = 0L;
 
-            var buffer = new byte[1000000]; // Max block size is 1Mb
+            var buffer = new byte[CBlock.nMaxBlockSize]; // Max block size is 1Mb
             var intBuffer = new byte[4];
 
             var fStream2 = File.OpenRead(BlockFile);

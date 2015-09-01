@@ -47,6 +47,11 @@ namespace Novacoin
     /// </summary>
     public class CBlock
 	{
+        /// <summary>
+        /// Maximum block size is 1Mb.
+        /// </summary>
+        public const uint nMaxBlockSize = 1000000;
+
 		/// <summary>
 		/// Block header.
 		/// </summary>
@@ -122,7 +127,7 @@ namespace Novacoin
             uint nSigOps = 0; // total sigops
 
             // Basic sanity checkings
-            if (vtx.Length == 0 || Size > 1000000)
+            if (vtx.Length == 0 || Size > nMaxBlockSize)
             {
                 return false;
             }
