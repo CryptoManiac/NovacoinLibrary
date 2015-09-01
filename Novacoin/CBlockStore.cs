@@ -340,30 +340,6 @@ namespace Novacoin
         /// </summary>
         private ConcurrentDictionary<Hash256, CTransactionStoreItem> txMap = new ConcurrentDictionary<Hash256, CTransactionStoreItem>();
 
-        private CBlock genesisBlock = new CBlock(
-            Interop.HexToArray(
-                "01000000" + // nVersion=1
-                "0000000000000000000000000000000000000000000000000000000000000000" + // prevhash is zero
-                "7b0502ad2f9f675528183f83d6385794fbcaa914e6d385c6cb1d866a3b3bb34c" + // merkle root
-                "398e1151" + // nTime=1360105017
-                "ffff0f1e" + // nBits=0x1e0fffff
-                "d3091800" + // nNonce=1575379
-                "01" +       // nTxCount=1
-                "01000000" + // nVersion=1
-                "398e1151" + // nTime=1360105017
-                "01" +       // nInputs=1
-                "0000000000000000000000000000000000000000000000000000000000000000" + // input txid is zero
-                "ffffffff" + // n=uint.maxValue
-                "4d" +       // scriptSigLen=77
-                "04ffff001d020f274468747470733a2f2f626974636f696e74616c6b2e6f72672f696e6465782e7068703f746f7069633d3133343137392e6d736731353032313936236d736731353032313936" + // scriptSig
-                "ffffffff" + // nSequence=uint.maxValue
-                "01" +       // nOutputs=1
-                "0000000000000000" + // nValue=0
-                "00" +       // scriptPubkeyLen=0
-                "00000000" + // nLockTime=0
-                "00"         // sigLen=0
-        ));
-
         public static CBlockStore Instance;
 
         /// <summary>
@@ -393,6 +369,30 @@ namespace Novacoin
                     // Create tables
                     dbConn.CreateTable<CBlockStoreItem>(CreateFlags.AutoIncPK);
                     dbConn.CreateTable<CTransactionStoreItem>(CreateFlags.ImplicitPK);
+
+                    var genesisBlock = new CBlock(
+                        Interop.HexToArray(
+                            "01000000" + // nVersion=1
+                            "0000000000000000000000000000000000000000000000000000000000000000" + // prevhash is zero
+                            "7b0502ad2f9f675528183f83d6385794fbcaa914e6d385c6cb1d866a3b3bb34c" + // merkle root
+                            "398e1151" + // nTime=1360105017
+                            "ffff0f1e" + // nBits=0x1e0fffff
+                            "d3091800" + // nNonce=1575379
+                            "01" +       // nTxCount=1
+                            "01000000" + // nVersion=1
+                            "398e1151" + // nTime=1360105017
+                            "01" +       // nInputs=1
+                            "0000000000000000000000000000000000000000000000000000000000000000" + // input txid is zero
+                            "ffffffff" + // n=uint.maxValue
+                            "4d" +       // scriptSigLen=77
+                            "04ffff001d020f274468747470733a2f2f626974636f696e74616c6b2e6f72672f696e6465782e7068703f746f7069633d3133343137392e6d736731353032313936236d736731353032313936" + // scriptSig
+                            "ffffffff" + // nSequence=uint.maxValue
+                            "01" +       // nOutputs=1
+                            "0000000000000000" + // nValue=0
+                            "00" +       // scriptPubkeyLen=0
+                            "00000000" + // nLockTime=0
+                            "00"         // sigLen=0
+                    ));
 
                     // Write block to file.
                     var itemTemplate = new CBlockStoreItem()
@@ -589,14 +589,20 @@ namespace Novacoin
 
             // TODO: Limited duplicity on stake and reserialization of block signature
 
-            // Preliminary checks
             if (!block.CheckBlock(true, true, true))
             {
-                return true;
+                // Preliminary checks failure.
+                return false;
             }
 
             if (block.IsProofOfStake)
             {
+                if (!block.SignatureOK || !block.vtx[1].VerifyScripts())
+                {
+                    // Proof-of-Stake signature validation failure.
+                    return false;
+                }
+
                 // TODO: proof-of-stake validation
             }
 
