@@ -27,7 +27,7 @@ namespace Novacoin
     /// </summary>
     public class base_uint : IComparable<base_uint>, IEquatable<base_uint>
     {
-        protected readonly int nWidth;
+        protected int nWidth;
         protected uint[] pn;
 
         public double getDouble()

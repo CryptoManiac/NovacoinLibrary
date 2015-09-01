@@ -13,6 +13,7 @@ namespace Novacoin
 
         public uint256()
         {
+            base.nWidth = nWidth;
             pn = new uint[nWidth];
 
             for (int i = 0; i < nWidth; i++)
@@ -23,6 +24,7 @@ namespace Novacoin
 
         public uint256(uint256 b)
         {
+            base.nWidth = nWidth;
             pn = new uint[nWidth];
 
             for (int i = 0; i < nWidth; i++)
@@ -34,6 +36,7 @@ namespace Novacoin
 
         public uint256(ulong n)
         {
+            base.nWidth = nWidth;
             pn = new uint[nWidth];
 
             pn[0] = (uint)n;
@@ -48,6 +51,7 @@ namespace Novacoin
         {
             Contract.Requires<ArgumentException>(bytes.Length == 32, "Incorrect array length");
 
+            base.nWidth = nWidth;
             pn = Interop.ToUInt32Array(bytes);
         }
 
@@ -55,6 +59,7 @@ namespace Novacoin
         {
             Contract.Requires<ArgumentException>(hex.Length == 64, "Incorrect string");
 
+            base.nWidth = nWidth;
             var bytes = Interop.ReverseBytes(Interop.HexToArray(hex));
             pn = Interop.ToUInt32Array(bytes);
         }

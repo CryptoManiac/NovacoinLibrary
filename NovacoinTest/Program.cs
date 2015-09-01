@@ -311,10 +311,10 @@ namespace NovacoinTest
 
             Output:
 
+            True
             False
             False
             True
-            False
             0000000000021173331e7742b51afe6c853158a8881f7ad871f4391a7ddcfa4d
             0000000000021173331e7742b51afe6c853158a8881f7ad871f4391a7ddcfa4f
             00021173331e7742b51afe6c853158a8881f7ad871f4391a7ddcfa4e00000000
