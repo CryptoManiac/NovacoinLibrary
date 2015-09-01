@@ -4,6 +4,7 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Numerics;
 
 namespace Novacoin
 {
@@ -64,6 +65,66 @@ namespace Novacoin
             pn = Interop.ToUInt32Array(bytes);
         }
 
+        /// <summary>
+        /// Compact representation of unsigned 256bit numbers.
+        /// 
+        /// N = (-1^sign) * m * 256^(exp-3)
+        /// 
+        /// http://bitcoin.stackexchange.com/questions/30467/what-are-the-equations-to-convert-between-bits-and-difficulty
+        /// </summary>
+        public uint Compact
+        {
+            get
+            {
+                int nSize = (bits + 7) / 8;
+                uint nCompact = 0;
+                if (nSize <= 3)
+                    nCompact = ((uint)GetLow64()) << 8 * (3 - nSize);
+                else
+                {
+                    uint256 bn = this >> 8 * (nSize - 3);
+                    nCompact = (uint)bn.GetLow64();
+                }
+
+                if ((nCompact & 0x00800000) != 0)
+                {
+                    nCompact >>= 8;
+                    nSize++;
+                }
+
+                Contract.Assert((nCompact & ~0x007fffff) == 0);
+                Contract.Assert(nSize < 256);
+
+                nCompact |= (uint)nSize << 24;
+                nCompact |= 0;
+
+                return nCompact;
+            }
+            set {
+                int nSize = (int)value >> 24;
+                uint nWord = value & 0x007fffff;
+
+                uint256 i;
+
+                if (nSize <= 3)
+                {
+                    nWord >>= 8 * (3 - nSize);
+                    i = new uint256(nWord);
+                }
+                else
+                {
+                    i = new uint256(nWord);
+                    i <<= 8 * (nSize - 3);
+                }
+
+                pn = i.pn;
+            }
+        }
+
+        private void SetBytes(byte[] bytes)
+        {
+            pn = Interop.ToUInt32Array(Interop.ReverseBytes(bytes));
+        }
 
         public static uint256 operator ~(uint256 a)
         {

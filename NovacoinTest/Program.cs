@@ -20,19 +20,19 @@ namespace NovacoinTest
             var tx = new CTransaction(Interop.HexToArray(strUserTx));
             var txCoinbase = new CTransaction(Interop.HexToArray(strCoinbaseTx));
 
-            Console.WriteLine("User TX:{0}\n", tx.ToString());
-            Console.WriteLine("Coinbase TX: {0}\n", txCoinbase.ToString());
+            Console.WriteLine("User TX:{0}\n", tx);
+            Console.WriteLine("Coinbase TX: {0}\n", txCoinbase);
 
             /// Block encoding/decoding tests
             string strBlock1 = "0600000086e539d77573abc0d81feb7896e1aef41a866001bc78bd24f5fe1a0000000000f5822cea59d999f37d896f66899c86e01e764ed6014706f3ceb58281ed55d0e55ab7d155ada3001d0000000005010000005ab7d155010000000000000000000000000000000000000000000000000000000000000000ffffffff0e0363ff02026d05062f503253482fffffffff0100000000000000000000000000010000005ab7d15501a768f8ed022f4080e3c8866bbe8292c7610b826cd467c49a06a1d0ff2ef7cdd6000000006b483045022100dce689d8cda64ebaffd6b96321952f16df34494256c58d2fd83069db7bce40e5022016020f55dc747d845d2057547c650412aa27d7d628e72238579f72e572dafdfe012102916e12c72a41913a5307bf7477db80dd499ea20f1a6bd99a2bdae6229f5aa093ffffffff03000000000000000000d0f1440300000000232102916e12c72a41913a5307bf7477db80dd499ea20f1a6bd99a2bdae6229f5aa093acc23f450300000000232102916e12c72a41913a5307bf7477db80dd499ea20f1a6bd99a2bdae6229f5aa093ac000000000100000091b4d15502c252c9130b1fd1dc8ef59cdb550ed398c4fe12c7ebf3eb917076bbda039b769d010000004847304402204bee0faac004364cdf6483d492333d00ad6f7c925faa3750fef2c79a9065a28102204a5e2b970f776ea1af2c2c03e36e6381d3d69b529d90b512363ae44815a321c601ffffffffc252c9130b1fd1dc8ef59cdb550ed398c4fe12c7ebf3eb917076bbda039b769d02000000494830450221008bf152a838f6f14f0ed1b2afc27821717e43a528e27aec3569ab42fc82f468aa02202cf6c962ef97db6e5ba32ccdd235afdc9a3cbb7907bfe879f8109446485d66dc01ffffffff0116467210000000001976a914edbf189bece45d4afa9848276e949183936bf6a488ac000000000100000017b5d1550229c74fb0004d45fba5baaefed1d9c229a8f1c85c36590cedf3ce6635335963d5000000006a4730440220319a4dfcf1607682d493c6d90087dc35d778a8bfcebe3549bae0af69e8daecb902206e6622367be30d9ccd4fdd27ed09c2fbcc9e5c858b26dfcdd927a8aba637b327012103b103f5d7e9717bc37cc99984b23babc3fff4677728be6b9c1847f6ce78e557f5ffffffff24b91fa6e9c160cc8da306e485942ee76137117aa8adecf531f6af1aef4e9b680000000049483045022100c9b311b7a7f5adeb0e72f962fb81b4cc1d105e32cfd7b1a7641a0fcc014d67c50220527161371a17301448bae87a26df201598b46d00ff452893177e9aed665c357c01ffffffff028e380000000000001976a91400afc350f81916a642a88b5ce8f73508663b531188ac67f46b00000000001976a91420c10f267f55ff4e05a083a8e1f4e882fbca1f4988ac0000000001000000efb6d15501626835db281e1fe6271620b8f67999f2174bb96df0eb3935fc99771e4ff45acf000000006a47304402206c34deb9c07c5477c47d398eaf91dbdf74aff5229c448e82ed0c1d8e2ee30e2d02203fe609434844b3eee21e747e313bcbf98efa4326727db6d2efba7bb627d2e0ce0121030c86c72f59c66824297aa78e433fe7057fd064e03e44c62ec49201ee0184149bffffffff028be30300000000001976a91481fc5cfb7f41afb3baf4138626022b3081b84e1788ac6abd0000000000001976a91499346dcd8ddfa10326697d5387b7df765004f4e388ac0000000046304402205189911c97354edb2965b4a119e6d76281f4c5da8fcead19c97bf6bcc9990fe102200f56d9dd967b036627b32b1e3ef2f819deaaafcc3244332472df7acfe19f1aa5";
             var b1 = new CBlock(Interop.HexToArray(strBlock1));
 
-            string strBlock1Bytes = Interop.ToHex((byte[])b1);
+            string strBlock1Bytes = Interop.ToHex(b1);
 
             string strBlock2 = "06000000eb5ab262c7382e7e009ad0b65c707131b8b6b846f8920a1a6697d929203a22f70e8cbd6bee1c0519a9d06b749b5eb6e599c154b12b732170807e603b6c326abbe0b7d15560e2211b15085b8f0101000000e0b7d155010000000000000000000000000000000000000000000000000000000000000000ffffffff270364ff02062f503253482f04c7b7d15508300000032b0000000d2f6e6f64655374726174756d2f0000000002f87d6b000000000023210287753c456abfc248d1bd155f44742d2ea72a2f29a5290c815fea0e9c55c4e2d0ac488a0000000000001976a914276cdbe21aaab75d58e151e01efea2860d3ef3d088ac0000000000";
             var b2 = new CBlock(Interop.HexToArray(strBlock2));
 
-            string strBlock2Bytes = Interop.ToHex((byte[])b2);
+            string strBlock2Bytes = Interop.ToHex(b2);
 
             Console.WriteLine(b1.ToString());
             Console.WriteLine("OK: {0}\n", strBlock1 == strBlock1Bytes);
@@ -62,19 +62,19 @@ namespace NovacoinTest
             /// Address generation test
 
             var keyID = keyPair1.KeyID;
-            Console.WriteLine("Key ID: {0}", Interop.ToHex((byte[])keyID));
-            Console.WriteLine("Novacoin address: {0}\n", keyID.ToString());
+            Console.WriteLine("Key ID: {0}", Interop.ToHex(keyID));
+            Console.WriteLine("Novacoin address: {0}\n", keyID);
 
             /// Privkey deserialization test
             var keyPair4 = new CKeyPair("MEP3qCtFGmWo3Gurf8fMnUNaDHGNf637DqjoeG8rKium2jSj51sf");
             Console.WriteLine("\nHard-coded privkey in Hex: {0}", keyPair4.ToHex());
-            Console.WriteLine("Hard-Coded privkey address: {0}", keyPair4.KeyID.ToString());
+            Console.WriteLine("Hard-Coded privkey address: {0}", keyPair4.KeyID);
             Console.WriteLine("Hard-Coded privkey: {0}\n", keyPair4.ToString());
 
             // Privkey hex deserialization test
             CKeyPair keyPair5 = new CKeyPair((byte[])keyPair4);
             Console.WriteLine("Decoded privkey in Hex: {0}", keyPair5.ToHex());
-            Console.WriteLine("Decoded privkey address: {0}\n", keyPair5.KeyID.ToString());
+            Console.WriteLine("Decoded privkey address: {0}\n", keyPair5.KeyID);
 
             /// ECDSA keypair signing test
 
@@ -104,7 +104,7 @@ namespace NovacoinTest
             byte[] dataBytesForScrypt = b1.header;
             var scryptHash = ScryptHash256.Compute256(dataBytesForScrypt);
 
-            Console.WriteLine("\nblock1 header hash: {0}", scryptHash.ToString());
+            Console.WriteLine("\nblock1 header hash: {0}", scryptHash);
 
             /// Solver tests
             var scriptPubKey = new CScript(Interop.HexToArray("21021ad6ae76a602310e86957d4ca752c81a8725f142fd2fc40f6a7fc2310bb2c749ac"));
@@ -123,21 +123,21 @@ namespace NovacoinTest
             var scriptDestinationTest = new CScript();
 
 
-            Console.WriteLine("Creating and decoding new destination with {0} as public key.\n", keyPair1.PubKey.ToString());
+            Console.WriteLine("Creating and decoding new destination with {0} as public key.\n", keyPair1.PubKey);
 
             Console.WriteLine("Pay-to-Pubkey:");
 
             scriptDestinationTest.SetDestination(keyPair1.PubKey);
 
             Console.WriteLine("\tscriptDestinationTest solved: {0}", ScriptCode.Solver(scriptDestinationTest, out typeRet, out solutions));
-            Console.WriteLine("\tscriptDestinationTest address: {0}\n", new CPubKey(solutions.First()).KeyID.ToString());
+            Console.WriteLine("\tscriptDestinationTest address: {0}\n", new CPubKey(solutions.First()).KeyID);
 
             Console.WriteLine("Pay-to-PubkeyHash:");
 
             scriptDestinationTest.SetDestination(keyPair1.PubKey.KeyID);
 
             Console.WriteLine("\tscriptDestinationTest solved: {0}", ScriptCode.Solver(scriptDestinationTest, out typeRet, out solutions));
-            Console.WriteLine("\tscriptDestinationTest address: {0}\n", new CKeyID(new Hash160(solutions.First())).ToString());
+            Console.WriteLine("\tscriptDestinationTest address: {0}\n", new CKeyID(new Hash160(solutions.First())));
 
             Console.WriteLine("Multisig with three random keys:");
 
@@ -153,12 +153,12 @@ namespace NovacoinTest
 
             foreach (var keyBytes in solutions.Skip(1).Take(nKeys))
             {
-                Console.WriteLine("\t{0}", (new CPubKey(keyBytes)).KeyID.ToString());
+                Console.WriteLine("\t{0}", (new CPubKey(keyBytes)).KeyID);
             }
 
             Console.WriteLine("\nnRequired={0}\n", nRequired);
 
-            Console.WriteLine("Script code: \n\n{0}", scriptDestinationTest.ToString());
+            Console.WriteLine("Script code: \n\n{0}", scriptDestinationTest);
 
             Console.WriteLine("\nPay-to-ScriptHash with same script:\n");
 
@@ -166,7 +166,7 @@ namespace NovacoinTest
             scriptP2SHTest.SetDestination(scriptDestinationTest.ScriptID);
 
             Console.WriteLine("\tscriptP2SHTest solved: {0}", ScriptCode.Solver(scriptP2SHTest, out typeRet, out solutions));
-            Console.WriteLine("\tscriptP2SHTest address: {0}\n", new CScriptID(new Hash160(solutions.First())).ToString());
+            Console.WriteLine("\tscriptP2SHTest address: {0}\n", new CScriptID(new Hash160(solutions.First())));
 
             // SignatureHash tests
             var txS = new CTransaction(Interop.HexToArray("01000000ccfe9e550d083902781746c80954e3af56e930235befb798f987667021a2f32dc0099499cd010000006b483045022100b5f6783af4f7f60866c889fd668c93ee110ecc3751208fe0b49cc7ace47e52e8022075652e1e960a50b27436ab04f2728b3bba09d07a858691559d99c1ac5dd74f16012103fe065856d7fa8cd41d0047600af2ec1ebe8c6198c1a889e90d8ce6b2f1f8afd7ffffffff2c6009a7494f38f7797bb9ef2aeafb093ae433208171a504367373df4164399d010000004847304402205f1b74bbc37219918f3de13ff645ecc7093512fecda4fcbcac2174c44144361102202149f1adcfcd473ec8a662b5b166b600208d92596e30b33fb402b4720bac3da101ffffffffbf1dd11394d2c0d3cbd4e0b56c74e7463ed5a19f22fe219ee700c61f834b3948010000006a473044022004824a9e071c40707e5309e510fd2cc105fd430504ceefce48aeed1c8fcf3bd7022023f4a43c58e4012284d8df25b55940199d19d4ca664053e2d5c1cc93ef441c3c012103fe065856d7fa8cd41d0047600af2ec1ebe8c6198c1a889e90d8ce6b2f1f8afd7ffffffffea06d18d8034a3645a8d5da75ed5c5f68a9dd09a798a876bef5d2cc9db8819390100000048473044022018e016973d87a53d6f14ae9929aa3c426d3d3a76eb81b3f1e996f0ec24ebacb302203668f165e6e9d5818eb3d108d23e2390213a6921ddfd51dbfca4ffebad73029601ffffffff5bda9a2a98debbda4ddad400a340190fcba4f4b3268f0a9d88eb5541bd7dadfc0100000049483045022100c4d210a6cd3edc6bc9cbfee1a8506ff239ef60baf7ebd46ffefb43e20a575d6c022019ea10cf480dadbb6332a03a404a3991437ffc9fef044c07112e2d15f3de74de01ffffffff5bda9a2a98debbda4ddad400a340190fcba4f4b3268f0a9d88eb5541bd7dadfc020000004948304502210084f5781ff88c201caca29b724f89fad5d72320a578239a3a2834ba669ea92b7e02207651ef9f7c60c2cc4fe187c98587252f3196fb1c31ed8f6c1f1f41e9a90d75ff01ffffffff61a9d75745092786bcbd48cc5860845beea607b8994790e9734f9fa68951bb66010000006b483045022100d2d3f925472970b9a0d365a120a9a6c9b7b0b3b3aacedaa40532397c6252da2f02206939d3cade4bada339799a4d651a7a33cb381640f6acef5fbecbe55ae1fa2364012103fe065856d7fa8cd41d0047600af2ec1ebe8c6198c1a889e90d8ce6b2f1f8afd7ffffffff635c711ba32bd587d349521475d2bd133a402c178543183c027cc1414a7837500100000049483045022100aece1ca9d902eaece08ec9704005196046f3a0b6f561cd17e9b09c01fed1447602207e68e21be4fcb895f045337741b42f43d218bb5c681f8e2eac5f9f3ffc8caf8301ffffffff7ddd7385fd7b81f19ccaa6ccd629bd2ab2a0af7ca69831c6dbb3b02c31de95db0100000049483045022100b260f2065dea407006e424d3cbb20009c807f422cee4ac8fb3553e4a81d62a7702204c67c99e792542cfe19a6956b101b4fd754a01fb1538b54e5f2141210729f09b01ffffffff8faebe377bc4211e41bd7e4a551e1de530040f8a55797f82e12d4d3c6a0b9fff010000004847304402204637911286c073fa0a8211e8427a6c63201bdac73e7b2760d3d9c7d748c9267c02205df709fdd06e3fb600ab81a17a1becc829769f1cb117b1520755d4f2a38429f001fffffffff1be969005bfcab4bcdaf835470680e2a309290b97d79fe63f7cbe904560b2d601000000484730440220352ad1a1ea5d92ddc13b7507a05180574c7309822f684ecf7321b7e925e5104302201e6a06e2f2d05a3d665cc6180fafacb658514a2f1bb632de99e88e4c26149e2501fffffffffa2019204a766fb4614be3d12bfb1ab35ad756e144193249e83660ca78898b3b0200000048473044022024f21eaf955291a9aec2cd45f42add62d8a30626aa9246664226fb3b56bf632f02205a3b46ec2857fec2fcb73663a57f99e4fcda328e8f1283198e8e9c5b4a2a3e0f01ffffffffd25e023fbdcd571ae346bf7aa142f5e32ca1aec23adae314ee209af22572cf1f000000006a4730440220551627592cbb7d970222a4d57a32aed50f1e93e81ae69958f26e56ca3b561715022019b12e560ff31013d0941ca2100ecdf9a3c3602b5c76b83d3b3c87d723d32ce3012103fe065856d7fa8cd41d0047600af2ec1ebe8c6198c1a889e90d8ce6b2f1f8afd7ffffffff02402d0000000000001976a91479f1d300be0da277e7ae217e99c6cc8a4f8717fe88ac00943577000000001976a914cbc5a055ae068d34b4a93e4c9adb9cb10262ae4f88ac00000000"));
@@ -176,10 +176,10 @@ namespace NovacoinTest
             Hash256 sigHashSingle = ScriptCode.SignatureHash(txS.vout[0].scriptPubKey, txS, 1, (int)sigflag.SIGHASH_SINGLE);
             Hash256 sigHashAnyone = ScriptCode.SignatureHash(txS.vout[0].scriptPubKey, txS, 1, (int)sigflag.SIGHASH_ANYONECANPAY);
 
-            Console.WriteLine("sigHashAll={0}", sigHashAll.ToString());
-            Console.WriteLine("sigHashNone={0}", sigHashNone.ToString());
-            Console.WriteLine("sigHashSingle={0}", sigHashSingle.ToString());
-            Console.WriteLine("sigHashAnyone={0}\n", sigHashAnyone.ToString());
+            Console.WriteLine("sigHashAll={0}", sigHashAll);
+            Console.WriteLine("sigHashNone={0}", sigHashNone);
+            Console.WriteLine("sigHashSingle={0}", sigHashSingle);
+            Console.WriteLine("sigHashAnyone={0}\n", sigHashAnyone);
 
             // Testing some opcode functionality
 
@@ -258,11 +258,11 @@ namespace NovacoinTest
 
             CKeyPair kp2;
             var queryRes = keyStore.GetKey(kp1.KeyID, out kp2);
-            Console.WriteLine("KeyID={0} exists in database: {1}", kp1.KeyID.ToString(), queryRes);
+            Console.WriteLine("KeyID={0} exists in database: {1}", kp1.KeyID, queryRes);
 
             if (queryRes)
             {
-                Console.WriteLine("KeyID={0} is identical to inserted one: {1}", kp2.KeyID.ToString(), kp2.KeyID.ToString() == kp1.KeyID.ToString());
+                Console.WriteLine("KeyID={0} is identical to inserted one: {1}", kp2.KeyID, kp2.KeyID.ToString() == kp1.KeyID.ToString());
             }
 
             watch = Stopwatch.StartNew();
@@ -270,31 +270,7 @@ namespace NovacoinTest
             keyStore.ResetPool();
             Console.WriteLine("Done in {0} ms.", watch.ElapsedMilliseconds);
 
-            Console.WriteLine("Hash comparison tests:");
-
-            ScryptHash256 hash1 = b1.header.Hash;
-            ScryptHash256 hash2 = b2.header.Hash;
-            ScryptHash256 hash3 = veryBigBlock.header.Hash;
-
-            Console.WriteLine("\n{0} < {1} : {2}", hash1.ToString(), hash3.ToString(), hash1 < hash3);
-            Console.WriteLine("{0} > {1} : {2}", hash1.ToString(), hash3.ToString(), hash1 > hash3);
-            Console.WriteLine("{0} <= {1} : {2}", hash1.ToString(), hash2.ToString(), hash1 <= hash2);
-            Console.WriteLine("{0} >= {1} : {2}", hash1.ToString(), hash2.ToString(), hash1 >= hash2);
-
-            Console.WriteLine("{0} != {1} : {2}", hash1.ToString(), hash2.ToString(), hash1 != hash2);
-            Console.WriteLine("{0} == {1} : {2}\n", hash2.ToString(), hash3.ToString(), hash2 == hash3);
-
-
-            /*
-            /// Pre-09854c5 revisions were affected by integer overflow bug, this issue was caused by incorrect deserialization of input value. Below you can see an example, broken transaction and its normal version.
-
-            var txBrokenByBug = new CTransaction(Interop.HexToArray("010000007a0f195109057f38eecc438221e7c53158e9ee7ce501818d2b4c14e41269b86e799624c6af010000006c493046022100dcaee50bc231857860f5e0a50f02bb43fd688a69c6b2b91e30f4ea44cb931bf30221008adb50edce6277ee030e3ac0c9f2f62b8b074d68c44a9a306d58eebf08473f65012103c84e4d660e1e637fd17d6b764d4300c4dd04b8dc9ddac31ac820b5eface4e152ffffffffb1cec18b7d68b4c527cefb8e0495ec68de67f960a83b650e54cd7deed76c5667000000004847304402206e0641d7973539a0da5e014232726e900aafcb86737375632226bdf94fcce836022014b855f588b1694806148157245f56dc3396f7dc6816fb4838ddd48bd73de3d901ffffffffc682526404ea8bd6f7dcf0a0003d755621b5868ee8d36c6bb4b9c859f537d053000000004847304402206dabd11d6c65cb1d53b6574f1ec171a7f81f201975cd8ebedb84abf352fb73a0022056880ca946eb3900561fc3f07b3e4e9647d83b032ea0291469d63f54b8020a0a01ffffffffd9c953ad35321a9fb600482e10baafd5f549deccc3414f70e04368ce1ee6a8a3010000006c493046022100c6431d3d7803772e5930cbde7bf7f5d20aba20534cbe3fb694cd5d3dbd8fdef002210082f7c787a80f94956fec2cd55ade6a32328f044dba3b5d3cdfb165e6b25c69d5012103c84e4d660e1e637fd17d6b764d4300c4dd04b8dc9ddac31ac820b5eface4e152ffffffffdea32fcf61c6d6ed95803e63b22f1395d5306ae87eb42beeb78f2b5389e19af2010000006b4830450221009e2f4c9b87094a1a8ce1d00f1a45dadb2a4fe3fa61da08c1f98e65b76770e05e02201f3a90c8c998b02efe58f583c1902646844ac658ce2b5767e00f84f54df1a9c4012103c84e4d660e1e637fd17d6b764d4300c4dd04b8dc9ddac31ac820b5eface4e152ffffffffeef4abc62727f3e52fadb952fa943c478b740a3d4f66a6626e380804875dab5c000000004a493046022100b70793134908ebf74dcab33a5f60fa91453cf3266c1714921f7f656dee36adaf022100d121892a94bf3caac713bc2e157cb8f5e032b0d77fa6173bb9626ebd645fd35501fffffffffbb6d8c93d4bbc2f05442778c31a4fa651659acdeaf980fef0a4aa4b163a590e010000006c493046022100ce375b454f80f35afad4d07187bd2a60fb4016b070d1d5c64ffbc1a7a4aef0d7022100ae876f1d30233900db5c532b1eecb4effade843de7414c1f5c11a3a94a810e35012103c84e4d660e1e637fd17d6b764d4300c4dd04b8dc9ddac31ac820b5eface4e152fffffffffe4ac77a8918638c1e470b049ef8b75fc3a109e56a1bcbb7fddf39b4d0fa1f4b010000006c493046022100a2b33c2e1ce08e1883f35bde4c444bf82eb07210e764146a538e3026d68cc177022100e8e0fa3971078d5d917701c53b4bca70391ff48ea2fc64ad53ed90a345cbdccc012103c84e4d660e1e637fd17d6b764d4300c4dd04b8dc9ddac31ac820b5eface4e152ffffffff3835596d05c57f778729b391f98ff34358b72e5cc0812849f3548ac995dfde18000000004847304402205d17a90cbb1b2ed79e8ff7ecf6e851f750991d7b544ac897ee5195b34c51fe8d02207eb6f420423f680a9e0e4cb463b8bffe255648bbc96a707dfaf045f28dc6fa1601ffffffff0210270000000000001976a91466447313fd3230e5f8adfd5425bef17c96d9917288ac00f2052a000000001976a914e04cad5597da08b244b59be6b881f8934537eb4d88ac00000000"));
-            var txNoBug = new CTransaction(Interop.HexToArray("010000007a0f195109057f38eecc438221e7c53158e9ee7ce501818d2b4c14e41269b86e799624c6af010000006c493046022100dcaee50bc231857860f5e0a50f02bb43fd688a69c6b2b91e30f4ea44cb931bf30221008adb50edce6277ee030e3ac0c9f2f62b8b074d68c44a9a306d58eebf08473f65012103c84e4d660e1e637fd17d6b764d4300c4dd04b8dc9ddac31ac820b5eface4e152ffffffffb1cec18b7d68b4c527cefb8e0495ec68de67f960a83b650e54cd7deed76c5667000000004847304402206e0641d7973539a0da5e014232726e900aafcb86737375632226bdf94fcce836022014b855f588b1694806148157245f56dc3396f7dc6816fb4838ddd48bd73de3d901ffffffffc682526404ea8bd6f7dcf0a0003d755621b5868ee8d36c6bb4b9c859f537d053000000004847304402206dabd11d6c65cb1d53b6574f1ec171a7f81f201975cd8ebedb84abf352fb73a0022056880ca946eb3900561fc3f07b3e4e9647d83b032ea0291469d63f54b8020a0a01ffffffffd9c953ad35321a9fb600482e10baafd5f549deccc3414f70e04368ce1ee6a8a3010000006c493046022100c6431d3d7803772e5930cbde7bf7f5d20aba20534cbe3fb694cd5d3dbd8fdef002210082f7c787a80f94956fec2cd55ade6a32328f044dba3b5d3cdfb165e6b25c69d5012103c84e4d660e1e637fd17d6b764d4300c4dd04b8dc9ddac31ac820b5eface4e152ffffffffdea32fcf61c6d6ed95803e63b22f1395d5306ae87eb42beeb78f2b5389e19af2010000006b4830450221009e2f4c9b87094a1a8ce1d00f1a45dadb2a4fe3fa61da08c1f98e65b76770e05e02201f3a90c8c998b02efe58f583c1902646844ac658ce2b5767e00f84f54df1a9c4012103c84e4d660e1e637fd17d6b764d4300c4dd04b8dc9ddac31ac820b5eface4e152ffffffffeef4abc62727f3e52fadb952fa943c478b740a3d4f66a6626e380804875dab5c000000004a493046022100b70793134908ebf74dcab33a5f60fa91453cf3266c1714921f7f656dee36adaf022100d121892a94bf3caac713bc2e157cb8f5e032b0d77fa6173bb9626ebd645fd35501fffffffffbb6d8c93d4bbc2f05442778c31a4fa651659acdeaf980fef0a4aa4b163a590e010000006c493046022100ce375b454f80f35afad4d07187bd2a60fb4016b070d1d5c64ffbc1a7a4aef0d7022100ae876f1d30233900db5c532b1eecb4effade843de7414c1f5c11a3a94a810e35012103c84e4d660e1e637fd17d6b764d4300c4dd04b8dc9ddac31ac820b5eface4e152fffffffffe4ac77a8918638c1e470b049ef8b75fc3a109e56a1bcbb7fddf39b4d0fa1f4b010000006c493046022100a2b33c2e1ce08e1883f35bde4c444bf82eb07210e764146a538e3026d68cc177022100e8e0fa3971078d5d917701c53b4bca70391ff48ea2fc64ad53ed90a345cbdccc012103c84e4d660e1e637fd17d6b764d4300c4dd04b8dc9ddac31ac820b5eface4e152ffffffff3835596d05c57f778729b391f98ff34358b72e5cc0812849f3548ac995dfde18000000004847304402205d17a90cbb1b2ed79e8ff7ecf6e851f750991d7b544ac897ee5195b34c51fe8d02207eb6f420423f680a9e0e4cb463b8bffe255648bbc96a707dfaf045f28dc6fa1601ffffffff0210270000000000001976a91466447313fd3230e5f8adfd5425bef17c96d9917288ac00f2052a010000001976a914e04cad5597da08b244b59be6b881f8934537eb4d88ac00000000"));
-            Console.WriteLine(txBrokenByBug);
-            Console.WriteLine(txNoBug);
-            */
-
-            /*
+            /* uint256 tests */
             var test1 = new uint256("0000000000021173331e7742b51afe6c853158a8881f7ad871f4391a7ddcfa4e");
             var test2 = new uint256("0000000000093bf84cea580ede01206c3ffc75487ec46771e533e38d9bda972d");
 
@@ -309,6 +285,7 @@ namespace NovacoinTest
             Console.WriteLine(test1 << 32);
             Console.WriteLine(test1 >> 32);
 
+            /*
             Output:
 
             True
@@ -319,6 +296,23 @@ namespace NovacoinTest
             0000000000021173331e7742b51afe6c853158a8881f7ad871f4391a7ddcfa4f
             00021173331e7742b51afe6c853158a8881f7ad871f4391a7ddcfa4e00000000
             000000000000000000021173331e7742b51afe6c853158a8881f7ad871f4391a
+            */
+
+            var target = new uint256("0000000000138d5e000000000000000000000000000000000000000000000000");
+            uint compact = target.Compact;
+
+            Console.WriteLine(Interop.ToHex(Interop.ReverseBytes(BitConverter.GetBytes(compact))));
+
+            var target1 = new uint256();
+            target1.Compact = 0x1b136944;
+
+            Console.WriteLine(target1);
+
+            /*
+            Output:
+
+            1b138d5e
+            0000000000136944000000000000000000000000000000000000000000000000
             */
 
             Console.WriteLine("Reading the block file...");

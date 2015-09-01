@@ -62,6 +62,29 @@ namespace Novacoin
             }
         }
 
+        /// <summary>
+        /// Zero or the position of highest non-zero bit plus one.
+        /// </summary>
+        protected int bits
+        {
+            get
+            {
+                for (int pos = nWidth - 1; pos >= 0; pos--)
+                {
+                    if (pn[pos]!=0)
+                    {
+                        for (int bits = 31; bits > 0; bits--)
+                        {
+                            if ((pn[pos] & 1 << bits)!=0)
+                                return 32 * pos + bits + 1;
+                        }
+                        return 32 * pos + 1;
+                    }
+                }
+                return 0;
+            }
+        }
+
         public static bool operator !(base_uint a)
         {
             for (int i = 0; i < a.nWidth; i++)
