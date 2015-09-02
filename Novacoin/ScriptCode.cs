@@ -1492,25 +1492,25 @@ namespace Novacoin
                                     {
                                         return false;
                                     }
-                                    Hash hash = null;
+                                    byte[] hash = null;
                                     var data = stacktop(ref stack, -1);
 
                                     switch (opcode)
                                     {
                                         case instruction.OP_HASH160:
-                                            hash = Hash160.Compute160(data);
+                                            hash = CryptoUtils.ComputeHash160(data);
                                             break;
                                         case instruction.OP_HASH256:
-                                            hash = Hash256.Compute256(data);
+                                            hash = CryptoUtils.ComputeHash256(data);
                                             break;
                                         case instruction.OP_SHA1:
-                                            hash = SHA1.Compute1(data);
+                                            hash = CryptoUtils.ComputeSha1(data);
                                             break;
                                         case instruction.OP_SHA256:
-                                            hash = SHA256.Compute256(data);
+                                            hash = CryptoUtils.ComputeSha256(data);
                                             break;
                                         case instruction.OP_RIPEMD160:
-                                            hash = RIPEMD160.Compute160(data);
+                                            hash = CryptoUtils.ComputeRipeMD160(data);
                                             break;
                                     }
                                     popstack(ref stack);

@@ -73,7 +73,7 @@ namespace Novacoin
         ///    New items are added in this format:
         ///    hash_length_byte hash_bytes
         /// </summary>
-        /// <param name="hash">Hash160 instance</param>
+        /// <param name="hash">uint160 instance</param>
         public void AddHash(uint160 hash)
         {
             codeBytes.Add((byte)hash.Size);
@@ -85,7 +85,7 @@ namespace Novacoin
         ///    New items are added in this format:
         ///    hash_length_byte hash_bytes
         /// </summary>
-        /// <param name="hash">Hash256 instance</param>
+        /// <param name="hash">uint256 instance</param>
         public void AddHash(uint256 hash)
         {
             codeBytes.Add((byte)hash.Size);

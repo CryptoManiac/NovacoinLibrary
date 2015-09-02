@@ -426,7 +426,7 @@ namespace Novacoin
                         var left = merkleTree.GetRange((levelOffset + nLeft) * 32, 32).ToArray();
                         var right = merkleTree.GetRange((levelOffset + nRight) * 32, 32).ToArray();
 
-                        merkleTree.AddRange(Hash256.ComputeRaw256(ref left, ref right));
+                        merkleTree.AddRange(CryptoUtils.ComputeHash256(ref left, ref right));
                     }
                     levelOffset += nLevelSize;
                 }

@@ -17,12 +17,86 @@
  */
 
 using System;
+using System.IO;
 using System.Security.Cryptography;
 
 namespace Novacoin
 {
     public class CryptoUtils
     {
+        private static SHA1Managed _sha1 = new SHA1Managed();
+        private static SHA256Managed _sha256 = new SHA256Managed();
+        private static RIPEMD160Managed _ripe160 = new RIPEMD160Managed();
+
+        /// <summary>
+        /// Sha1 calculation
+        /// </summary>
+        /// <param name="inputBytes">Bytes to hash</param>
+        /// <returns>Hashing result</returns>
+        public static byte[] ComputeSha1(byte[] inputBytes)
+        {
+            return _sha1.ComputeHash(inputBytes, 0, inputBytes.Length);
+        }
+
+        /// <summary>
+        /// Sha256 calculation
+        /// </summary>
+        /// <param name="inputBytes">Bytes to hash</param>
+        /// <returns>Hashing result</returns>
+        public static byte[] ComputeSha256(byte[] inputBytes)
+        {
+            return _sha256.ComputeHash(inputBytes, 0, inputBytes.Length);
+        }
+
+        /// <summary>
+        /// RIPEMD-160 calculation
+        /// </summary>
+        /// <param name="inputBytes">Bytes to hash</param>
+        /// <returns>Hashing result</returns>
+        public static byte[] ComputeRipeMD160(byte[] inputBytes)
+        {
+            return _ripe160.ComputeHash(inputBytes, 0, inputBytes.Length);
+        }
+
+        /// <summary>
+        /// RipeMD160(Sha256(X)) calculation
+        /// </summary>
+        /// <param name="inputBytes">Bytes to hash</param>
+        /// <returns>Hashing result</returns>
+        public static byte[] ComputeHash160(byte[] inputBytes)
+        {
+            var digest1 = _sha256.ComputeHash(inputBytes, 0, inputBytes.Length);
+            return _ripe160.ComputeHash(digest1, 0, digest1.Length);
+        }
+
+        /// <summary>
+        /// Sha256(Sha256(X)) calculation
+        /// </summary>
+        /// <param name="inputBytes">Bytes to hash</param>
+        /// <returns>Hashing result</returns>
+        public static byte[] ComputeHash256(byte[] dataBytes)
+        {
+            var digest1 = _sha256.ComputeHash(dataBytes, 0, dataBytes.Length);
+            return _sha256.ComputeHash(digest1, 0, digest1.Length);
+        }
+
+        /// <summary>
+        /// Sha256(Sha256(X)) calculation
+        /// </summary>
+        /// <param name="input1">Reference to first half of data</param>
+        /// <param name="input2">Reference to second half of data</param>
+        /// <returns>Hashing result</returns>
+        public static byte[] ComputeHash256(ref byte[] input1, ref byte[] input2)
+        {
+            var buffer = new byte[64];
+
+            input1.CopyTo(buffer, 0);
+            input2.CopyTo(buffer, input1.Length);
+
+            var digest1 = _sha256.ComputeHash(buffer, 0, buffer.Length);
+            return _sha256.ComputeHash(digest1, 0, digest1.Length);
+        }
+
         public static byte[] PBKDF2_Sha256(int dklen, byte[] password, byte[] salt, int iterationCount)
         {
             /* Init HMAC state. */
@@ -44,7 +118,7 @@ namespace Novacoin
                 }
                 var extendedkey = new byte[salt.Length + 4];
                 Buffer.BlockCopy(salt, 0, extendedkey, 0, salt.Length);
-                using (var ms = new System.IO.MemoryStream())
+                using (var ms = new MemoryStream())
                 {
                     /* Iterate through the blocks. */
                     for (int i = 0; i < keyLength; i++)

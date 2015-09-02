@@ -250,6 +250,12 @@ namespace Novacoin
         }
         #endregion
 
+        /// <summary>
+        /// Arrays equality checking helper method.
+        /// </summary>
+        /// <param name="a">Array 1</param>
+        /// <param name="b">Array 2</param>
+        /// <returns>Result.</returns>
         private static bool ArraysEqual(uint[] a, uint[] b)
         {
             Contract.Requires<ArgumentException>(a.Length == b.Length, "Array length mismatch.");
@@ -329,6 +335,10 @@ namespace Novacoin
         }
         #endregion
 
+        /// <summary>
+        /// Serialize to string.
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
             return Interop.ToHex(Interop.ReverseBytes(this));
