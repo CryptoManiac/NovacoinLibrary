@@ -271,7 +271,22 @@ namespace Novacoin
 
         private bool CheckProofOfWork(uint256 hash, uint nBits)
         {
-            // TODO: stub!
+            uint256 nTarget = new uint256();
+            nTarget.Compact = nBits;
+
+            // Check range
+            if (nTarget > NetUtils.nProofOfWorkLimit)
+            {
+                // nBits below minimum work
+                return false; 
+            }
+
+            // Check proof of work matches claimed amount
+            if (hash > nTarget)
+            {
+                //  hash doesn't match nBits
+                return false;
+            }
 
             return true;
         }
