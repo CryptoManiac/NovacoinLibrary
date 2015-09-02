@@ -76,11 +76,6 @@ namespace Novacoin
         public byte nEntropyBit { get; set; }
 
         /// <summary>
-        /// Next block hash
-        /// </summary>
-        public byte[] NextHash { get; set; }
-
-        /// <summary>
         /// Block height
         /// </summary>
         public uint nHeight { get; set; }
@@ -501,9 +496,9 @@ namespace Novacoin
 
         public bool AcceptBlock(ref CBlock block)
         {
-            uint256 hash = block.header.Hash;
+            uint256 nHash = block.header.Hash;
 
-            if (blockMap.ContainsKey(hash))
+            if (blockMap.ContainsKey(nHash))
             {
                 // Already have this block.
                 return false;
@@ -542,7 +537,8 @@ namespace Novacoin
             // Write block to file.
             var itemTemplate = new CBlockStoreItem()
             {
-                nHeight = nHeight
+                nHeight = nHeight,
+                nEntropyBit = Entropy.GetStakeEntropyBit(nHeight, nHash)
             };
 
             itemTemplate.FillHeader(block.header);
