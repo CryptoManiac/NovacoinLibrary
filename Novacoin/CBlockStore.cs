@@ -233,10 +233,16 @@ namespace Novacoin
             get { return CBlockStore.Instance.GetCursor(nextHash); }
         }
 
-        /// <summary>
-        /// STake modifier generation flag
-        /// </summary>
-        public bool GeneratedStakeModifier
+        bool IsInMainChain
+        {
+            get { return (next != null); }
+        }
+
+
+    /// <summary>
+    /// STake modifier generation flag
+    /// </summary>
+    public bool GeneratedStakeModifier
         {
             get { return (BlockTypeFlag & BlockType.BLOCK_STAKE_MODIFIER) != 0; }
         }
