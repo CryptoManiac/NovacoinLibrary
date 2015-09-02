@@ -211,7 +211,7 @@ namespace Novacoin
         /// <summary>
         /// Previous block cursor
         /// </summary>
-        public public CBlockStoreItem prev {
+        public CBlockStoreItem prev {
             get { return CBlockStore.Instance.GetCursor(prevHash); }
         }
 
