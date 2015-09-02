@@ -10,36 +10,31 @@ namespace Novacoin
 {
     public class uint256 : base_uint
     {
-        new public readonly int nWidth = 8;
+        new protected int nWidth {
+            get { return base.nWidth; }
+            private set { base.nWidth = value; }
+        }
+        new protected uint[] pn {
+            get { return base.pn; }
+            private set { base.pn = value; }
+        }
 
         public uint256()
         {
-            base.nWidth = nWidth;
+            nWidth = 8;
             pn = new uint[nWidth];
-
-            for (int i = 0; i < nWidth; i++)
-            {
-                pn[i] = 0;
-            }
         }
 
-        public uint256(uint256 b)
+        public uint256(uint256 b) : this()
         {
-            base.nWidth = nWidth;
-            pn = new uint[nWidth];
-
             for (int i = 0; i < nWidth; i++)
             {
                 pn[i] = b.pn[i];
             }
         }
 
-
-        public uint256(ulong n)
+        public uint256(ulong n) : this()
         {
-            base.nWidth = nWidth;
-            pn = new uint[nWidth];
-
             pn[0] = (uint)n;
             pn[1] = (uint)(n >> 32);
             for (int i = 2; i < nWidth; i++)
@@ -48,19 +43,17 @@ namespace Novacoin
             }
         }
 
-        public uint256(byte[] bytes)
+        public uint256(byte[] bytes) : this()
         {
             Contract.Requires<ArgumentException>(bytes.Length == 32, "Incorrect array length");
 
-            base.nWidth = nWidth;
             pn = Interop.ToUInt32Array(bytes);
         }
 
-        public uint256(string hex)
+        public uint256(string hex) : this()
         {
             Contract.Requires<ArgumentException>(hex.Length == 64, "Incorrect string");
 
-            base.nWidth = nWidth;
             var bytes = Interop.ReverseBytes(Interop.HexToArray(hex));
             pn = Interop.ToUInt32Array(bytes);
         }
