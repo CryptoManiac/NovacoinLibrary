@@ -128,7 +128,7 @@ namespace Novacoin
 
         public bool CheckBlock(bool fCheckPOW = true, bool fCheckMerkleRoot = true, bool fCheckSig = true)
         {
-            var uniqueTX = new List<Hash256>(); // tx hashes
+            var uniqueTX = new List<uint256>(); // tx hashes
             uint nSigOps = 0; // total sigops
 
             // Basic sanity checkings
@@ -269,7 +269,7 @@ namespace Novacoin
             return true;
         }
 
-        private bool CheckProofOfWork(ScryptHash256 hash, uint nBits)
+        private bool CheckProofOfWork(uint256 hash, uint nBits)
         {
             // TODO: stub!
 
@@ -405,7 +405,7 @@ namespace Novacoin
         /// <summary>
         /// Merkle root
         /// </summary>
-        public Hash256 hashMerkleRoot
+        public uint256 hashMerkleRoot
         {
             get {
                 
@@ -413,7 +413,7 @@ namespace Novacoin
 
                 foreach (var tx in vtx)
                 {
-                    merkleTree.AddRange(Hash256.ComputeRaw256(tx));
+                    merkleTree.AddRange(CryptoUtils.ComputeHash256(tx));
                 }
 
                 int levelOffset = 0;
@@ -431,7 +431,7 @@ namespace Novacoin
                     levelOffset += nLevelSize;
                 }
 
-                return (merkleTree.Count == 0) ? new Hash256() : new Hash256(merkleTree.GetRange(merkleTree.Count-32, 32).ToArray());
+                return (merkleTree.Count == 0) ? 0 : (uint256)merkleTree.GetRange(merkleTree.Count-32, 32).ToArray();
             }
         }
 

@@ -23,11 +23,12 @@ namespace Novacoin
     /// </summary>
     public class CScriptID : uint160
     {
+        #region Constructors
         public CScriptID() : base()
         {
         }
 
-        public CScriptID(CScriptID KeyID) : base(KeyID)
+        public CScriptID(CScriptID KeyID) : base(KeyID as uint160)
         {
         }
 
@@ -38,6 +39,7 @@ namespace Novacoin
         public CScriptID(byte[] hashBytes) : base(hashBytes)
         {
         }
+        #endregion
 
         /// <summary>
         /// Generate Pay-to-ScriptHash address

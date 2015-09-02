@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace Novacoin
@@ -29,7 +30,7 @@ namespace Novacoin
         /// <summary>
         /// Hash of parent transaction.
         /// </summary>
-        public Hash256 hash;
+        public uint256 hash;
 
         /// <summary>
         /// Parent input number.
@@ -43,11 +44,11 @@ namespace Novacoin
 
         public COutPoint()
         {
-            hash = new Hash256();
+            hash = new uint256();
             n = uint.MaxValue;
         }
 
-        public COutPoint(Hash256 hashIn, uint nIn)
+        public COutPoint(uint256 hashIn, uint nIn)
         {
             hash = hashIn;
             n = nIn;
@@ -55,7 +56,7 @@ namespace Novacoin
 
         public COutPoint(COutPoint o)
         {
-            hash = new Hash256(o.hash);
+            hash = o.hash;
             n = o.n;
         }
 
@@ -63,13 +64,13 @@ namespace Novacoin
         {
             Contract.Requires<ArgumentException>(bytes.Length == 36, "Any valid outpoint reference data item is exactly 36 bytes long.");
 
-            hash = new Hash256(bytes);
+            hash = bytes.Take(32).ToArray();
             n = BitConverter.ToUInt32(bytes, 32);
         }
 
         public bool IsNull
         {
-            get { return hash.IsZero && n == uint.MaxValue; }
+            get { return !hash && n == uint.MaxValue; }
         }
 
         public static implicit operator byte[] (COutPoint o)

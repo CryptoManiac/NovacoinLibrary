@@ -82,11 +82,11 @@ namespace Novacoin
         /// <param name="sigHash">Data hash</param>
         /// <param name="signature">Signature bytes</param>
         /// <returns>Checking result</returns>
-        public bool VerifySignature(Hash sigHash, byte[] signature)
+        public bool VerifySignature(uint256 sigHash, byte[] signature)
         {
             var signer = SignerUtilities.GetSigner("NONEwithECDSA");
             signer.Init(false, _Public);
-            signer.BlockUpdate(sigHash, 0, sigHash.hashSize);
+            signer.BlockUpdate(sigHash, 0, sigHash.Size);
 
             return signer.VerifySignature(signature);
         }
@@ -97,7 +97,7 @@ namespace Novacoin
         /// <returns>New key ID</returns>
         public CKeyID KeyID
         {
-            get { return new CKeyID(Hash160.Compute160(_Public.Q.GetEncoded())); }
+            get { return new CKeyID(CryptoUtils.ComputeHash160(_Public.Q.GetEncoded())); }
         }
 
         /// <summary>

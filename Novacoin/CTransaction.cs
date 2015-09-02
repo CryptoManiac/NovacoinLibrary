@@ -398,9 +398,9 @@ namespace Novacoin
         /// <summary>
         /// Transaction hash
         /// </summary>
-        public Hash256 Hash
+        public uint256 Hash
         {
-            get { return Hash256.Compute256(this); }
+            get { return CryptoUtils.ComputeHash256(this); }
         }
 
         /// <summary>

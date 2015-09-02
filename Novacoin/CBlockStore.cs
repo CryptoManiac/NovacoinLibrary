@@ -100,9 +100,9 @@ namespace Novacoin
         /// </summary>
         /// <param name="header">Block header</param>
         /// <returns>Header hash</returns>
-        public ScryptHash256 FillHeader(CBlockHeader header)
+        public uint256 FillHeader(CBlockHeader header)
         {
-            ScryptHash256 _hash;
+            uint256 _hash;
             Hash = _hash = header.Hash;
 
             nVersion = header.nVersion;
@@ -125,8 +125,8 @@ namespace Novacoin
                 CBlockHeader header = new CBlockHeader();
 
                 header.nVersion = nVersion;
-                header.prevHash = new ScryptHash256(prevHash);
-                header.merkleRoot = new Hash256(merkleRoot);
+                header.prevHash = prevHash;
+                header.merkleRoot = merkleRoot;
                 header.nTime = nTime;
                 header.nBits = nBits;
                 header.nNonce = nNonce;
@@ -327,18 +327,18 @@ namespace Novacoin
         /// <summary>
         /// Map of block tree nodes.
         /// </summary>
-        private ConcurrentDictionary<ScryptHash256, CBlockStoreItem> blockMap = new ConcurrentDictionary<ScryptHash256, CBlockStoreItem>();
+        private ConcurrentDictionary<uint256, CBlockStoreItem> blockMap = new ConcurrentDictionary<uint256, CBlockStoreItem>();
 
         /// <summary>
         /// Orphaned blocks map.
         /// </summary>
-        private ConcurrentDictionary<ScryptHash256, CBlock> orphanMap = new ConcurrentDictionary<ScryptHash256, CBlock>();
-        private ConcurrentDictionary<ScryptHash256, CBlock> orphanMapByPrev = new ConcurrentDictionary<ScryptHash256, CBlock>();
+        private ConcurrentDictionary<uint256, CBlock> orphanMap = new ConcurrentDictionary<uint256, CBlock>();
+        private ConcurrentDictionary<uint256, CBlock> orphanMapByPrev = new ConcurrentDictionary<uint256, CBlock>();
 
         /// <summary>
         /// Map of unspent items.
         /// </summary>
-        private ConcurrentDictionary<Hash256, CTransactionStoreItem> txMap = new ConcurrentDictionary<Hash256, CTransactionStoreItem>();
+        private ConcurrentDictionary<uint256, CTransactionStoreItem> txMap = new ConcurrentDictionary<uint256, CTransactionStoreItem>();
 
         public static CBlockStore Instance;
 
@@ -415,14 +415,14 @@ namespace Novacoin
                 // Init list of block items
                 foreach (var item in blockTreeItems)
                 {
-                    blockMap.TryAdd(new ScryptHash256(item.Hash), item);
+                    blockMap.TryAdd(item.Hash, item);
                 }
             }
 
             Instance = this;
         }
 
-        public bool GetTransaction(Hash256 TxID, ref CTransaction tx)
+        public bool GetTransaction(uint256 TxID, ref CTransaction tx)
         {
             var reader = new BinaryReader(fStreamReadWrite).BaseStream;
             var QueryTx = dbConn.Query<CTransactionStoreItem>("select * from [TransactionStorage] where [TransactionHash] = ?", (byte[])TxID);
@@ -440,7 +440,7 @@ namespace Novacoin
         private bool AddItemToIndex(ref CBlockStoreItem itemTemplate, ref CBlock block)
         {
             var writer = new BinaryWriter(fStreamReadWrite).BaseStream;
-            var blockHash = new ScryptHash256(itemTemplate.Hash);
+            uint256 blockHash = itemTemplate.Hash;
 
             if (blockMap.ContainsKey(blockHash))
             {
@@ -501,7 +501,7 @@ namespace Novacoin
 
         public bool AcceptBlock(ref CBlock block)
         {
-            ScryptHash256 hash = block.header.Hash;
+            uint256 hash = block.header.Hash;
 
             if (blockMap.ContainsKey(hash))
             {
@@ -555,7 +555,7 @@ namespace Novacoin
             return true;
         }
 
-        public bool GetBlock(ScryptHash256 blockHash, ref CBlock block)
+        public bool GetBlock(uint256 blockHash, ref CBlock block)
         {
             var reader = new BinaryReader(fStreamReadWrite).BaseStream;
 
@@ -573,7 +573,7 @@ namespace Novacoin
 
         public bool ProcessBlock(ref CBlock block)
         {
-            ScryptHash256 blockHash = block.header.Hash;
+            var blockHash = block.header.Hash;
 
             if (blockMap.ContainsKey(blockHash))
             {
@@ -631,12 +631,12 @@ namespace Novacoin
             }
 
             // Recursively process any orphan blocks that depended on this one
-            var orphansQueue = new List<ScryptHash256>();
+            var orphansQueue = new List<uint256>();
             orphansQueue.Add(blockHash);
 
             for (int i = 0; i < orphansQueue.Count; i++)
             {
-                ScryptHash256 hashPrev = orphansQueue[i];
+                var hashPrev = orphansQueue[i];
 
                 foreach (var pair in orphanMap)
                 {

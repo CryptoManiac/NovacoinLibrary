@@ -28,31 +28,43 @@ namespace Novacoin
     /// </summary>
     public class base_uint : IComparable<base_uint>, IEquatable<base_uint>, IEqualityComparer<base_uint>
     {
+        #region Internal representation
+        /// <summary>
+        /// Length of internal representation
+        /// </summary>
         protected int nWidth;
+        /// <summary>
+        /// Big numbers are stored as array of unsigned 32-bit integers.
+        /// </summary>
         protected uint[] pn;
+        #endregion
 
-        public double getDouble()
+        #region Helper properties
+        public double Double
         {
-            double ret = 0.0;
-            double fact = 1.0;
-
-            for (int i = 0; i < nWidth; i++)
+            get
             {
-                ret += fact * pn[i];
-                fact *= 4294967296.0;
+                double ret = 0.0;
+                double fact = 1.0;
+
+                for (int i = 0; i < nWidth; i++)
+                {
+                    ret += fact * pn[i];
+                    fact *= 4294967296.0;
+                }
+
+                return ret;
             }
-
-            return ret;
         }
 
-        public ulong GetLow64()
+        public ulong Low64
         {
-            return pn[0] | (ulong)pn[1] << 32;
+            get { return pn[0] | (ulong)pn[1] << 32; }
         }
 
-        public uint GetLow32()
+        public uint Low32
         {
-            return pn[0];
+            get { return pn[0]; }
         }
 
         /// <summary>
@@ -75,11 +87,11 @@ namespace Novacoin
             {
                 for (int pos = nWidth - 1; pos >= 0; pos--)
                 {
-                    if (pn[pos]!=0)
+                    if (pn[pos] != 0)
                     {
                         for (int bits = 31; bits > 0; bits--)
                         {
-                            if ((pn[pos] & 1 << bits)!=0)
+                            if ((pn[pos] & 1 << bits) != 0)
                                 return 32 * pos + bits + 1;
                         }
                         return 32 * pos + 1;
@@ -88,7 +100,14 @@ namespace Novacoin
                 return 0;
             }
         }
+        #endregion
 
+
+        /// <summary>
+        /// Negation operator
+        /// </summary>
+        /// <param name="a">Value</param>
+        /// <returns>True if value is zero, false otherwise.</returns>
         public static bool operator !(base_uint a)
         {
             for (int i = 0; i < a.nWidth; i++)
@@ -308,7 +327,7 @@ namespace Novacoin
         #region IEquatable
         public bool Equals(base_uint a)
         {
-            if (a == null)
+            if (object.ReferenceEquals(a, null))
             {
                 return false;
             }

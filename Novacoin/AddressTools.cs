@@ -67,7 +67,7 @@ namespace Novacoin
         {
             var dataBytes = new byte[bytes.Length + 4];
             bytes.CopyTo(dataBytes, 0);
-            var checkSum = Hash256.ComputeRaw256(bytes).Take(4).ToArray();
+            var checkSum = CryptoUtils.ComputeHash256(bytes).Take(4).ToArray();
             checkSum.CopyTo(dataBytes, dataBytes.Length - 4); // add 4-byte hash check to the end
 
             return Base58Encode(dataBytes);
@@ -128,7 +128,7 @@ namespace Novacoin
             Array.Copy(rawData, result, result.Length);
             Array.Copy(rawData, result.Length, resultCheckSum, 0, 4);
 
-            var checkSum = Hash256.ComputeRaw256(result).Take(4).ToArray();
+            var checkSum = CryptoUtils.ComputeHash256(result).Take(4).ToArray();
 
             if (!checkSum.SequenceEqual(resultCheckSum))
             {

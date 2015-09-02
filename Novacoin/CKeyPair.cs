@@ -142,11 +142,11 @@ namespace Novacoin
         /// </summary>
         /// <param name="data">Hash to sigh</param>
         /// <returns>Signature bytes sequence</returns>
-        public byte[] Sign(Hash sigHash)
+        public byte[] Sign(uint256 sigHash)
         {
             var signer = SignerUtilities.GetSigner("NONEwithECDSA");
             signer.Init(true, _Private);
-            signer.BlockUpdate(sigHash, 0, sigHash.hashSize);
+            signer.BlockUpdate(sigHash, 0, sigHash.Size);
 
             return signer.GenerateSignature();
         }

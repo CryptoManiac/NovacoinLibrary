@@ -37,12 +37,12 @@ namespace Novacoin
 		/// <summary>
 		/// Previous block hash.
 		/// </summary>
-		public ScryptHash256 prevHash;
+		public uint256 prevHash;
 
 		/// <summary>
 		/// Merkle root hash.
 		/// </summary>
-		public Hash256 merkleRoot;
+		public uint256 merkleRoot;
 
 		/// <summary>
 		/// Block timestamp.
@@ -65,8 +65,8 @@ namespace Novacoin
 		public CBlockHeader ()
 		{
             nVersion = 6;
-            prevHash = new ScryptHash256();
-            merkleRoot = new Hash256();
+            prevHash = new uint256();
+            merkleRoot = new uint256();
             nTime = Interop.GetTime();
             nBits = 0;
             nNonce = 0;
@@ -75,8 +75,8 @@ namespace Novacoin
         public CBlockHeader(CBlockHeader header)
         {
             nVersion = header.nVersion;
-            prevHash = new ScryptHash256(header.prevHash);
-            merkleRoot = new Hash256(header.merkleRoot);
+            prevHash = header.prevHash;
+            merkleRoot = header.merkleRoot;
             nTime = header.nTime;
             nBits = header.nBits;
             nNonce = header.nNonce;
@@ -85,8 +85,8 @@ namespace Novacoin
         internal CBlockHeader(ref BinaryReader reader)
         {
             nVersion = reader.ReadUInt32();
-            prevHash = new ScryptHash256(reader.ReadBytes(32));
-            merkleRoot = new Hash256(reader.ReadBytes(32));
+            prevHash = reader.ReadBytes(32);
+            merkleRoot = reader.ReadBytes(32);
             nTime = reader.ReadUInt32();
             nBits = reader.ReadUInt32();
             nNonce = reader.ReadUInt32();
@@ -104,8 +104,8 @@ namespace Novacoin
             var reader = new BinaryReader(stream);
 
             nVersion = reader.ReadUInt32();
-            prevHash = new ScryptHash256(reader.ReadBytes(32));
-            merkleRoot = new Hash256(reader.ReadBytes(32));
+            prevHash = reader.ReadBytes(32);
+            merkleRoot = reader.ReadBytes(32);
             nTime = reader.ReadUInt32();
             nBits = reader.ReadUInt32();
             nNonce = reader.ReadUInt32();
@@ -136,10 +136,10 @@ namespace Novacoin
             return resultBytes;
         }
 
-        public ScryptHash256 Hash
+        public uint256 Hash
         {
             get {
-                return ScryptHash256.Compute256(this);
+                return CryptoUtils.ComputeScryptHash256(this);
             }
         }
 

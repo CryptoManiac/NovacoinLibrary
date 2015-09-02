@@ -23,11 +23,12 @@ namespace Novacoin
     /// </summary>
     public class CKeyID : uint160
     {
+        #region Constructors
         public CKeyID() : base()
         {
         }
 
-        public CKeyID(CKeyID KeyID) : base(KeyID)
+        public CKeyID(CKeyID KeyID) : base(KeyID as uint160)
         {
         }
 
@@ -38,6 +39,7 @@ namespace Novacoin
         public CKeyID(byte[] hashBytes) : base(hashBytes)
         {
         }
+        #endregion
 
         /// <summary>
         /// Generate Pay-to-PubkeyHash address

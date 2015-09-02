@@ -79,7 +79,7 @@ namespace NovacoinTest
             /// ECDSA keypair signing test
 
             var data = "Превед!";
-            var sigHash = Hash256.Compute256(Encoding.UTF8.GetBytes(data));
+            uint256 sigHash = CryptoUtils.ComputeHash256(Encoding.UTF8.GetBytes(data));
             var signature = keyPair1.Sign(sigHash);
 
             Console.WriteLine("Signature: {0}", Interop.ToHex(signature));
@@ -102,7 +102,7 @@ namespace NovacoinTest
 
             /// Block header hashing test
             byte[] dataBytesForScrypt = b1.header;
-            var scryptHash = ScryptHash256.Compute256(dataBytesForScrypt);
+            uint256 scryptHash = CryptoUtils.ComputeScryptHash256(dataBytesForScrypt);
 
             Console.WriteLine("\nblock1 header hash: {0}", scryptHash);
 
@@ -117,7 +117,7 @@ namespace NovacoinTest
             Console.WriteLine("scriptPubKey address: {0}\n", new CPubKey(solutions.First()).KeyID.ToString());
 
             Console.WriteLine("scriptPubKeyHash solved: {0}", ScriptCode.Solver(scriptPubKeyHash, out typeRet, out solutions));
-            Console.WriteLine("scriptPubKeyHash address: {0}\n", new CKeyID(new Hash160(solutions.First())).ToString());
+            Console.WriteLine("scriptPubKeyHash address: {0}\n", new CKeyID(solutions.First()).ToString());
 
             /// Some SetDestination tests
             var scriptDestinationTest = new CScript();
@@ -137,7 +137,7 @@ namespace NovacoinTest
             scriptDestinationTest.SetDestination(keyPair1.PubKey.KeyID);
 
             Console.WriteLine("\tscriptDestinationTest solved: {0}", ScriptCode.Solver(scriptDestinationTest, out typeRet, out solutions));
-            Console.WriteLine("\tscriptDestinationTest address: {0}\n", new CKeyID(new Hash160(solutions.First())));
+            Console.WriteLine("\tscriptDestinationTest address: {0}\n", new CKeyID(solutions.First()));
 
             Console.WriteLine("Multisig with three random keys:");
 
@@ -166,15 +166,15 @@ namespace NovacoinTest
             scriptP2SHTest.SetDestination(scriptDestinationTest.ScriptID);
 
             Console.WriteLine("\tscriptP2SHTest solved: {0}", ScriptCode.Solver(scriptP2SHTest, out typeRet, out solutions));
-            Console.WriteLine("\tscriptP2SHTest address: {0}\n", new CScriptID(new Hash160(solutions.First())));
+            Console.WriteLine("\tscriptP2SHTest address: {0}\n", new CScriptID(solutions.First()));
 
             // SignatureHash tests
             var txS = new CTransaction(Interop.HexToArray("01000000ccfe9e550d083902781746c80954e3af56e930235befb798f987667021a2f32dc0099499cd010000006b483045022100b5f6783af4f7f60866c889fd668c93ee110ecc3751208fe0b49cc7ace47e52e8022075652e1e960a50b27436ab04f2728b3bba09d07a858691559d99c1ac5dd74f16012103fe065856d7fa8cd41d0047600af2ec1ebe8c6198c1a889e90d8ce6b2f1f8afd7ffffffff2c6009a7494f38f7797bb9ef2aeafb093ae433208171a504367373df4164399d010000004847304402205f1b74bbc37219918f3de13ff645ecc7093512fecda4fcbcac2174c44144361102202149f1adcfcd473ec8a662b5b166b600208d92596e30b33fb402b4720bac3da101ffffffffbf1dd11394d2c0d3cbd4e0b56c74e7463ed5a19f22fe219ee700c61f834b3948010000006a473044022004824a9e071c40707e5309e510fd2cc105fd430504ceefce48aeed1c8fcf3bd7022023f4a43c58e4012284d8df25b55940199d19d4ca664053e2d5c1cc93ef441c3c012103fe065856d7fa8cd41d0047600af2ec1ebe8c6198c1a889e90d8ce6b2f1f8afd7ffffffffea06d18d8034a3645a8d5da75ed5c5f68a9dd09a798a876bef5d2cc9db8819390100000048473044022018e016973d87a53d6f14ae9929aa3c426d3d3a76eb81b3f1e996f0ec24ebacb302203668f165e6e9d5818eb3d108d23e2390213a6921ddfd51dbfca4ffebad73029601ffffffff5bda9a2a98debbda4ddad400a340190fcba4f4b3268f0a9d88eb5541bd7dadfc0100000049483045022100c4d210a6cd3edc6bc9cbfee1a8506ff239ef60baf7ebd46ffefb43e20a575d6c022019ea10cf480dadbb6332a03a404a3991437ffc9fef044c07112e2d15f3de74de01ffffffff5bda9a2a98debbda4ddad400a340190fcba4f4b3268f0a9d88eb5541bd7dadfc020000004948304502210084f5781ff88c201caca29b724f89fad5d72320a578239a3a2834ba669ea92b7e02207651ef9f7c60c2cc4fe187c98587252f3196fb1c31ed8f6c1f1f41e9a90d75ff01ffffffff61a9d75745092786bcbd48cc5860845beea607b8994790e9734f9fa68951bb66010000006b483045022100d2d3f925472970b9a0d365a120a9a6c9b7b0b3b3aacedaa40532397c6252da2f02206939d3cade4bada339799a4d651a7a33cb381640f6acef5fbecbe55ae1fa2364012103fe065856d7fa8cd41d0047600af2ec1ebe8c6198c1a889e90d8ce6b2f1f8afd7ffffffff635c711ba32bd587d349521475d2bd133a402c178543183c027cc1414a7837500100000049483045022100aece1ca9d902eaece08ec9704005196046f3a0b6f561cd17e9b09c01fed1447602207e68e21be4fcb895f045337741b42f43d218bb5c681f8e2eac5f9f3ffc8caf8301ffffffff7ddd7385fd7b81f19ccaa6ccd629bd2ab2a0af7ca69831c6dbb3b02c31de95db0100000049483045022100b260f2065dea407006e424d3cbb20009c807f422cee4ac8fb3553e4a81d62a7702204c67c99e792542cfe19a6956b101b4fd754a01fb1538b54e5f2141210729f09b01ffffffff8faebe377bc4211e41bd7e4a551e1de530040f8a55797f82e12d4d3c6a0b9fff010000004847304402204637911286c073fa0a8211e8427a6c63201bdac73e7b2760d3d9c7d748c9267c02205df709fdd06e3fb600ab81a17a1becc829769f1cb117b1520755d4f2a38429f001fffffffff1be969005bfcab4bcdaf835470680e2a309290b97d79fe63f7cbe904560b2d601000000484730440220352ad1a1ea5d92ddc13b7507a05180574c7309822f684ecf7321b7e925e5104302201e6a06e2f2d05a3d665cc6180fafacb658514a2f1bb632de99e88e4c26149e2501fffffffffa2019204a766fb4614be3d12bfb1ab35ad756e144193249e83660ca78898b3b0200000048473044022024f21eaf955291a9aec2cd45f42add62d8a30626aa9246664226fb3b56bf632f02205a3b46ec2857fec2fcb73663a57f99e4fcda328e8f1283198e8e9c5b4a2a3e0f01ffffffffd25e023fbdcd571ae346bf7aa142f5e32ca1aec23adae314ee209af22572cf1f000000006a4730440220551627592cbb7d970222a4d57a32aed50f1e93e81ae69958f26e56ca3b561715022019b12e560ff31013d0941ca2100ecdf9a3c3602b5c76b83d3b3c87d723d32ce3012103fe065856d7fa8cd41d0047600af2ec1ebe8c6198c1a889e90d8ce6b2f1f8afd7ffffffff02402d0000000000001976a91479f1d300be0da277e7ae217e99c6cc8a4f8717fe88ac00943577000000001976a914cbc5a055ae068d34b4a93e4c9adb9cb10262ae4f88ac00000000"));
 
-            Hash256 sigHashAll = ScriptCode.SignatureHash(txS.vout[0].scriptPubKey, txS, 1, (int)sigflag.SIGHASH_ALL);
-            Hash256 sigHashNone = ScriptCode.SignatureHash(txS.vout[0].scriptPubKey, txS, 1, (int)sigflag.SIGHASH_NONE);
-            Hash256 sigHashSingle = ScriptCode.SignatureHash(txS.vout[0].scriptPubKey, txS, 1, (int)sigflag.SIGHASH_SINGLE);
-            Hash256 sigHashAnyone = ScriptCode.SignatureHash(txS.vout[0].scriptPubKey, txS, 1, (int)sigflag.SIGHASH_ANYONECANPAY);
+            uint256 sigHashAll = ScriptCode.SignatureHash(txS.vout[0].scriptPubKey, txS, 1, (int)sigflag.SIGHASH_ALL);
+            uint256 sigHashNone = ScriptCode.SignatureHash(txS.vout[0].scriptPubKey, txS, 1, (int)sigflag.SIGHASH_NONE);
+            uint256 sigHashSingle = ScriptCode.SignatureHash(txS.vout[0].scriptPubKey, txS, 1, (int)sigflag.SIGHASH_SINGLE);
+            uint256 sigHashAnyone = ScriptCode.SignatureHash(txS.vout[0].scriptPubKey, txS, 1, (int)sigflag.SIGHASH_ANYONECANPAY);
 
             Console.WriteLine("sigHashAll={0}", sigHashAll);
             Console.WriteLine("sigHashNone={0}", sigHashNone);
@@ -228,8 +228,7 @@ namespace NovacoinTest
             elapsedMs = watch.ElapsedMilliseconds;
             Console.WriteLine("Unserialization time: {0} ms\n", elapsedMs);
 
-
-            Hash256 merkleroot = null;
+            uint256 merkleroot = null;
 
             Console.WriteLine("\nRinning 100 iterations of merkle tree computation for very big block...");
 

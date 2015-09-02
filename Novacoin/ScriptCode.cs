@@ -656,7 +656,7 @@ namespace Novacoin
         /// <param name="nIn">Input number</param>
         /// <param name="nHashType">Hash type flag</param>
         /// <returns></returns>
-        public static Hash256 SignatureHash(CScript script, CTransaction txTo, int nIn, int nHashType)
+        public static uint256 SignatureHash(CScript script, CTransaction txTo, int nIn, int nHashType)
         {
             Contract.Requires<ArgumentOutOfRangeException>(nIn < txTo.vin.Length, "nIn out of range.");
 
@@ -727,7 +727,7 @@ namespace Novacoin
             var txBytes = (byte[])txTmp;
             var nHashTypeBytes = BitConverter.GetBytes(nHashType);
 
-            return Hash256.Compute256(ref txBytes, ref nHashTypeBytes);
+            return CryptoUtils.ComputeHash256(ref txBytes, ref nHashTypeBytes);
         }
 
         //

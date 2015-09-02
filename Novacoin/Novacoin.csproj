@@ -119,10 +119,8 @@
     <Compile Include="CPubKey.cs" />
     <Compile Include="CryptoUtils.cs" />
     <Compile Include="CScriptID.cs" />
-    <Compile Include="Hash.cs" />
     <Compile Include="Interop.cs" />
     <Compile Include="NetInfo.cs" />
-    <Compile Include="ScryptHash256.cs" />
     <Compile Include="uint160.cs" />
     <Compile Include="uint256.cs" />
     <Compile Include="VarInt.cs" />
@@ -130,8 +128,6 @@
     <Compile Include="CTxIn.cs" />
     <Compile Include="CTransaction.cs" />
     <Compile Include="CTxOut.cs" />
-    <Compile Include="Hash256.cs" />
-    <Compile Include="Hash160.cs" />
     <Compile Include="CBlockHeader.cs" />
     <Compile Include="CBlock.cs" />
     <Compile Include="CScript.cs" />
