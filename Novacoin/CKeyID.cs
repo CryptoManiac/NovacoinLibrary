@@ -16,25 +16,33 @@
 *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-using System;
-using System.Diagnostics.Contracts;
-
 namespace Novacoin
 {
-    public class CKeyID : Hash160
+    /// <summary>
+    /// Represents the key identifier. Internal state is calculated as Hash160(pubkey).
+    /// </summary>
+    public class CKeyID : uint160
     {
-        public CKeyID(Hash160 pubKeyHash)
+        public CKeyID() : base()
         {
-            _hashBytes = pubKeyHash;
         }
 
-        internal CKeyID(byte[] hashBytes)
+        public CKeyID(CKeyID KeyID) : base(KeyID)
         {
-            Contract.Requires<ArgumentException>(hashBytes.Length == 20, "Your data doesn't seem like a hash160 of some value.");
-
-            _hashBytes = hashBytes;
         }
 
+        public CKeyID(uint160 pubKeyHash) : base(pubKeyHash)
+        {
+        }
+
+        public CKeyID(byte[] hashBytes) : base(hashBytes)
+        {
+        }
+
+        /// <summary>
+        /// Generate Pay-to-PubkeyHash address
+        /// </summary>
+        /// <returns>Base58 formatted novacoin address</returns>
         public override string ToString()
         {
             return (new CNovacoinAddress(this)).ToString();

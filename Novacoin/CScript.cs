@@ -74,9 +74,9 @@ namespace Novacoin
         ///    hash_length_byte hash_bytes
         /// </summary>
         /// <param name="hash">Hash160 instance</param>
-        public void AddHash(Hash160 hash)
+        public void AddHash(uint160 hash)
         {
-            codeBytes.Add((byte)hash.hashSize);
+            codeBytes.Add((byte)hash.Size);
             codeBytes.AddRange((byte[])hash);
         }
 
@@ -86,9 +86,9 @@ namespace Novacoin
         ///    hash_length_byte hash_bytes
         /// </summary>
         /// <param name="hash">Hash256 instance</param>
-        public void AddHash(Hash256 hash)
+        public void AddHash(uint256 hash)
         {
-            codeBytes.Add((byte)hash.hashSize);
+            codeBytes.Add((byte)hash.Size);
             codeBytes.AddRange((byte[])hash);
         }
 

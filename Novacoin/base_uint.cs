@@ -18,6 +18,7 @@
 
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 
 namespace Novacoin
@@ -25,7 +26,7 @@ namespace Novacoin
     /// <summary>
     /// Base class for uint256 and uint160.
     /// </summary>
-    public class base_uint : IComparable<base_uint>, IEquatable<base_uint>
+    public class base_uint : IComparable<base_uint>, IEquatable<base_uint>, IEqualityComparer<base_uint>
     {
         protected int nWidth;
         protected uint[] pn;
@@ -54,11 +55,14 @@ namespace Novacoin
             return pn[0];
         }
 
+        /// <summary>
+        /// Total size in bytes.
+        /// </summary>
         public int Size
         {
             get
             {
-                return nWidth;
+                return nWidth * sizeof(uint);
             }
         }
 
@@ -98,6 +102,7 @@ namespace Novacoin
         }
 
 
+        #region Comparison operations
         public static bool operator <(base_uint a, base_uint b)
         {
             for (int i = a.nWidth - 1; i >= 0; i--)
@@ -161,7 +166,9 @@ namespace Novacoin
             }
             return true;
         }
+        #endregion
 
+        #region Equality operators
         public static bool operator ==(base_uint a, base_uint b)
         {
             if (object.ReferenceEquals(a, b))
@@ -210,21 +217,38 @@ namespace Novacoin
         {
             return (!(a == b));
         }
+        #endregion
 
+        #region Cast oerations
+        /// <summary>
+        /// True cast operator
+        /// </summary>
+        /// <param name="a"></param>
+        /// <returns></returns>
         public static bool operator true(base_uint a)
         {
             return (a != 0);
         }
 
+        /// <summary>
+        /// False cast operator.
+        /// </summary>
+        /// <param name="a">Value</param>
+        /// <returns>Boolean result</returns>
         public static bool operator false(base_uint a)
         {
             return (a == 0);
         }
 
+        /// <summary>
+        /// Imlicit byte[] cast operator.
+        /// </summary>
+        /// <param name="a">Value</param>
         public static implicit operator byte[] (base_uint a)
         {
             return Interop.LEBytes(a.pn);
         }
+        #endregion
 
         private static bool ArraysEqual(uint[] a, uint[] b)
         {
@@ -240,19 +264,26 @@ namespace Novacoin
             return true;
         }
 
-        public override int GetHashCode()
+
+        #region IEqualityComparer
+        public bool Equals(base_uint a, base_uint b)
         {
-            int hash = 17;
-            unchecked
+            if (object.ReferenceEquals(a, b))
             {
-                foreach (var element in pn)
-                {
-                    hash = hash * 31 + element.GetHashCode();
-                }
+                return true;
             }
-            return hash;
+
+            return ArraysEqual(a.pn, b.pn);
         }
 
+        public int GetHashCode(base_uint a)
+        {
+            return a.GetHashCode();
+        }
+
+        #endregion
+
+        #region IComparable
         public int CompareTo(base_uint item)
         {
             if (this > item)
@@ -266,7 +297,9 @@ namespace Novacoin
 
             return 0;
         }
+        #endregion
 
+        #region IEquatable
         public bool Equals(base_uint a)
         {
             if (a == null)
@@ -277,10 +310,24 @@ namespace Novacoin
             return ArraysEqual(pn, a.pn);
         }
 
+        public override int GetHashCode()
+        {
+            int hash = 17;
+            unchecked
+            {
+                foreach (var element in pn)
+                {
+                    hash = hash * 31 + element.GetHashCode();
+                }
+            }
+            return hash;
+        }
+
         public override bool Equals(object o)
         {
             return Equals(o as base_uint);
         }
+        #endregion
 
         public override string ToString()
         {

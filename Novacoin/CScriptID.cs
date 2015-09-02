@@ -16,25 +16,33 @@
 *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-using System;
-using System.Diagnostics.Contracts;
-
 namespace Novacoin
 {
-    public class CScriptID : Hash160
+    /// <summary>
+    /// Represents the script identifier. Internal value is calculated as Hash160(script).
+    /// </summary>
+    public class CScriptID : uint160
     {
-        public CScriptID(Hash160 scriptHash)
+        public CScriptID() : base()
         {
-            _hashBytes = scriptHash;
         }
 
-        internal CScriptID(byte[] hashBytes)
+        public CScriptID(CScriptID KeyID) : base(KeyID)
         {
-            Contract.Requires<ArgumentException>(hashBytes.Length == 20, "Your data doesn't seem like a hash160 of some value.");
-
-            _hashBytes = hashBytes;
         }
 
+        public CScriptID(uint160 pubKeyHash) : base(pubKeyHash)
+        {
+        }
+
+        public CScriptID(byte[] hashBytes) : base(hashBytes)
+        {
+        }
+
+        /// <summary>
+        /// Generate Pay-to-ScriptHash address
+        /// </summary>
+        /// <returns>Base58 formatted novacoin address</returns>
         public override string ToString()
         {
             return (new CNovacoinAddress(this)).ToString();
