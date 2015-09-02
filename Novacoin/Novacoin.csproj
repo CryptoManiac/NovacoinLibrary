@@ -123,6 +123,7 @@
     <Compile Include="CScriptID.cs" />
     <Compile Include="Interop.cs" />
     <Compile Include="NetInfo.cs" />
+    <Compile Include="StakeModifier.cs" />
     <Compile Include="uint160.cs" />
     <Compile Include="uint256.cs" />
     <Compile Include="VarInt.cs" />

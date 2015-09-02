@@ -16,7 +16,7 @@ namespace Novacoin
     /// Block headers table
     /// </summary>
     [Table("BlockStorage")]
-    class CBlockStoreItem
+    public class CBlockStoreItem
     {
         /// <summary>
         /// Item ID in the database
@@ -207,6 +207,72 @@ namespace Novacoin
                 return false;
             }
         }
+
+        /// <summary>
+        /// Previous block cursor
+        /// </summary>
+        public public CBlockStoreItem prev {
+            get { return CBlockStore.Instance.GetCursor(prevHash); }
+        }
+
+        /// <summary>
+        /// STake modifier generation flag
+        /// </summary>
+        public bool GeneratedStakeModifier
+        {
+            get { return (BlockTypeFlag & BlockType.BLOCK_STAKE_MODIFIER) != 0; }
+        }
+
+        /// <summary>
+        /// Sets stake modifier and flag.
+        /// </summary>
+        /// <param name="nModifier">New stake modifier.</param>
+        /// <param name="fGeneratedStakeModifier">Set generation flag?</param>
+        public void SetStakeModifier(long nModifier, bool fGeneratedStakeModifier)
+        {
+            nStakeModifier = nModifier;
+            if (fGeneratedStakeModifier)
+                BlockTypeFlag |= BlockType.BLOCK_STAKE_MODIFIER;
+        }
+
+        /// <summary>
+        /// Set entropy bit.
+        /// </summary>
+        /// <param name="nEntropyBit">Entropy bit value (0 or 1).</param>
+        /// <returns>False if value is our of range.</returns>
+        public bool SetStakeEntropyBit(byte nEntropyBit)
+        {
+            if (nEntropyBit > 1)
+                return false;
+            BlockTypeFlag |= (nEntropyBit != 0 ? BlockType.BLOCK_STAKE_ENTROPY : 0);
+            return true;
+        }
+
+        /// <summary>
+        /// Set proof-of-stake flag.
+        /// </summary>
+        public void SetProofOfStake()
+        {
+            BlockTypeFlag |= BlockType.BLOCK_PROOF_OF_STAKE;
+        }
+
+        /// <summary>
+        /// Block has no proof-of-stake flag.
+        /// </summary>
+        public bool IsProofOfWork
+        {
+            get { return (BlockTypeFlag & BlockType.BLOCK_PROOF_OF_STAKE) != 0; }
+        }
+
+        /// <summary>
+        /// Block has proof-of-stake flag set.
+        /// </summary>
+        public bool IsProofOfStake 
+        {
+            get { return (BlockTypeFlag & BlockType.BLOCK_PROOF_OF_STAKE) == 0; }
+        }
+
+
     }
 
     /// <summary>
@@ -214,10 +280,9 @@ namespace Novacoin
     /// </summary>
     public enum BlockType
     {
-        PROOF_OF_WORK,
-        PROOF_OF_WORK_MODIFIER,
-        PROOF_OF_STAKE,
-        PROOF_OF_STAKE_MODIFIER
+        BLOCK_PROOF_OF_STAKE = (1 << 0), // is proof-of-stake block
+        BLOCK_STAKE_ENTROPY = (1 << 1), // entropy bit for stake modifier
+        BLOCK_STAKE_MODIFIER = (1 << 2), // regenerated stake modifier
     };
 
     /// <summary>
@@ -565,6 +630,38 @@ namespace Novacoin
             // Block not found
 
             return false;
+        }
+
+        /// <summary>
+        /// Get block cursor from map.
+        /// </summary>
+        /// <param name="blockHash">block hash</param>
+        /// <returns>Cursor or null</returns>
+        public CBlockStoreItem GetCursor(uint256 blockHash)
+        {
+            if (blockHash == 0)
+            {
+                // Genesis block has zero prevHash and no parent.
+                return null;
+            }
+
+            // First, check our block map.
+            CBlockStoreItem item = null;
+            if (blockMap.TryGetValue(blockHash, out item))
+            {
+                return item;
+            }
+
+            // Trying to get cursor from the database.
+            var QueryBlockCursor = dbConn.Query<CBlockStoreItem>("select * from [BlockStorage] where [Hash] = ?", (byte[])blockHash);
+
+            if (QueryBlockCursor.Count == 1)
+            {
+                return QueryBlockCursor[0];
+            }
+
+            // Nothing found.
+            return null;
         }
 
         public bool ProcessBlock(ref CBlock block)
