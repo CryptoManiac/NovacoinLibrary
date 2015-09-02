@@ -24,7 +24,7 @@ using Org.BouncyCastle.Crypto.Digests;
 namespace Novacoin
 {
     /// <summary>
-    /// Representation of SHA-256 hash
+    /// Representation of SHA-1 hash
     /// </summary>
     public class SHA1 : Hash
     {
