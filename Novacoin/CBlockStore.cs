@@ -61,6 +61,11 @@ namespace Novacoin
         public uint nNonce { get; set; }
 
         /// <summary>
+        /// Next block hash.
+        /// </summary>
+        public byte[] nextHash { get; set; }
+
+        /// <summary>
         /// Block type flags
         /// </summary>
         public BlockType BlockTypeFlag { get; set; }
@@ -74,6 +79,11 @@ namespace Novacoin
         /// Stake entropy bit
         /// </summary>
         public byte nEntropyBit { get; set; }
+
+        /// <summary>
+        /// Proof-of-Stake hash
+        /// </summary>
+        public byte[] hashProofOfStake { get; set; }
 
         /// <summary>
         /// Block height
@@ -216,11 +226,24 @@ namespace Novacoin
         }
 
         /// <summary>
+        /// Next block cursor
+        /// </summary>
+        public CBlockStoreItem next
+        {
+            get { return CBlockStore.Instance.GetCursor(nextHash); }
+        }
+
+        /// <summary>
         /// STake modifier generation flag
         /// </summary>
         public bool GeneratedStakeModifier
         {
             get { return (BlockTypeFlag & BlockType.BLOCK_STAKE_MODIFIER) != 0; }
+        }
+
+        public uint StakeEntropyBit
+        {
+            get { return ((uint)(BlockTypeFlag & BlockType.BLOCK_STAKE_ENTROPY) >> 1); }
         }
 
         /// <summary>
@@ -513,7 +536,10 @@ namespace Novacoin
             // TODO: compute stake modifier
 
             // Add to index
-            itemTemplate.BlockTypeFlag = block.IsProofOfStake ? BlockType.PROOF_OF_STAKE : BlockType.PROOF_OF_WORK;
+            if (block.IsProofOfStake)
+            {
+                itemTemplate.SetProofOfStake();
+            }
 
             if (!itemTemplate.WriteToFile(ref writer, ref block))
             {
