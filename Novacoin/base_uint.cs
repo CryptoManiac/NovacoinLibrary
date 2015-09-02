@@ -238,7 +238,7 @@ namespace Novacoin
         }
         #endregion
 
-        #region Cast oerations
+        #region Cast operations
         /// <summary>
         /// True cast operator
         /// </summary>
