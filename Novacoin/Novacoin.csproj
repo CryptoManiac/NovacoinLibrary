@@ -122,10 +122,7 @@
     <Compile Include="Hash.cs" />
     <Compile Include="Interop.cs" />
     <Compile Include="NetInfo.cs" />
-    <Compile Include="RIPEMD160.cs" />
     <Compile Include="ScryptHash256.cs" />
-    <Compile Include="SHA1.cs" />
-    <Compile Include="SHA256.cs" />
     <Compile Include="uint160.cs" />
     <Compile Include="uint256.cs" />
     <Compile Include="VarInt.cs" />
