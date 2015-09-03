@@ -1,4 +1,23 @@
-﻿using System;
+﻿/**
+*  Novacoin classes library
+*  Copyright (C) 2015 Alex D. (balthazar.ad@gmail.com)
+
+*  This program is free software: you can redistribute it and/or modify
+*  it under the terms of the GNU Affero General Public License as
+*  published by the Free Software Foundation, either version 3 of the
+*  License, or (at your option) any later version.
+
+*  This program is distributed in the hope that it will be useful,
+*  but WITHOUT ANY WARRANTY; without even the implied warranty of
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*  GNU Affero General Public License for more details.
+
+*  You should have received a copy of the GNU Affero General Public License
+*  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+
+using System;
 using System.IO;
 using System.Linq;
 using System.Collections.Concurrent;
@@ -74,6 +93,11 @@ namespace Novacoin
         /// Stake modifier
         /// </summary>
         public long nStakeModifier { get; set; }
+
+        /// <summary>
+        /// Stake modifier checksum.
+        /// </summary>
+        public uint nStakeModifierChecksum { get; set; }
 
         /// <summary>
         /// Chain trust score
@@ -560,6 +584,8 @@ namespace Novacoin
         /// </summary>
         private ConcurrentDictionary<uint256, CTransactionStoreItem> txMap = new ConcurrentDictionary<uint256, CTransactionStoreItem>();
 
+        private ConcurrentDictionary<uint256, uint256> mapProofOfStake = new ConcurrentDictionary<uint256, uint256>();
+
         public static CBlockStore Instance;
 
         /// <summary>
@@ -676,9 +702,31 @@ namespace Novacoin
                 return false; // SetStakeEntropyBit() failed
             }
 
-            // TODO: set stake entropy bit, record proof-of-stake hash value
+            // Save proof-of-stake hash value
+            if (itemTemplate.IsProofOfStake)
+            {
+                uint256 hashProofOfStake;
+                if (!CBlockStore.Instance.GetProofOfStakeHash(blockHash, out hashProofOfStake))
+                {
+                    return false;  // hashProofOfStake not found 
+                }
+                itemTemplate.hashProofOfStake = hashProofOfStake;
+            }
 
             // TODO: compute stake modifier
+
+            // ppcoin: compute stake modifier
+            long nStakeModifier = 0;
+            bool fGeneratedStakeModifier = false;
+            if (!StakeModifier.ComputeNextStakeModifier(itemTemplate, ref nStakeModifier, ref fGeneratedStakeModifier))
+            {
+                return false;  // ComputeNextStakeModifier() failed
+            }
+
+            itemTemplate.SetStakeModifier(nStakeModifier, fGeneratedStakeModifier);
+            itemTemplate.nStakeModifierChecksum = StakeModifier.GetStakeModifierChecksum(itemTemplate);
+
+            // TODO: verify stake modifier checkpoints
 
             // Add to index
             if (block.IsProofOfStake)
@@ -728,6 +776,17 @@ namespace Novacoin
             }
 
             return blockMap.TryAdd(blockHash, itemTemplate);
+        }
+
+        /// <summary>
+        /// Try to find proof-of-stake hash in the map.
+        /// </summary>
+        /// <param name="blockHash">Block hash</param>
+        /// <param name="hashProofOfStake">Proof-of-stake hash</param>
+        /// <returns>Proof-of-Stake hash value</returns>
+        private bool GetProofOfStakeHash(uint256 blockHash, out uint256 hashProofOfStake)
+        {
+            return mapProofOfStake.TryGetValue(blockHash, out hashProofOfStake);
         }
 
         public bool AcceptBlock(ref CBlock block)
@@ -786,7 +845,7 @@ namespace Novacoin
             return true;
         }
 
-        public bool GetBlock(uint256 blockHash, ref CBlock block)
+        public bool GetBlock(uint256 blockHash, ref CBlock block, ref long nBlockPos)
         {
             var reader = new BinaryReader(fStreamReadWrite).BaseStream;
 
@@ -794,10 +853,26 @@ namespace Novacoin
 
             if (QueryBlock.Count == 1)
             {
+                nBlockPos = QueryBlock[0].nBlockPos;
                 return QueryBlock[0].ReadFromFile(ref reader, out block);
             }
 
             // Block not found
+
+            return false;
+        }
+
+        public bool GetByTransactionID(uint256 TxID, ref CBlock block, ref CTransaction tx, ref long nBlockPos, ref long nTxPos)
+        {
+            var QueryTx = dbConn.Query<CTransactionStoreItem>("select * from [TransactionStorage] where [TransactionHash] = ?", (byte[])TxID);
+
+            if (QueryTx.Count == 1)
+            {
+                nTxPos = QueryTx[0].nTxPos;
+                return GetBlock(QueryTx[0].BlockHash, ref block, ref nBlockPos);
+            }
+
+            // Tx not found
 
             return false;
         }
@@ -867,6 +942,18 @@ namespace Novacoin
                 }
 
                 // TODO: proof-of-stake validation
+
+                uint256 hashProofOfStake = 0, targetProofOfStake = 0;
+                if (!StakeModifier.CheckProofOfStake(block.vtx[1], block.header.nBits, ref hashProofOfStake, ref targetProofOfStake))
+                {
+                    return false; // do not error here as we expect this during initial block download
+                }
+                if (!mapProofOfStake.ContainsKey(blockHash)) 
+                {
+                    // add to mapProofOfStake
+                    mapProofOfStake.TryAdd(blockHash, hashProofOfStake);
+                }
+
             }
 
             // TODO: difficulty verification

@@ -14,6 +14,8 @@ namespace Novacoin
 
         public static uint nChainChecksSwitchTime = 1379635200; // Fri, 20 Sep 2013 00:00:00 GMT
 
+        public static uint256 nHashGenesisBlock = new uint256("00000a060336cbb72fe969666d337b87198b1add2abaa59cca226820b32933a4");
+
         public static readonly uint nLockTimeThreshold = 500000000;
         private static readonly uint nDrift = 7200;
 
