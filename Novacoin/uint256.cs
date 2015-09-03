@@ -251,7 +251,7 @@ namespace Novacoin
             return a - new uint256(b);
         }
 
-        public static uint256 operator /(uint256 a, uint b)
+        public static uint256 operator /(uint256 a, uint divisor)
         {
             var result = new uint256();
 
@@ -262,11 +262,26 @@ namespace Novacoin
             {
                 r <<= 32;
                 r |= a.pn[i];
-                result.pn[i] = (uint)(r / b);
-                r %= b;
+                result.pn[i] = (uint)(r / divisor);
+                r %= divisor;
             }
 
             return result;
+        }
+
+        public static uint operator %(uint256 a, uint divisor)
+        {
+            ulong r = 0;
+            int i = a.nWidth;
+
+            while (i-- > 0)
+            {
+                r <<= 32;
+                r |= a.pn[i];
+                r %= divisor;
+            }
+
+            return (uint)r;
         }
         #endregion
 
