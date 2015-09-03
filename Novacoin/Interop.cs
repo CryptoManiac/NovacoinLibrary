@@ -82,6 +82,20 @@ namespace Novacoin
             return bytes;
         }
 
+        public static byte[] TrimArray(byte[] bytes)
+        {
+            int trimStart = bytes.Length - 1;
+            while (trimStart >= 0 && bytes[trimStart] == 0)
+            {
+                trimStart--;
+            }
+
+            byte[] result = new byte[trimStart + 1];
+            Array.Copy(bytes, 0, result, 0, trimStart + 1);
+
+            return result;
+        }
+
         public static string ToHex(byte[] bytes)
         {
             var sb = new StringBuilder();

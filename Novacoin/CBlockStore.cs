@@ -76,9 +76,9 @@ namespace Novacoin
         public long nStakeModifier { get; set; }
 
         /// <summary>
-        /// Stake entropy bit
+        /// Chain trust score
         /// </summary>
-        public byte nEntropyBit { get; set; }
+        public byte[] ChainTrust { get; set; }
 
         /// <summary>
         /// Proof-of-Stake hash
@@ -221,6 +221,7 @@ namespace Novacoin
         /// <summary>
         /// Previous block cursor
         /// </summary>
+        [Ignore]
         public CBlockStoreItem prev {
             get { return CBlockStore.Instance.GetCursor(prevHash); }
         }
@@ -228,25 +229,31 @@ namespace Novacoin
         /// <summary>
         /// Next block cursor
         /// </summary>
+        [Ignore]
         public CBlockStoreItem next
         {
             get { return CBlockStore.Instance.GetCursor(nextHash); }
         }
 
+        [Ignore]
         bool IsInMainChain
         {
             get { return (next != null); }
         }
 
-
-    /// <summary>
-    /// STake modifier generation flag
-    /// </summary>
-    public bool GeneratedStakeModifier
+        /// <summary>
+        /// STake modifier generation flag
+        /// </summary>
+        [Ignore]
+        public bool GeneratedStakeModifier
         {
             get { return (BlockTypeFlag & BlockType.BLOCK_STAKE_MODIFIER) != 0; }
         }
 
+        /// <summary>
+        /// Stake entropy bit
+        /// </summary>
+        [Ignore]
         public uint StakeEntropyBit
         {
             get { return ((uint)(BlockTypeFlag & BlockType.BLOCK_STAKE_ENTROPY) >> 1); }
@@ -288,19 +295,143 @@ namespace Novacoin
         /// <summary>
         /// Block has no proof-of-stake flag.
         /// </summary>
+        [Ignore]
         public bool IsProofOfWork
         {
-            get { return (BlockTypeFlag & BlockType.BLOCK_PROOF_OF_STAKE) != 0; }
+            get { return (BlockTypeFlag & BlockType.BLOCK_PROOF_OF_STAKE) == 0; }
         }
 
         /// <summary>
         /// Block has proof-of-stake flag set.
         /// </summary>
+        [Ignore]
         public bool IsProofOfStake 
         {
-            get { return (BlockTypeFlag & BlockType.BLOCK_PROOF_OF_STAKE) == 0; }
+            get { return (BlockTypeFlag & BlockType.BLOCK_PROOF_OF_STAKE) != 0; }
         }
 
+        /// <summary>
+        /// Chain trust score.
+        /// </summary>
+        [Ignore]
+        public uint256 nChainTrust {
+            get
+            {
+                if (ChainTrust.Length != 32)
+                {
+                    byte[] tmp = ChainTrust;
+                    Array.Resize(ref tmp, 32);
+                    ChainTrust = tmp;
+                }
+
+                return ChainTrust;
+            }
+            set { ChainTrust = Interop.TrimArray(value); }
+        }
+
+        /// <summary>
+        /// Block trust score.
+        /// </summary>
+        [Ignore]
+        public uint256 nBlockTrust
+        {
+            get
+            {
+                uint256 nTarget = 0;
+                nTarget.Compact = nBits;
+
+                /* Old protocol */
+                if (nTime < NetUtils.nChainChecksSwitchTime)
+                {
+                    return IsProofOfStake ? (new uint256(1) << 256) / (nTarget + 1) : 1;
+                }
+
+                /* New protocol */
+
+                // Calculate work amount for block
+                var nPoWTrust = NetUtils.nPoWBase / (nTarget + 1);
+
+                // Set nPowTrust to 1 if we are checking PoS block or PoW difficulty is too low
+                nPoWTrust = (IsProofOfStake || !nPoWTrust) ? 1 : nPoWTrust;
+
+                // Return nPoWTrust for the first 12 blocks
+                if (prev == null || prev.nHeight < 12)
+                    return nPoWTrust;
+
+                CBlockStoreItem currentIndex = prev;
+
+                if (IsProofOfStake)
+                {
+                    var nNewTrust = (new uint256(1) << 256) / (nTarget + 1);
+
+                    // Return 1/3 of score if parent block is not the PoW block
+                    if (!prev.IsProofOfWork)
+                    {
+                        return nNewTrust / 3;
+                    }
+
+                    int nPoWCount = 0;
+
+                    // Check last 12 blocks type
+                    while (prev.nHeight - currentIndex.nHeight < 12)
+                    {
+                        if (currentIndex.IsProofOfWork)
+                        {
+                            nPoWCount++;
+                        }
+                        currentIndex = currentIndex.prev;
+                    }
+
+                    // Return 1/3 of score if less than 3 PoW blocks found
+                    if (nPoWCount < 3)
+                    {
+                        return nNewTrust / 3;
+                    }
+
+                    return nNewTrust;
+                }
+                else
+                {
+                    var nLastBlockTrust = prev.nChainTrust - prev.prev.nChainTrust;
+
+                    // Return nPoWTrust + 2/3 of previous block score if two parent blocks are not PoS blocks
+                    if (!prev.IsProofOfStake || !prev.prev.IsProofOfStake)
+                    {
+                        return nPoWTrust + (2 * nLastBlockTrust / 3);
+                    }
+
+                    int nPoSCount = 0;
+
+                    // Check last 12 blocks type
+                    while (prev.nHeight - currentIndex.nHeight < 12)
+                    {
+                        if (currentIndex.IsProofOfStake)
+                        {
+                            nPoSCount++;
+                        }
+                        currentIndex = currentIndex.prev;
+                    }
+
+                    // Return nPoWTrust + 2/3 of previous block score if less than 7 PoS blocks found
+                    if (nPoSCount < 7)
+                    {
+                        return nPoWTrust + (2 * nLastBlockTrust / 3);
+                    }
+
+                    nTarget.Compact = prev.nBits;
+
+                    if (!nTarget)
+                    {
+                        return 0;
+                    }
+
+                    var nNewTrust = (new uint256(1) << 256) / (nTarget + 1);
+
+                    // Return nPoWTrust + full trust score for previous block nBits
+                    return nPoWTrust + nNewTrust;
+                }
+            }
+        }
 
     }
 
@@ -451,6 +582,8 @@ namespace Novacoin
 
             fStreamReadWrite = File.Open(strBlockFile, FileMode.OpenOrCreate, FileAccess.ReadWrite);
 
+            Instance = this;
+
             if (firstInit)
             {
                 lock (LockObj)
@@ -507,8 +640,6 @@ namespace Novacoin
                     blockMap.TryAdd(item.Hash, item);
                 }
             }
-
-            Instance = this;
         }
 
         public bool GetTransaction(uint256 TxID, ref CTransaction tx)
@@ -537,7 +668,15 @@ namespace Novacoin
                 return false;
             }
 
-            // TODO: compute chain trust, set stake entropy bit, record proof-of-stake hash value
+            // Compute chain trust score
+            itemTemplate.nChainTrust = (itemTemplate.prev != null ? itemTemplate.prev.nChainTrust : 0) + itemTemplate.nBlockTrust;
+
+            if (!itemTemplate.SetStakeEntropyBit(Entropy.GetStakeEntropyBit(itemTemplate.nHeight, blockHash)))
+            {
+                return false; // SetStakeEntropyBit() failed
+            }
+
+            // TODO: set stake entropy bit, record proof-of-stake hash value
 
             // TODO: compute stake modifier
 
@@ -635,7 +774,6 @@ namespace Novacoin
             var itemTemplate = new CBlockStoreItem()
             {
                 nHeight = nHeight,
-                nEntropyBit = Entropy.GetStakeEntropyBit(nHeight, nHash)
             };
 
             itemTemplate.FillHeader(block.header);
