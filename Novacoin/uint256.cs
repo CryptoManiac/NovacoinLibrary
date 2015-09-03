@@ -202,7 +202,6 @@ namespace Novacoin
             return ret;
         }
 
-
         public static uint256 operator ++(uint256 a)
         {
             int i = 0;
@@ -250,6 +249,24 @@ namespace Novacoin
         public static uint256 operator -(uint256 a, ulong b)
         {
             return a - new uint256(b);
+        }
+
+        public static uint256 operator /(uint256 a, uint b)
+        {
+            var result = new uint256();
+
+            ulong r = 0;
+            int i = a.nWidth;
+
+            while (i-- > 0)
+            {
+                r <<= 32;
+                r |= a.pn[i];
+                result.pn[i] = (uint)(r / b);
+                r %= b;
+            }
+
+            return result;
         }
         #endregion
 

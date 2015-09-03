@@ -194,6 +194,24 @@ namespace Novacoin
             return a;
         }
 
+        public static uint160 operator /(uint160 a, uint b)
+        {
+            var result = new uint160();
+
+            ulong r = 0;
+            int i = a.nWidth;
+
+            while (i-- > 0)
+            {
+                r <<= 32;
+                r |= a.pn[i];
+                result.pn[i] = (uint)(r / b);
+                r %= b;
+            }
+
+            return result;
+        }
+
         #endregion
 
         #region Shift
