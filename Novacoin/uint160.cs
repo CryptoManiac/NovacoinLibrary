@@ -230,6 +230,66 @@ namespace Novacoin
             return result;
         }
 
+        public static uint160 operator *(uint160 a, uint160 b)
+        {
+            if (!a || !b)
+            {
+                // Multiplication by zero results with zero.
+                return 0;
+            }
+            else if (b.bits <= 32)
+            {
+                if (b.pn[0] == 1)
+                {
+                    // If right is 1 then return left operand value
+                    return a;
+                }
+
+                return a * b.pn[0];
+            }
+            else if (a.bits <= 32)
+            {
+                if (a.pn[0] == 1)
+                {
+                    // If left is 1 then return right operand value
+                    return b;
+                }
+
+                return a * b.pn[0];
+            }
+
+            int m = a.bits / 32 + (a.bits % 32 != 0 ? 1 : 0);
+            int n = b.bits / 32 + (b.bits % 32 != 0 ? 1 : 0);
+
+            uint160 result = new uint160();
+
+            uint[] left = a.pn.Take(m).ToArray();
+            uint[] right = b.pn.Take(n).ToArray();
+
+            for (int i = 0; i < m; ++i)
+            {
+                uint ai = left[i];
+                int k = i;
+
+                ulong temp = 0;
+                for (int j = 0; j < n; ++j)
+                {
+                    temp = temp + ((ulong)ai) * right[j] + result.pn[k];
+                    result.pn[k++] = (uint)temp;
+                    temp >>= 32;
+                }
+
+                while (temp != 0)
+                {
+                    temp += result.pn[k];
+                    result.pn[k++] = (uint)temp;
+                    temp >>= 32;
+                }
+            }
+
+            return result;
+        }
+
         public static uint operator %(uint160 a, uint divisor)
         {
             ulong r = 0;
