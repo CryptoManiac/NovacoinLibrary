@@ -18,6 +18,7 @@
 
 using System;
 using System.Diagnostics.Contracts;
+using System.Linq;
 
 namespace Novacoin
 {
@@ -251,7 +252,7 @@ namespace Novacoin
             return a - new uint256(b);
         }
 
-        public static uint256 operator /(uint256 a, uint divisor)
+        public static uint256 operator /(uint256 a, uint b)
         {
             var result = new uint256();
 
@@ -262,14 +263,14 @@ namespace Novacoin
             {
                 r <<= 32;
                 r |= a.pn[i];
-                result.pn[i] = (uint)(r / divisor);
-                r %= divisor;
+                result.pn[i] = (uint)(r / b);
+                r %= b;
             }
 
             return result;
         }
 
-        public static uint256 operator *(uint256 a, uint multiplier)
+        public static uint256 operator *(uint256 a, uint b)
         {
             var result = new uint256();
 
@@ -278,7 +279,7 @@ namespace Novacoin
 
             do
             {
-                c += a.pn[i] * (ulong)multiplier;
+                c += a.pn[i] * (ulong)b;
                 result.pn[i] = (uint)c;
                 c >>= 32;
             } while (++i < result.nWidth);
@@ -286,7 +287,7 @@ namespace Novacoin
             return result;
         }
 
-        public static uint operator %(uint256 a, uint divisor)
+        public static uint operator %(uint256 a, uint b)
         {
             ulong r = 0;
             int i = a.nWidth;
@@ -295,43 +296,57 @@ namespace Novacoin
             {
                 r <<= 32;
                 r |= a.pn[i];
-                r %= divisor;
+                r %= b;
             }
 
             return (uint)r;
         }
 
-        public static uint256 operator /(uint256 a, uint256 divisor)
+        public static uint256 operator /(uint256 a, uint256 b)
         {
-            if (divisor.bits <= 32)
+            if (b.bits <= 32)
             {
-                return a / divisor.Low32;
+                return a / b.Low32;
             }
 
-            return Divide(a, divisor)[0];
+            uint256 result = new uint256();
+
+            uint[] quotient;
+            uint[] remainder_value;
+
+            int m = a.bits / 32 + (a.bits % 32 != 0 ? 1 : 0);
+            int n = b.bits / 32 + (b.bits % 32 != 0 ? 1 : 0);
+
+            BignumHelper.DivModUnsigned(a.pn.Take(m).ToArray(), b.pn.Take(n).ToArray(), out quotient, out remainder_value);
+
+            quotient.CopyTo(result.pn, 0);
+
+            return result;
         }
 
-        public static uint256 operator %(uint256 a, uint256 divisor)
+        public static uint256 operator %(uint256 a, uint256 b)
         {
-            if (divisor.bits <= 32)
+            if (b.bits <= 32)
             {
-                return a % divisor.Low32;
+                return a % b.Low32;
             }
 
-            return Divide(a, divisor)[1];
+            uint256 result = new uint256();
+
+            uint[] quotient;
+            uint[] remainder_value;
+
+            int m = a.bits / 32 + (a.bits % 32 != 0 ? 1 : 0);
+            int n = b.bits / 32 + (b.bits % 32 != 0 ? 1 : 0);
+
+            BignumHelper.DivModUnsigned(a.pn.Take(m).ToArray(), b.pn.Take(n).ToArray(), out quotient, out remainder_value);
+
+            remainder_value.CopyTo(result.pn, 0);
+
+            return result;
+
         }
         #endregion
-
-        public static uint256[] Divide(uint256 bi1, uint256 bi2)
-        {
-            // STUB!
-
-            uint256[] ret = new uint256[2] { 0, 0 };
-
-            return ret;
-        }
-
-
 
         #region Shift
         public static uint256 operator <<(uint256 a, int shift)

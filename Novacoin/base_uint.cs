@@ -81,7 +81,7 @@ namespace Novacoin
         /// <summary>
         /// Zero or the position of highest non-zero bit plus one.
         /// </summary>
-        protected int bits
+        public int bits
         {
             get
             {

@@ -18,6 +18,7 @@
 
 using System;
 using System.Diagnostics.Contracts;
+using System.Linq;
 
 namespace Novacoin
 {
@@ -242,6 +243,51 @@ namespace Novacoin
             }
 
             return (uint)r;
+        }
+
+        public static uint160 operator /(uint160 a, uint160 b)
+        {
+            if (b.bits <= 32)
+            {
+                return a / b.Low32;
+            }
+
+            uint160 result = new uint160();
+
+            uint[] quotient;
+            uint[] remainder_value;
+
+            int m = a.bits / 32 + (a.bits % 32 != 0 ? 1 : 0);
+            int n = b.bits / 32 + (b.bits % 32 != 0 ? 1 : 0);
+
+            BignumHelper.DivModUnsigned(a.pn.Take(m).ToArray(), b.pn.Take(n).ToArray(), out quotient, out remainder_value);
+
+            quotient.CopyTo(result.pn, 0);
+
+            return result;
+        }
+
+        public static uint160 operator %(uint160 a, uint160 b)
+        {
+            if (b.bits <= 32)
+            {
+                return a % b.Low32;
+            }
+
+            uint160 result = new uint160();
+
+            uint[] quotient;
+            uint[] remainder_value;
+
+            int m = a.bits / 32 + (a.bits % 32 != 0 ? 1 : 0);
+            int n = b.bits / 32 + (b.bits % 32 != 0 ? 1 : 0);
+
+            BignumHelper.DivModUnsigned(a.pn.Take(m).ToArray(), b.pn.Take(n).ToArray(), out quotient, out remainder_value);
+
+            remainder_value.CopyTo(result.pn, 0);
+
+            return result;
+
         }
 
         #endregion
