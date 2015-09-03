@@ -3,9 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Novacoin
 {
@@ -147,7 +144,7 @@ namespace Novacoin
                 // compute the selection hash by hashing its proof-hash and the
                 // previous proof-of-stake modifier
 
-                uint256 hashProof = cursor.IsProofOfStake ? (uint256)cursor.hashProofOfStake : selectedBlockHash;
+                var hashProof = cursor.IsProofOfStake ? (uint256)cursor.hashProofOfStake : selectedBlockHash;
                 uint256 hashSelection;
 
                 var s = new MemoryStream();
@@ -332,14 +329,14 @@ namespace Novacoin
                 return false; // Min age violation
             }
 
-            uint256 nTargetPerCoinDay = new uint256();
+            uint256 nTargetPerCoinDay = 0;
             nTargetPerCoinDay.Compact = nBits;
 
             ulong nValueIn = txPrev.vout[prevout.n].nValue;
             uint256 hashBlockFrom = blockFrom.header.Hash;
-            BigInteger bnCoinDayWeight = (long)nValueIn * GetWeight(txPrev.nTime, nTimeTx) / (long)CTransaction.nCoin / (24 * 60 * 60);
+            uint256 nCoinDayWeight = new uint256(nValueIn) * GetWeight(txPrev.nTime, nTimeTx) / CTransaction.nCoin / (24 * 60 * 60);
 
-            targetProofOfStake = (bnCoinDayWeight * new BigInteger(nTargetPerCoinDay)).ToByteArray();
+            targetProofOfStake = nCoinDayWeight * nTargetPerCoinDay;
 
             // Calculate hash
             long nStakeModifier = 0;
@@ -371,7 +368,7 @@ namespace Novacoin
         }
 
         // Get time weight using supplied timestamps
-        static long GetWeight(long nIntervalBeginning, long nIntervalEnd)
+        static ulong GetWeight(ulong nIntervalBeginning, ulong nIntervalEnd)
         {
             // Kernel hash weight starts from 0 at the 30-day min age
             // this change increases active coins participating the hash and helps
