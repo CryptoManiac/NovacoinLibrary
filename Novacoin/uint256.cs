@@ -269,6 +269,23 @@ namespace Novacoin
             return result;
         }
 
+        public static uint256 operator *(uint256 a, uint multiplier)
+        {
+            var result = new uint256();
+
+            ulong c = 0;
+            uint i = 0;
+
+            do
+            {
+                c += a.pn[i] * (ulong)multiplier;
+                result.pn[i] = (uint)c;
+                c >>= 32;
+            } while (++i < result.nWidth);
+
+            return result;
+        }
+
         public static uint operator %(uint256 a, uint divisor)
         {
             ulong r = 0;
