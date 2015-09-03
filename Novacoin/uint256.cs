@@ -300,7 +300,38 @@ namespace Novacoin
 
             return (uint)r;
         }
+
+        public static uint256 operator /(uint256 a, uint256 divisor)
+        {
+            if (divisor.bits <= 32)
+            {
+                return a / divisor.Low32;
+            }
+
+            return Divide(a, divisor)[0];
+        }
+
+        public static uint256 operator %(uint256 a, uint256 divisor)
+        {
+            if (divisor.bits <= 32)
+            {
+                return a % divisor.Low32;
+            }
+
+            return Divide(a, divisor)[1];
+        }
         #endregion
+
+        public static uint256[] Divide(uint256 bi1, uint256 bi2)
+        {
+            // STUB!
+
+            uint256[] ret = new uint256[2] { 0, 0 };
+
+            return ret;
+        }
+
+
 
         #region Shift
         public static uint256 operator <<(uint256 a, int shift)
