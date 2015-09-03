@@ -213,7 +213,7 @@ namespace Novacoin
             return result;
         }
 
-        public static uint160 operator *(uint160 a, uint multiplier)
+        public static uint160 operator *(uint160 a, ulong multiplier)
         {
             var result = new uint160();
 
@@ -222,7 +222,7 @@ namespace Novacoin
 
             do
             {
-                c += a.pn[i] * (ulong)multiplier;
+                c += a.pn[i] * multiplier;
                 result.pn[i] = (uint)c;
                 c >>= 32;
             } while (++i < result.nWidth);

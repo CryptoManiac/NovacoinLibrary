@@ -270,7 +270,7 @@ namespace Novacoin
             return result;
         }
 
-        public static uint256 operator *(uint256 a, uint b)
+        public static uint256 operator *(uint256 a, ulong b)
         {
             var result = new uint256();
 
@@ -279,7 +279,7 @@ namespace Novacoin
 
             do
             {
-                c += a.pn[i] * (ulong)b;
+                c += a.pn[i] * b;
                 result.pn[i] = (uint)c;
                 c >>= 32;
             } while (++i < result.nWidth);
