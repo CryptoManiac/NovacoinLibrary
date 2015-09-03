@@ -12,6 +12,8 @@ namespace Novacoin
 
         public static uint256 nPoWBase = new uint256("00000000ffff0000000000000000000000000000000000000000000000000000"); // difficulty-1 target
 
+        public static uint nChainChecksSwitchTime = 1379635200; // Fri, 20 Sep 2013 00:00:00 GMT
+
         public static readonly uint nLockTimeThreshold = 500000000;
         private static readonly uint nDrift = 7200;
 
