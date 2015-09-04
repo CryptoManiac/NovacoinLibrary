@@ -280,7 +280,7 @@ namespace Novacoin
                 }
 
                 // write the entropy bit of the selected block
-                nStakeModifierNew |= ((cursor.StakeEntropyBit) << nRound);
+                nStakeModifierNew |= (((long)cursor.StakeEntropyBit) << nRound);
 
                 // add the selected block from candidates to selected list
                 mapSelectedBlocks.Add(cursor.Hash, cursor);
