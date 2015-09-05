@@ -20,6 +20,7 @@ using System;
 using System.Text;
 using System.Collections.Generic;
 using System.IO;
+using System.Diagnostics.Contracts;
 
 namespace Novacoin
 {
@@ -401,6 +402,23 @@ namespace Novacoin
         public uint256 Hash
         {
             get { return CryptoUtils.ComputeHash256(this); }
+        }
+
+        /// <summary>
+        /// Amount of novacoins spent by this transaction.
+        /// </summary>
+        public ulong ValueOut
+        {
+            get
+            {
+                ulong nValueOut = 0;
+                foreach (var txout in vout)
+                {
+                    nValueOut += txout.nValue;
+                    Contract.Assert(MoneyRange(txout.nValue) && MoneyRange(nValueOut));
+                }
+                return nValueOut;
+            }
         }
 
         /// <summary>
