@@ -88,6 +88,11 @@ namespace Novacoin
             return outBytes;
         }
 
+        public static implicit operator COutPoint(byte[] b)
+        {
+            return new COutPoint(b);
+        }
+
         public override string ToString()
         {
             var sb = new StringBuilder();
@@ -123,6 +128,11 @@ namespace Novacoin
         /// <returns>Result of comparison.</returns>
         public bool Equals(COutPoint o)
         {
+            if (object.ReferenceEquals(o, null))
+            {
+                return false;
+            }
+
             return (o.n == n) && (o.hash == hash);
         }
     }
