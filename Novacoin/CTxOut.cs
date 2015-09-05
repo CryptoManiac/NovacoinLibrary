@@ -80,6 +80,48 @@ namespace Novacoin
         }
 
         /// <summary>
+        /// Deserialize outputs array.
+        /// </summary>
+        /// <param name="outBytes">Byte array</param>
+        /// <returns>Outputs array</returns>
+        public static CTxOut[] DeserializeOutputsArray(byte[] outBytes)
+        {
+            var stream = new MemoryStream(outBytes);
+            var reader = new BinaryReader(stream);
+
+            CTxOut[] result = ReadTxOutList(ref reader);
+
+            reader.Close();
+
+            return result;
+        }
+
+        /// <summary>
+        /// Create serialized representation of outputs array.
+        /// </summary>
+        /// <param name="vout">Outputs array</param>
+        /// <returns>Byte array</returns>
+        public static byte[] SerializeOutputsArray(CTxOut[] vout)
+        {
+            var stream = new MemoryStream();
+            var writer = new BinaryWriter(stream);
+
+            writer.Write(VarInt.EncodeVarInt(vout.Length));
+
+            foreach (var o in vout)
+            {
+                writer.Write(o);
+            }
+
+            var resultBytes = stream.ToArray();
+
+            writer.Close();
+
+            return resultBytes;
+        }
+
+
+        /// <summary>
         /// Get raw bytes representation of our output.
         /// </summary>
         /// <returns>Byte sequence.</returns>
