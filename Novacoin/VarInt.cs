@@ -113,21 +113,24 @@ namespace Novacoin
         public static ulong DecodeVarInt(byte[] bytes)
         {
             var prefix = bytes[0];
-            var bytesArray = new byte[bytes.Length - 1];
 
-            bytes.CopyTo(bytesArray, 1);  // Get rid of prefix
-
-            switch (prefix)
+            if (bytes.Length > 1)
             {
-                case 0xfd: // ushort flag
-                    return BitConverter.ToUInt16(bytesArray, 0);
-                case 0xfe: // uint flag
-                    return BitConverter.ToUInt32(bytesArray, 0);
-                case 0xff: // ulong flag
-                    return BitConverter.ToUInt64(bytesArray, 0);
-                default:
-                    return prefix;
+                var bytesArray = new byte[bytes.Length - 1];
+                Array.Copy(bytes, 1, bytesArray, 0, bytesArray.Length);
+
+                switch (prefix)
+                {
+                    case 0xfd: // ushort flag
+                        return BitConverter.ToUInt16(bytesArray, 0);
+                    case 0xfe: // uint flag
+                        return BitConverter.ToUInt32(bytesArray, 0);
+                    case 0xff: // ulong flag
+                        return BitConverter.ToUInt64(bytesArray, 0);
+                }
             }
+            
+            return prefix; // Values lower than 0xfd are stored directly
         }
 
         public static ulong ReadVarInt(ref BinaryReader reader)
