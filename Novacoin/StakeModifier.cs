@@ -448,9 +448,14 @@ namespace Novacoin
             CTransaction txPrev = null;
             long nBlockPos = 0, nTxPos = 0;
             
-            if (!CBlockStore.Instance.GetByTransactionID(txin.prevout.hash, ref block, ref txPrev, ref nBlockPos, ref nTxPos))
+            if (!CBlockStore.Instance.GetBlockByTransactionID(txin.prevout.hash, ref block, ref txPrev, ref nBlockPos, ref nTxPos))
             {
                 return false; // unable to read block of previous transaction
+            }
+
+            if (!ScriptCode.VerifyScript(txin.scriptSig, txPrev.vout[txin.prevout.n].scriptPubKey, tx, 0, (int)scriptflag.SCRIPT_VERIFY_P2SH, 0))
+            {
+                return false; // vin[0] signature check failed
             }
 
             if (!CheckStakeKernelHash(nBits, block.header.Hash, block.header.nTime, (uint)(nTxPos - nBlockPos), txPrev, txin.prevout, tx.nTime, ref hashProofOfStake, ref targetProofOfStake))

@@ -39,6 +39,17 @@ namespace Novacoin
         public CScript scriptPubKey;
 
         /// <summary>
+        /// Initialize new outpoint using provided value and script.
+        /// </summary>
+        /// <param name="nValue">Input value</param>
+        /// <param name="scriptPubKey">Spending instructions.</param>
+        public CTxOut(ulong nValue, CScript scriptPubKey)
+        {
+            this.nValue = nValue;
+            this.scriptPubKey = scriptPubKey;
+        }
+
+        /// <summary>
         /// Initialize new CTxOut instance as a copy of another instance.
         /// </summary>
         /// <param name="o">CTxOut instance.</param>

@@ -501,6 +501,15 @@ namespace Novacoin
         }
 
         /// <summary>
+        /// Implicit cast of byte array to CScript.
+        /// </summary>
+        /// <param name="scriptBytes"></param>
+        public static implicit operator CScript(byte[] scriptBytes)
+        {
+            return new CScript(scriptBytes);
+        }
+
+        /// <summary>
         /// Script size
         /// </summary>
         public int Size

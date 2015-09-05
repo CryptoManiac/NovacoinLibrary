@@ -28,6 +28,7 @@ using SQLite.Net.Interop;
 using SQLite.Net.Platform.Generic;
 using SQLiteNetExtensions.Attributes;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 
 namespace Novacoin
 {
@@ -41,7 +42,7 @@ namespace Novacoin
         /// Item ID in the database
         /// </summary>
         [PrimaryKey, AutoIncrement]
-        public int ItemID { get; set; }
+        public long ItemID { get; set; }
 
         /// <summary>
         /// PBKDF2+Salsa20 of block hash
@@ -95,20 +96,20 @@ namespace Novacoin
         public long nStakeModifier { get; set; }
 
         /// <summary>
-        /// Stake modifier checksum.
-        /// </summary>
-        public uint nStakeModifierChecksum { get; set; }
-
-        /// <summary>
-        /// Chain trust score
-        /// </summary>
-        public byte[] ChainTrust { get; set; }
-
-        /// <summary>
         /// Proof-of-Stake hash
         /// </summary>
         public byte[] hashProofOfStake { get; set; }
 
+        /// <summary>
+        /// Stake generation outpoint.
+        /// </summary>
+        public byte[] prevoutStake { get; set; }
+
+        /// <summary>
+        /// Stake generation time.
+        /// </summary>
+        public uint nStakeTime { get; set; }
+        
         /// <summary>
         /// Block height
         /// </summary>
@@ -257,6 +258,13 @@ namespace Novacoin
         public CBlockStoreItem next
         {
             get { return CBlockStore.Instance.GetCursor(nextHash); }
+            set
+            {
+                CBlockStoreItem newCursor = this;
+                newCursor.nextHash = value.Hash;
+
+                CBlockStore.Instance.UpdateCursor(this, ref newCursor);
+            }
         }
 
         [Ignore]
@@ -332,25 +340,6 @@ namespace Novacoin
         public bool IsProofOfStake 
         {
             get { return (BlockTypeFlag & BlockType.BLOCK_PROOF_OF_STAKE) != 0; }
-        }
-
-        /// <summary>
-        /// Chain trust score.
-        /// </summary>
-        [Ignore]
-        public uint256 nChainTrust {
-            get
-            {
-                if (ChainTrust.Length != 32)
-                {
-                    byte[] tmp = ChainTrust;
-                    Array.Resize(ref tmp, 32);
-                    ChainTrust = tmp;
-                }
-
-                return ChainTrust;
-            }
-            set { ChainTrust = Interop.TrimArray(value); }
         }
 
         /// <summary>
@@ -457,6 +446,15 @@ namespace Novacoin
             }
         }
 
+        /// <summary>
+        /// Stake modifier checksum.
+        /// </summary>
+        public uint nStakeModifierChecksum;
+
+        /// <summary>
+        /// Chain trust score
+        /// </summary>
+        public uint256 nChainTrust;
     }
 
     /// <summary>
@@ -478,6 +476,161 @@ namespace Novacoin
         TX_COINSTAKE,
         TX_USER
     }
+
+    /// <summary>
+    /// Transaction type.
+    /// </summary>
+    public enum OutputType
+    {
+        TX_USER      = (1 << 0), // User output
+        TX_COINBASE  = (1 << 1), // Coinbase output
+        TX_COINSTAKE = (1 << 2), // Coinstake output
+        TX_AVAILABLE = (2 << 0), // Unspent output
+        TX_SPENT     = (2 << 1)  // Spent output
+    }
+
+    [Table("MerkleNodes")]
+    public class MerkleNode
+    {
+        [PrimaryKey, AutoIncrement]
+        public long nMerkleNodeID { get; set; }
+
+        /// <summary>
+        /// Reference to parent block database item.
+        /// </summary>
+        [ForeignKey(typeof(CBlockStoreItem), Name = "ItemId")]
+        public long nParentBlockID { get; set; }
+
+        /// <summary>
+        /// Transaction hash
+        /// </summary>
+        public byte[] TransactionHash { get; set; }
+
+        public static bool QueryParentBlockCursor(uint256 transactionHash, out CBlockStoreItem cursor)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    [Table("Outputs")]
+    public class TxOutItem
+    {
+        /// <summary>
+        /// Link the transaction hash with database item identifier.
+        /// </summary>
+        private static ConcurrentDictionary<uint256, long> outMap = new ConcurrentDictionary<uint256, long>();
+
+        /// <summary>
+        /// Reference to transaction item.
+        /// </summary>
+        [ForeignKey(typeof(MerkleNode), Name = "nMerkleNodeID")]
+        public long nMerkleNodeID { get; set; }
+
+        /// <summary>
+        /// Output flags
+        /// </summary>
+        public OutputType outputFlags { get; set; }
+
+        /// <summary>
+        /// Output number in VarInt format.
+        /// </summary>
+        public byte[] OutputNumber { get; set; }
+
+        /// <summary>
+        /// Output value in VarInt format.
+        /// </summary>
+        public byte[] OutputValue { get; set; }
+
+        /// <summary>
+        /// Second half of script which contains spending instructions.
+        /// </summary>
+        public byte[] scriptPubKey { get; set; }
+
+        /// <summary>
+        /// Construct new item from provided transaction data.
+        /// </summary>
+        /// <param name="o"></param>
+        public TxOutItem(CTransaction tx, uint nOut)
+        {
+            Contract.Requires<ArgumentException>(nOut < tx.vout.Length);
+
+            long nMerkleId = 0;
+            if (!outMap.TryGetValue(tx.Hash, out nMerkleId))
+            {
+                // Not in the blockchain
+                nMerkleNodeID = -1;
+            }
+
+            OutputNumber = VarInt.EncodeVarInt(nOut);
+            OutputValue = VarInt.EncodeVarInt(tx.vout[nOut].nValue);
+            scriptPubKey = tx.vout[nOut].scriptPubKey;
+
+            if (tx.IsCoinBase)
+            {
+                outputFlags |= OutputType.TX_COINBASE;
+            }
+            else if (tx.IsCoinStake)
+            {
+                outputFlags |= OutputType.TX_COINSTAKE;
+            }
+        }
+
+        /// <summary>
+        /// Getter for output number.
+        /// </summary>
+        [Ignore]
+        public uint nOut
+        {
+            get { return (uint)VarInt.DecodeVarInt(OutputNumber); }
+        }
+
+        /// <summary>
+        /// Getter for output value.
+        /// </summary>
+        [Ignore]
+        public ulong nValue
+        {
+            get { return VarInt.DecodeVarInt(OutputValue); }
+        }
+
+        /// <summary>
+        /// Is this a user transaction output?
+        /// </summary>
+        [Ignore]
+        public bool IsUser
+        {
+            get { return (outputFlags & OutputType.TX_USER) != 0; }
+        }
+
+        /// <summary>
+        /// Is this a coinbase transaction output?
+        /// </summary>
+        [Ignore]
+        public bool IsCoinBase
+        {
+            get { return (outputFlags & OutputType.TX_COINBASE) != 0;  }
+        }
+
+        /// <summary>
+        /// Is this a coinstake transaction output?
+        /// </summary>
+        [Ignore]
+        public bool IsCoinStake
+        {
+            get { return (outputFlags & OutputType.TX_COINSTAKE) != 0; }
+        }
+
+        /// <summary>
+        /// Getter ans setter for IsSpent flag.
+        /// </summary>
+        [Ignore]
+        public bool IsSpent
+        {
+            get { return (outputFlags & OutputType.TX_SPENT) != 0; }
+            set { outputFlags |= value ? OutputType.TX_SPENT : OutputType.TX_AVAILABLE; }
+        }
+    }
+
 
     [Table("TransactionStorage")]
     public class CTransactionStoreItem
@@ -508,6 +661,11 @@ namespace Novacoin
         /// Transaction size
         /// </summary>
         public int nTxSize { get; set; }
+
+        /// <summary>
+        /// Serialized output array
+        /// </summary>
+        public byte[] vOut { get; set; }
 
         /// <summary>
         /// Read transaction from file.
@@ -543,6 +701,15 @@ namespace Novacoin
                 // Constructor error
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Outputs array access
+        /// </summary>
+        [Ignore]
+        public CTxOut[] Outputs {
+            get { return CTxOut.DeserializeOutputsArray(vOut); }
+            set { vOut = CTxOut.SerializeOutputsArray(value); }
         }
     }
 
@@ -583,13 +750,48 @@ namespace Novacoin
         /// Map of unspent items.
         /// </summary>
         private ConcurrentDictionary<uint256, CTransactionStoreItem> txMap = new ConcurrentDictionary<uint256, CTransactionStoreItem>();
-
+        
+        /// <summary>
+        /// Map of the proof-of-stake hashes. This is necessary for stake duplication checks.
+        /// </summary>
         private ConcurrentDictionary<uint256, uint256> mapProofOfStake = new ConcurrentDictionary<uint256, uint256>();
 
-        public static CBlockStore Instance;
+
+        private ConcurrentDictionary<COutPoint, uint> mapStakeSeen = new ConcurrentDictionary<COutPoint, uint>();
+        private ConcurrentDictionary<COutPoint, uint> mapStakeSeenOrphan = new ConcurrentDictionary<COutPoint, uint>();
 
         /// <summary>
-        /// Block file stream with read access
+        /// Unconfirmed transactions.
+        /// </summary>
+        private ConcurrentDictionary<uint256, CTransaction> mapUnconfirmedTx = new ConcurrentDictionary<uint256, CTransaction>();
+
+        /// <summary>
+        /// Trust score for the longest chain.
+        /// </summary>
+        private uint256 nBestChainTrust = 0;
+
+        /// <summary>
+        /// Top block of the best chain.
+        /// </summary>
+        private uint256 nHashBestChain = 0;
+
+        /// <summary>
+        /// Cursor which is pointing us to the end of best chain.
+        /// </summary>
+        private CBlockStoreItem bestBlockCursor = null;
+
+        /// <summary>
+        /// Cursor which is always pointing us to genesis block.
+        /// </summary>
+        private CBlockStoreItem genesisBlockCursor = null;
+
+        /// <summary>
+        /// Current and the only instance of block storage manager. Should be a property with private setter though it's enough for the beginning.
+        /// </summary>
+        public static CBlockStore Instance = null;
+
+        /// <summary>
+        /// Block file stream with read/write access
         /// </summary>
         private Stream fStreamReadWrite;
 
@@ -664,6 +866,12 @@ namespace Novacoin
                 foreach (var item in blockTreeItems)
                 {
                     blockMap.TryAdd(item.Hash, item);
+
+                    if (item.IsProofOfStake)
+                    {
+                        // build mapStakeSeen
+                        mapStakeSeen.TryAdd(item.prevoutStake, item.nStakeTime);
+                    }
                 }
             }
         }
@@ -706,16 +914,14 @@ namespace Novacoin
             if (itemTemplate.IsProofOfStake)
             {
                 uint256 hashProofOfStake;
-                if (!CBlockStore.Instance.GetProofOfStakeHash(blockHash, out hashProofOfStake))
+                if (!GetProofOfStakeHash(blockHash, out hashProofOfStake))
                 {
                     return false;  // hashProofOfStake not found 
                 }
                 itemTemplate.hashProofOfStake = hashProofOfStake;
             }
 
-            // TODO: compute stake modifier
-
-            // ppcoin: compute stake modifier
+            // compute stake modifier
             long nStakeModifier = 0;
             bool fGeneratedStakeModifier = false;
             if (!StakeModifier.ComputeNextStakeModifier(itemTemplate, ref nStakeModifier, ref fGeneratedStakeModifier))
@@ -732,6 +938,9 @@ namespace Novacoin
             if (block.IsProofOfStake)
             {
                 itemTemplate.SetProofOfStake();
+
+                itemTemplate.prevoutStake = block.vtx[1].vin[0].prevout;
+                itemTemplate.nStakeTime = block.vtx[1].nTime;
             }
 
             if (!itemTemplate.WriteToFile(ref writer, ref block))
@@ -739,12 +948,29 @@ namespace Novacoin
                 return false;
             }
 
-            dbConn.Insert(itemTemplate);
+            if (dbConn.Insert(itemTemplate) == 0 || !blockMap.TryAdd(blockHash, itemTemplate))
+            {
+                return false;
+            }
+
+            if (itemTemplate.nChainTrust > nBestChainTrust)
+            {
+                // New best chain
+
+                // TODO: SetBestChain implementation
+
+                /*
+                if (!SetBestChain(ref itemTemplate))
+                {
+                    return false; // SetBestChain failed.
+                }
+                */
+            }
 
             // We have no SetBestChain and ConnectBlock/Disconnect block yet, so adding these transactions manually.
             for (int i = 0; i < block.vtx.Length; i++)
             {
-                // Handle trasactions
+                // Handle trasactions using our temporary stub algo
 
                 if (!block.vtx[i].VerifyScripts())
                 {
@@ -775,7 +1001,117 @@ namespace Novacoin
                 dbConn.Insert(NewTxItem);
             }
 
-            return blockMap.TryAdd(blockHash, itemTemplate);
+            return true;
+        }
+
+        private bool SetBestChain(ref CBlockStoreItem cursor)
+        {
+            dbConn.BeginTransaction();
+
+            uint256 hashBlock = cursor.Hash;
+
+            if (genesisBlockCursor == null && hashBlock == NetUtils.nHashGenesisBlock)
+            {
+                genesisBlockCursor = cursor;
+            }
+            else if (nHashBestChain == (uint256)cursor.prevHash)
+            {
+                if (!SetBestChainInner(cursor))
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                // the first block in the new chain that will cause it to become the new best chain
+                CBlockStoreItem cursorIntermediate = cursor;
+
+                // list of blocks that need to be connected afterwards
+                List<CBlockStoreItem> secondary = new List<CBlockStoreItem>();
+
+                // Reorganize is costly in terms of db load, as it works in a single db transaction.
+                // Try to limit how much needs to be done inside
+                while (cursorIntermediate.prev != null && cursorIntermediate.prev.nChainTrust > bestBlockCursor.nChainTrust)
+                {
+                    secondary.Add(cursorIntermediate);
+                    cursorIntermediate = cursorIntermediate.prev;
+                }
+
+                // Switch to new best branch
+                if (!Reorganize(cursorIntermediate))
+                {
+                    dbConn.Rollback();
+                    InvalidChainFound(cursor);
+                    return false; // reorganize failed
+                }
+
+
+            }
+
+
+            throw new NotImplementedException();
+        }
+
+        private void InvalidChainFound(CBlockStoreItem cursor)
+        {
+            throw new NotImplementedException();
+        }
+
+        private bool Reorganize(CBlockStoreItem cursorIntermediate)
+        {
+            throw new NotImplementedException();
+        }
+
+        private bool SetBestChainInner(CBlockStoreItem cursor)
+        {
+            uint256 hash = cursor.Hash;
+            CBlock block;
+
+            // Adding to current best branch
+            if (!ConnectBlock(cursor, false, out block) || !WriteHashBestChain(hash))
+            {
+                dbConn.Rollback();
+                InvalidChainFound(cursor);
+                return false;
+            }
+
+            // Add to current best branch
+            cursor.prev.next = cursor;
+
+            dbConn.Commit();
+
+            // Delete redundant memory transactions
+            foreach (var tx in block.vtx)
+            {
+                CTransaction dummy;
+                mapUnconfirmedTx.TryRemove(tx.Hash, out dummy);
+            }
+
+            return true;
+        }
+
+        private bool ConnectBlock(CBlockStoreItem cursor, bool fJustCheck, out CBlock block)
+        {
+            var reader = new BinaryReader(fStreamReadWrite).BaseStream;
+            if (cursor.ReadFromFile(ref reader, out block))
+            {
+                return false; // Unable to read block from file.
+            }
+
+            // Check it again in case a previous version let a bad block in, but skip BlockSig checking
+            if (!block.CheckBlock(!fJustCheck, !fJustCheck, false))
+            {
+                return false; // Invalid block found.
+            }
+
+            // TODO: the remaining stuff lol :D
+
+            throw new NotImplementedException();
+        }
+
+        private bool WriteHashBestChain(uint256 hash)
+        {
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -862,7 +1198,7 @@ namespace Novacoin
             return false;
         }
 
-        public bool GetByTransactionID(uint256 TxID, ref CBlock block, ref CTransaction tx, ref long nBlockPos, ref long nTxPos)
+        public bool GetBlockByTransactionID(uint256 TxID, ref CBlock block, ref CTransaction tx, ref long nBlockPos, ref long nTxPos)
         {
             var QueryTx = dbConn.Query<CTransactionStoreItem>("select * from [TransactionStorage] where [TransactionHash] = ?", (byte[])TxID);
 
@@ -902,11 +1238,29 @@ namespace Novacoin
 
             if (QueryBlockCursor.Count == 1)
             {
+                blockMap.TryAdd(blockHash, QueryBlockCursor[0]);
+
                 return QueryBlockCursor[0];
             }
 
             // Nothing found.
             return null;
+        }
+
+        /// <summary>
+        /// Update cursor in memory and on disk.
+        /// </summary>
+        /// <param name="originalItem">Original cursor</param>
+        /// <param name="newItem">New cursor</param>
+        /// <returns></returns>
+        public bool UpdateCursor(CBlockStoreItem originalItem, ref CBlockStoreItem newItem)
+        {
+            if (blockMap.TryUpdate(originalItem.Hash, newItem, originalItem))
+            {
+                return dbConn.Update(newItem) != 0;
+            }
+
+            return false;
         }
 
         public bool ProcessBlock(ref CBlock block)
@@ -935,7 +1289,7 @@ namespace Novacoin
 
             if (block.IsProofOfStake)
             {
-                if (!block.SignatureOK || !block.vtx[1].VerifyScripts())
+                if (!block.SignatureOK)
                 {
                     // Proof-of-Stake signature validation failure.
                     return false;
