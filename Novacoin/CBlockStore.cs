@@ -873,14 +873,24 @@ namespace Novacoin
             return false;
         }
 
-        public bool FetchInputs(ref CTransaction tx, ref Dictionary<uint256, TxOutItem> queued, out TxOutItem[] inputs, bool IsBlock, out bool Invalid)
+        interface InputsJoin : ITxOutItem
         {
-            Invalid = true;
-            inputs = null;
+            byte[] TransactionHash { get; set; }
+        }
+
+        public bool FetchInputs(ref CTransaction tx, ref Dictionary<COutPoint, CTxOut> queued, ref Dictionary<COutPoint, CTxOut> inputs, bool IsBlock, out bool Invalid)
+        {
+            Invalid = false;
+
+            if (tx.IsCoinBase)
+            {
+                // Coinbase transactions have no inputs to fetch.
+                return true; 
+            }
 
             StringBuilder queryBuilder = new StringBuilder();
             
-            queryBuilder.Append("select o.* from [Outputs] o left join [MerkleNodes] m on (m.[nMerkleNodeID] = o.[nMerkleNodeID]) where ");
+            queryBuilder.Append("select o.*, m.[TransactionHash] from [Outputs] o left join [MerkleNodes] m on (m.[nMerkleNodeID] = o.[nMerkleNodeID]) where ");
 
             for (var i = 0; i < tx.vin.Length; i++)
             {
@@ -890,26 +900,70 @@ namespace Novacoin
                 ));
             }
 
-            var queryResults = dbConn.Query<TxOutItem>(queryBuilder.ToString());
+            var queryResults = dbConn.Query<InputsJoin>(queryBuilder.ToString());
+
+            foreach (var item in queryResults)
+            {
+                if (item.IsSpent)
+                {
+                    return false; // Already spent
+                }
+
+                var inputsKey =  new COutPoint(item.TransactionHash, item.nOut);
+
+                // Add output data to dictionary
+                inputs[inputsKey] = new CTxOut(item.nValue, item.scriptPubKey);
+            }
 
             if (queryResults.Count < tx.vin.Length)
             {
-                // It seems than some transactions are being spent in the same block.
-
                 if (IsBlock)
                 {
-                    
+                    // It seems that some transactions are being spent in the same block.
+
+                    foreach (var txin in tx.vin)
+                    {
+                        var outPoint = txin.prevout;
+
+                        if (!queued.ContainsKey(outPoint))
+                        {
+                            return false; // No such transaction
+                        }
+
+                        // Add output data to dictionary
+                        inputs[outPoint] = queued[outPoint];
+
+                        // And remove it from queued data
+                        queued.Remove(outPoint);
+                    }
                 }
                 else
                 {
-                    // TODO: use mapUnconfirmed
+                    // Unconfirmed transaction
+
+                    foreach (var txin in tx.vin)
+                    {
+                        var outPoint = txin.prevout;
+                        CTransaction txPrev;
+
+                        if (!mapUnconfirmedTx.TryGetValue(outPoint.hash, out txPrev))
+                        {
+                            return false; // No such transaction
+                        }
+
+                        if (outPoint.n > txPrev.vout.Length)
+                        {
+                            Invalid = true;
+
+                            return false; // nOut is out of range
+                        }
+
+                        inputs[outPoint] = txPrev.vout[outPoint.n];
+                    }
 
                     return false;
                 }
             }
-
-            inputs = queryResults.ToArray();
-            Invalid = false;
 
             return true;
         }
