@@ -124,8 +124,14 @@ namespace Novacoin
         /// <summary>
         /// Block height, encoded in VarInt format
         /// </summary>
-        [Column("Height")]
-        public byte[] Height { get; set; }
+        [Column("nHeight")]
+        public uint nHeight { get; set; }
+
+        /// <summary>
+        /// Chain trust score, serialized and trimmed uint256 representation.
+        /// </summary>
+        [Column("ChainTrust")]
+        public byte[] ChainTrust { get; set; }
 
         /// <summary>
         /// Block position in file, encoded in VarInt format
@@ -159,17 +165,6 @@ namespace Novacoin
             get { return (int)VarInt.DecodeVarInt(BlockSize); }
             set { BlockSize = VarInt.EncodeVarInt(value); }
         }
-
-        /// <summary>
-        /// Accessor and mutator for Height value.
-        /// </summary>
-        [Ignore]
-        public uint nHeight
-        {
-            get { return (uint)VarInt.DecodeVarInt(Height); }
-            set { Height = VarInt.EncodeVarInt(value); }
-        }
-
 
         /// <summary>
         /// Fill database item with data from given block header.
@@ -509,7 +504,11 @@ namespace Novacoin
         /// <summary>
         /// Chain trust score
         /// </summary>
-        public uint256 nChainTrust;
+        [Ignore]
+        public uint256 nChainTrust {
+            get { return Interop.AppendWithZeros(ChainTrust); }
+            set { ChainTrust = Interop.TrimArray(value); }
+        }
     }
 
     /// <summary>
@@ -707,6 +706,11 @@ namespace Novacoin
         private SQLiteConnection dbConn;
 
         /// <summary>
+        /// Current SQLite platform
+        /// </summary>
+        private ISQLitePlatform dbPlatform;
+
+        /// <summary>
         /// Block file.
         /// </summary>
         private string strBlockFile;
@@ -774,6 +778,9 @@ namespace Novacoin
         /// Block file stream with read/write access
         /// </summary>
         private Stream fStreamReadWrite;
+        private uint nBestHeight;
+        private uint nTimeBestReceived;
+        private int nTransactionsUpdated;
 
         /// <summary>
         /// Init the block storage manager.
@@ -786,7 +793,8 @@ namespace Novacoin
             strBlockFile = BlockFile;
 
             bool firstInit = !File.Exists(strDbFile);
-            dbConn = new SQLiteConnection(new SQLitePlatformGeneric(), strDbFile);
+            dbPlatform = new SQLitePlatformGeneric();
+            dbConn = new SQLiteConnection(dbPlatform, strDbFile);
 
             fStreamReadWrite = File.Open(strBlockFile, FileMode.OpenOrCreate, FileAccess.ReadWrite);
 
@@ -1025,23 +1033,27 @@ namespace Novacoin
                 return false;
             }
 
-            if (dbConn.Insert(itemTemplate) == 0 || !blockMap.TryAdd(blockHash, itemTemplate))
+            if (dbConn.Insert(itemTemplate) == 0)
             {
-                return false;
+                return false; // Insert failed
+            }
+
+            // Get last RowID.
+            itemTemplate.ItemID = dbPlatform.SQLiteApi.LastInsertRowid(dbConn.Handle);
+            
+            if (!blockMap.TryAdd(blockHash, itemTemplate))
+            {
+                return false; // blockMap add failed
             }
 
             if (itemTemplate.nChainTrust > nBestChainTrust)
             {
                 // New best chain
 
-                // TODO: SetBestChain implementation
-
-                /*
                 if (!SetBestChain(ref itemTemplate))
                 {
                     return false; // SetBestChain failed.
                 }
-                */
             }
 
             return true;
@@ -1049,8 +1061,6 @@ namespace Novacoin
 
         private bool SetBestChain(ref CBlockStoreItem cursor)
         {
-            dbConn.BeginTransaction();
-
             uint256 hashBlock = cursor.Hash;
 
             if (genesisBlockCursor == null && hashBlock == NetUtils.nHashGenesisBlock)
@@ -1067,10 +1077,10 @@ namespace Novacoin
             else
             {
                 // the first block in the new chain that will cause it to become the new best chain
-                CBlockStoreItem cursorIntermediate = cursor;
+                var cursorIntermediate = cursor;
 
                 // list of blocks that need to be connected afterwards
-                List<CBlockStoreItem> secondary = new List<CBlockStoreItem>();
+                var secondary = new List<CBlockStoreItem>();
 
                 // Reorganize is costly in terms of db load, as it works in a single db transaction.
                 // Try to limit how much needs to be done inside
@@ -1083,16 +1093,36 @@ namespace Novacoin
                 // Switch to new best branch
                 if (!Reorganize(cursorIntermediate))
                 {
-                    dbConn.Rollback();
                     InvalidChainFound(cursor);
                     return false; // reorganize failed
                 }
 
+                // Connect further blocks
+                foreach (var currentCursor in secondary)
+                {
+                    CBlock block;
+                    if (!currentCursor.ReadFromFile(ref fStreamReadWrite, out block))
+                    {
+                        // ReadFromDisk failed
+                        break;
+                    }
 
+                    // errors now are not fatal, we still did a reorganisation to a new chain in a valid way
+                    if (!SetBestChainInner(currentCursor))
+                    {
+                        break;
+                    }
+                }
             }
 
+            nHashBestChain = cursor.Hash;
+            bestBlockCursor = cursor;
+            nBestHeight = cursor.nHeight;
+            nBestChainTrust = cursor.nChainTrust;
+            nTimeBestReceived = Interop.GetTime();
+            nTransactionsUpdated++;
 
-            throw new NotImplementedException();
+            return true;
         }
 
         private void InvalidChainFound(CBlockStoreItem cursor)
@@ -1102,6 +1132,120 @@ namespace Novacoin
 
         private bool Reorganize(CBlockStoreItem cursorIntermediate)
         {
+            // Find the fork
+            var fork = bestBlockCursor;
+            var longer = cursorIntermediate;
+
+            while (fork.ItemID != longer.ItemID)
+            {
+                while (longer.nHeight > fork.nHeight)
+                {
+                    if ((longer = longer.prev) == null)
+                    {
+                        return false; // longer.prev is null
+                    }
+                }
+
+                if (fork.ItemID == longer.ItemID)
+                {
+                    break;
+                }
+
+                if ((fork = fork.prev) == null)
+                {
+                    return false; // fork.prev is null
+                }
+            }
+
+            // List of what to disconnect
+            var disconnect = new List<CBlockStoreItem>();
+            for (var cursor = bestBlockCursor; cursor.ItemID != fork.ItemID; cursor = cursor.prev)
+            {
+                disconnect.Add(cursor);
+            }
+
+            // List of what to connect
+            var connect = new List<CBlockStoreItem>();
+            for (var cursor = cursorIntermediate; cursor.ItemID != fork.ItemID; cursor = cursor.prev)
+            {
+                connect.Add(cursor);
+            }
+            connect.Reverse();
+
+            // Disconnect shorter branch
+            var txResurrect = new List<CTransaction>();
+            foreach (var blockCursor in disconnect)
+            {
+                CBlock block;
+                if (!blockCursor.ReadFromFile(ref fStreamReadWrite, out block))
+                {
+                    return false; // ReadFromFile for disconnect failed.
+                }
+                if (!DisconnectBlock(blockCursor, ref block))
+                {
+                    return false; // DisconnectBlock failed.
+                }
+
+                // Queue memory transactions to resurrect
+                foreach (var tx in block.vtx)
+                {
+                    if (!tx.IsCoinBase && !tx.IsCoinStake)
+                    {
+                        txResurrect.Add(tx);
+                    }
+                }
+            }
+
+
+            // Connect longer branch
+            var txDelete = new List<CTransaction>();
+            foreach (var cursor in connect)
+            {
+                CBlock block;
+                if (!cursor.ReadFromFile(ref fStreamReadWrite, out block))
+                {
+                    return false; // ReadFromDisk for connect failed
+                }
+
+                if (!ConnectBlock(cursor, ref block))
+                {
+                    // Invalid block
+                    return false; // ConnectBlock failed
+                }
+
+                // Queue memory transactions to delete
+                foreach (var tx in block.vtx)
+                {
+                    txDelete.Add(tx);
+                }
+            }
+
+            if (!WriteHashBestChain(cursorIntermediate.Hash))
+            {
+                return false; // WriteHashBestChain failed
+            }
+
+            // Make sure it's successfully written to disk 
+            dbConn.Commit();
+
+            // Resurrect memory transactions that were in the disconnected branch
+            foreach (var tx in txResurrect)
+            {
+                mapUnconfirmedTx.TryAdd(tx.Hash, tx);
+            }
+
+            // Delete redundant memory transactions that are in the connected branch
+            foreach (var tx in txDelete)
+            {
+                CTransaction dummy;
+                mapUnconfirmedTx.TryRemove(tx.Hash, out dummy);
+            }
+
+            return true; // Done
+        }
+
+        private bool DisconnectBlock(CBlockStoreItem blockCursor, ref CBlock block)
+        {
             throw new NotImplementedException();
         }
 
@@ -1109,11 +1253,14 @@ namespace Novacoin
         {
             uint256 hash = cursor.Hash;
             CBlock block;
+            if (!cursor.ReadFromFile(ref fStreamReadWrite, out block))
+            {
+                return false; // Unable to read block from file.
+            }
 
             // Adding to current best branch
-            if (!ConnectBlock(cursor, false, out block) || !WriteHashBestChain(hash))
+            if (!ConnectBlock(cursor, ref block) || !WriteHashBestChain(hash))
             {
-                dbConn.Rollback();
                 InvalidChainFound(cursor);
                 return false;
             }
@@ -1133,14 +1280,8 @@ namespace Novacoin
             return true;
         }
 
-        private bool ConnectBlock(CBlockStoreItem cursor, bool fJustCheck, out CBlock block)
+        private bool ConnectBlock(CBlockStoreItem cursor, ref CBlock block, bool fJustCheck=false)
         {
-            var reader = new BinaryReader(fStreamReadWrite).BaseStream;
-            if (cursor.ReadFromFile(ref reader, out block))
-            {
-                return false; // Unable to read block from file.
-            }
-
             // Check it again in case a previous version let a bad block in, but skip BlockSig checking
             if (!block.CheckBlock(!fJustCheck, !fJustCheck, false))
             {
@@ -1448,8 +1589,6 @@ namespace Novacoin
 
             readerForBlocks.Seek(nOffset, SeekOrigin.Begin); // Seek to previous offset + previous block length
 
-            dbConn.BeginTransaction();
-
             while (readerForBlocks.Read(buffer, 0, 4) == 4) // Read magic number
             {
                 var nMagic = BitConverter.ToUInt32(buffer, 0);
@@ -1491,12 +1630,13 @@ namespace Novacoin
                 int nCount = blockMap.Count;
                 Console.WriteLine("nCount={0}, Hash={1}, Time={2}", nCount, block.header.Hash, DateTime.Now); // Commit on each 100th block
 
+                /*
                 if (nCount % 100 == 0 && nCount != 0)
                 {
                     Console.WriteLine("Commit...");
                     dbConn.Commit();
                     dbConn.BeginTransaction();
-                }
+                }*/
             }
 
             dbConn.Commit();

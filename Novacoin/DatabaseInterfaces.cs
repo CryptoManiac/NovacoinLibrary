@@ -9,7 +9,6 @@ using SQLite.Net.Attributes;
 using SQLite.Net.Interop;
 using SQLite.Net.Platform.Generic;
 using SQLiteNetExtensions.Attributes;
-using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 
 namespace Novacoin
@@ -92,7 +91,7 @@ namespace Novacoin
         /// <summary>
         /// Block height
         /// </summary>
-        byte[] Height { get; set; }
+        uint nHeight { get; set; }
 
         /// <summary>
         /// Block position in file

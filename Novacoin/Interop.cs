@@ -96,6 +96,14 @@ namespace Novacoin
             return result;
         }
 
+        public static byte[] AppendWithZeros(byte[] bytes, int nTargetLen=32)
+        {
+            var result = new byte[nTargetLen];
+            bytes.CopyTo(result, 0);
+
+            return result;
+        }
+
         public static string ToHex(byte[] bytes)
         {
             var sb = new StringBuilder();
