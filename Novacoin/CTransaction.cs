@@ -138,15 +138,15 @@ namespace Novacoin
                 return true;
             }
 
-            CTransaction txPrev = null;
+            TxOutItem txOutCursor = null;
             for (int i = 0; i < vin.Length; i++)
             {
                 var outpoint = vin[i].prevout;
 
-                if (!CBlockStore.Instance.GetTransaction(outpoint.hash, ref txPrev))
+                if (!CBlockStore.Instance.GetTxOutCursor(outpoint, ref txOutCursor))
                     return false;
 
-                if (!ScriptCode.VerifyScript(vin[i].scriptSig, txPrev.vout[outpoint.n].scriptPubKey, this, i, (int)scriptflag.SCRIPT_VERIFY_P2SH, 0))
+                if (!ScriptCode.VerifyScript(vin[i].scriptSig, txOutCursor.scriptPubKey, this, i, (int)scriptflag.SCRIPT_VERIFY_P2SH, 0))
                     return false;
             }
 

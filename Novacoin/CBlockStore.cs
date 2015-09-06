@@ -29,15 +29,14 @@ using SQLite.Net.Platform.Generic;
 using SQLiteNetExtensions.Attributes;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Text;
 
 namespace Novacoin
 {
-    /// <summary>
-    /// Block headers table
-    /// </summary>
     [Table("BlockStorage")]
-    public class CBlockStoreItem
+    public class CBlockStoreItem : IBlockStorageItem
     {
+        #region IBlockStorageItem
         /// <summary>
         /// Item ID in the database
         /// </summary>
@@ -53,77 +52,124 @@ namespace Novacoin
         /// <summary>
         /// Version of block schema
         /// </summary>
+        [Column("nVersion")]
         public uint nVersion { get; set; }
 
         /// <summary>
         /// Previous block hash.
         /// </summary>
+        [Column("prevHash")]
         public byte[] prevHash { get; set; }
 
         /// <summary>
         /// Merkle root hash.
         /// </summary>
+        [Column("merkleRoot")]
         public byte[] merkleRoot { get; set; }
 
         /// <summary>
         /// Block timestamp.
         /// </summary>
+        [Column("nTime")]
         public uint nTime { get; set; }
 
         /// <summary>
         /// Compressed difficulty representation.
         /// </summary>
+        [Column("nBits")]
         public uint nBits { get; set; }
 
         /// <summary>
         /// Nonce counter.
         /// </summary>
+        [Column("nNonce")]
         public uint nNonce { get; set; }
 
         /// <summary>
         /// Next block hash.
         /// </summary>
+        [Column("nextHash")]
         public byte[] nextHash { get; set; }
 
         /// <summary>
         /// Block type flags
         /// </summary>
+        [Column("BlockTypeFlag")]
         public BlockType BlockTypeFlag { get; set; }
 
         /// <summary>
         /// Stake modifier
         /// </summary>
+        [Column("nStakeModifier")]
         public long nStakeModifier { get; set; }
 
         /// <summary>
         /// Proof-of-Stake hash
         /// </summary>
+        [Column("hashProofOfStake")]
         public byte[] hashProofOfStake { get; set; }
 
         /// <summary>
         /// Stake generation outpoint.
         /// </summary>
+        [Column("prevoutStake")]
         public byte[] prevoutStake { get; set; }
 
         /// <summary>
         /// Stake generation time.
         /// </summary>
+        [Column("nStakeTime")]
         public uint nStakeTime { get; set; }
-        
-        /// <summary>
-        /// Block height
-        /// </summary>
-        public uint nHeight { get; set; }
 
         /// <summary>
-        /// Block position in file
+        /// Block height, encoded in VarInt format
         /// </summary>
-        public long nBlockPos { get; set; }
+        [Column("Height")]
+        public byte[] Height { get; set; }
 
         /// <summary>
-        /// Block size in bytes
+        /// Block position in file, encoded in VarInt format
         /// </summary>
-        public int nBlockSize { get; set; }
+        [Column("BlockPos")]
+        public byte[] BlockPos { get; set; }
+
+        /// <summary>
+        /// Block size in bytes, encoded in VarInt format
+        /// </summary>
+        [Column("BlockSize")]
+        public byte[] BlockSize { get; set; }
+        #endregion
+
+        /// <summary>
+        /// Accessor and mutator for BlockPos value.
+        /// </summary>
+        [Ignore]
+        public long nBlockPos
+        {
+            get { return (long)VarInt.DecodeVarInt(BlockPos); }
+            set { BlockPos = VarInt.EncodeVarInt(value); }
+        }
+
+        /// <summary>
+        /// Accessor and mutator for BlockSize value.
+        /// </summary>
+        [Ignore]
+        public int nBlockSize
+        {
+            get { return (int)VarInt.DecodeVarInt(BlockSize); }
+            set { BlockSize = VarInt.EncodeVarInt(value); }
+        }
+
+        /// <summary>
+        /// Accessor and mutator for Height value.
+        /// </summary>
+        [Ignore]
+        public uint nHeight
+        {
+            get { return (uint)VarInt.DecodeVarInt(Height); }
+            set { Height = VarInt.EncodeVarInt(value); }
+        }
+
 
         /// <summary>
         /// Fill database item with data from given block header.
@@ -132,8 +178,9 @@ namespace Novacoin
         /// <returns>Header hash</returns>
         public uint256 FillHeader(CBlockHeader header)
         {
-            uint256 _hash;
-            Hash = _hash = header.Hash;
+            uint256 _hash = header.Hash;
+
+            Hash = _hash;
 
             nVersion = header.nVersion;
             prevHash = header.prevHash;
@@ -257,7 +304,15 @@ namespace Novacoin
         [Ignore]
         public CBlockStoreItem next
         {
-            get { return CBlockStore.Instance.GetCursor(nextHash); }
+            get
+            {
+                if (nextHash == null)
+                {
+                    return null;
+                }
+
+                return CBlockStore.Instance.GetCursor(nextHash);
+            }
             set
             {
                 CBlockStoreItem newCursor = this;
@@ -470,7 +525,7 @@ namespace Novacoin
     /// <summary>
     /// Transaction type.
     /// </summary>
-    public enum TxType
+    public enum TxFlags : byte
     {
         TX_COINBASE,
         TX_COINSTAKE,
@@ -478,20 +533,21 @@ namespace Novacoin
     }
 
     /// <summary>
-    /// Transaction type.
+    /// Output flags.
     /// </summary>
-    public enum OutputType
+    public enum OutputFlags : byte
     {
-        TX_USER      = (1 << 0), // User output
-        TX_COINBASE  = (1 << 1), // Coinbase output
-        TX_COINSTAKE = (1 << 2), // Coinstake output
-        TX_AVAILABLE = (2 << 0), // Unspent output
-        TX_SPENT     = (2 << 1)  // Spent output
+        AVAILABLE, // Unspent output
+        SPENT      // Spent output
     }
 
     [Table("MerkleNodes")]
-    public class MerkleNode
+    public class CMerkleNode : IMerkleNode
     {
+        #region IMerkleNode
+        /// <summary>
+        /// Node identifier
+        /// </summary>
         [PrimaryKey, AutoIncrement]
         public long nMerkleNodeID { get; set; }
 
@@ -502,170 +558,29 @@ namespace Novacoin
         public long nParentBlockID { get; set; }
 
         /// <summary>
-        /// Transaction hash
-        /// </summary>
-        public byte[] TransactionHash { get; set; }
-
-        public static bool QueryParentBlockCursor(uint256 transactionHash, out CBlockStoreItem cursor)
-        {
-            throw new NotImplementedException();
-        }
-    }
-
-    [Table("Outputs")]
-    public class TxOutItem
-    {
-        /// <summary>
-        /// Link the transaction hash with database item identifier.
-        /// </summary>
-        private static ConcurrentDictionary<uint256, long> outMap = new ConcurrentDictionary<uint256, long>();
-
-        /// <summary>
-        /// Reference to transaction item.
-        /// </summary>
-        [ForeignKey(typeof(MerkleNode), Name = "nMerkleNodeID")]
-        public long nMerkleNodeID { get; set; }
-
-        /// <summary>
-        /// Output flags
-        /// </summary>
-        public OutputType outputFlags { get; set; }
-
-        /// <summary>
-        /// Output number in VarInt format.
-        /// </summary>
-        public byte[] OutputNumber { get; set; }
-
-        /// <summary>
-        /// Output value in VarInt format.
-        /// </summary>
-        public byte[] OutputValue { get; set; }
-
-        /// <summary>
-        /// Second half of script which contains spending instructions.
-        /// </summary>
-        public byte[] scriptPubKey { get; set; }
-
-        /// <summary>
-        /// Construct new item from provided transaction data.
-        /// </summary>
-        /// <param name="o"></param>
-        public TxOutItem(CTransaction tx, uint nOut)
-        {
-            Contract.Requires<ArgumentException>(nOut < tx.vout.Length);
-
-            long nMerkleId = 0;
-            if (!outMap.TryGetValue(tx.Hash, out nMerkleId))
-            {
-                // Not in the blockchain
-                nMerkleNodeID = -1;
-            }
-
-            OutputNumber = VarInt.EncodeVarInt(nOut);
-            OutputValue = VarInt.EncodeVarInt(tx.vout[nOut].nValue);
-            scriptPubKey = tx.vout[nOut].scriptPubKey;
-
-            if (tx.IsCoinBase)
-            {
-                outputFlags |= OutputType.TX_COINBASE;
-            }
-            else if (tx.IsCoinStake)
-            {
-                outputFlags |= OutputType.TX_COINSTAKE;
-            }
-        }
-
-        /// <summary>
-        /// Getter for output number.
-        /// </summary>
-        [Ignore]
-        public uint nOut
-        {
-            get { return (uint)VarInt.DecodeVarInt(OutputNumber); }
-        }
-
-        /// <summary>
-        /// Getter for output value.
-        /// </summary>
-        [Ignore]
-        public ulong nValue
-        {
-            get { return VarInt.DecodeVarInt(OutputValue); }
-        }
-
-        /// <summary>
-        /// Is this a user transaction output?
-        /// </summary>
-        [Ignore]
-        public bool IsUser
-        {
-            get { return (outputFlags & OutputType.TX_USER) != 0; }
-        }
-
-        /// <summary>
-        /// Is this a coinbase transaction output?
-        /// </summary>
-        [Ignore]
-        public bool IsCoinBase
-        {
-            get { return (outputFlags & OutputType.TX_COINBASE) != 0;  }
-        }
-
-        /// <summary>
-        /// Is this a coinstake transaction output?
-        /// </summary>
-        [Ignore]
-        public bool IsCoinStake
-        {
-            get { return (outputFlags & OutputType.TX_COINSTAKE) != 0; }
-        }
-
-        /// <summary>
-        /// Getter ans setter for IsSpent flag.
-        /// </summary>
-        [Ignore]
-        public bool IsSpent
-        {
-            get { return (outputFlags & OutputType.TX_SPENT) != 0; }
-            set { outputFlags |= value ? OutputType.TX_SPENT : OutputType.TX_AVAILABLE; }
-        }
-    }
-
-
-    [Table("TransactionStorage")]
-    public class CTransactionStoreItem
-    {
-        /// <summary>
-        /// Transaction hash
-        /// </summary>
-        [PrimaryKey]
-        public byte[] TransactionHash { get; set; }
-
-        /// <summary>
-        /// Block hash
-        /// </summary>
-        [ForeignKey(typeof(CBlockStoreItem), Name = "Hash")]
-        public byte[] BlockHash { get; set; }
-
-        /// <summary>
         /// Transaction type flag
         /// </summary>
-        public TxType txType { get; set; }
+        [Column("TransactionFlags")]
+        public TxFlags TransactionFlags { get; set; }
 
         /// <summary>
-        /// Tx position in file
+        /// Transaction hash
         /// </summary>
-        public long nTxPos { get; set; }
+        [Column("TransactionHash")]
+        public byte[] TransactionHash { get; set; }
 
         /// <summary>
-        /// Transaction size
+        /// Transaction offset from the beginning of block header, encoded in VarInt format.
         /// </summary>
-        public int nTxSize { get; set; }
+        [Column("TxOffset")]
+        public byte[] TxOffset { get; set; }
 
         /// <summary>
-        /// Serialized output array
+        /// Transaction size, encoded in VarInt format.
         /// </summary>
-        public byte[] vOut { get; set; }
+        [Column("TxSize")]
+        public byte[] TxSize { get; set; }
+        #endregion
 
         /// <summary>
         /// Read transaction from file.
@@ -673,14 +588,15 @@ namespace Novacoin
         /// <param name="reader">Stream with read access.</param>
         /// <param name="tx">CTransaction reference.</param>
         /// <returns>Result</returns>
-        public bool ReadFromFile(ref Stream reader, out CTransaction tx)
+        public bool ReadFromFile(ref Stream reader, long nBlockPos, out CTransaction tx)
         {
             var buffer = new byte[CTransaction.nMaxTxSize];
+
             tx = null;
 
             try
             {
-                reader.Seek(nTxPos, SeekOrigin.Begin); // Seek to transaction offset
+                reader.Seek(nBlockPos + nTxOffset, SeekOrigin.Begin); // Seek to transaction offset
 
                 if (nTxSize != reader.Read(buffer, 0, nTxSize))
                 {
@@ -704,12 +620,77 @@ namespace Novacoin
         }
 
         /// <summary>
-        /// Outputs array access
+        /// Transaction offset accessor
         /// </summary>
         [Ignore]
-        public CTxOut[] Outputs {
-            get { return CTxOut.DeserializeOutputsArray(vOut); }
-            set { vOut = CTxOut.SerializeOutputsArray(value); }
+        public long nTxOffset
+        {
+            get { return (long) VarInt.DecodeVarInt(TxOffset); }
+        }
+
+        /// <summary>
+        /// Transaction size accessor
+        /// </summary>
+        [Ignore]
+        public int nTxSize
+        {
+            get { return (int)VarInt.DecodeVarInt(TxSize); }
+        }
+
+    }
+
+    [Table("Outputs")]
+    public class TxOutItem : ITxOutItem
+    {
+        /// <summary>
+        /// Reference to transaction item.
+        /// </summary>
+        [ForeignKey(typeof(CMerkleNode), Name = "nMerkleNodeID")]
+        public long nMerkleNodeID { get; set; }
+
+        /// <summary>
+        /// Output flags
+        /// </summary>
+        public OutputFlags outputFlags { get; set; }
+
+        /// <summary>
+        /// Output number in VarInt format.
+        /// </summary>
+        public byte[] OutputNumber { get; set; }
+
+        /// <summary>
+        /// Output value in VarInt format.
+        /// </summary>
+        public byte[] OutputValue { get; set; }
+
+        /// <summary>
+        /// Second half of script which contains spending instructions.
+        /// </summary>
+        public byte[] scriptPubKey { get; set; }
+
+        /// <summary>
+        /// Getter for output number.
+        /// </summary>
+        public uint nOut
+        {
+            get { return (uint)VarInt.DecodeVarInt(OutputNumber); }
+        }
+
+        /// <summary>
+        /// Getter for output value.
+        /// </summary>
+        public ulong nValue
+        {
+            get { return VarInt.DecodeVarInt(OutputValue); }
+        }
+
+        /// <summary>
+        /// Getter ans setter for IsSpent flag.
+        /// </summary>
+        public bool IsSpent
+        {
+            get { return (outputFlags & OutputFlags.SPENT) != 0; }
+            set { outputFlags |= value ? OutputFlags.SPENT : OutputFlags.AVAILABLE; }
         }
     }
 
@@ -737,6 +718,8 @@ namespace Novacoin
 
         /// <summary>
         /// Map of block tree nodes.
+        /// 
+        /// blockHash => CBlockStoreItem
         /// </summary>
         private ConcurrentDictionary<uint256, CBlockStoreItem> blockMap = new ConcurrentDictionary<uint256, CBlockStoreItem>();
 
@@ -747,10 +730,12 @@ namespace Novacoin
         private ConcurrentDictionary<uint256, CBlock> orphanMapByPrev = new ConcurrentDictionary<uint256, CBlock>();
 
         /// <summary>
-        /// Map of unspent items.
+        /// Unconfirmed transactions.
+        /// 
+        /// TxID => Transaction
         /// </summary>
-        private ConcurrentDictionary<uint256, CTransactionStoreItem> txMap = new ConcurrentDictionary<uint256, CTransactionStoreItem>();
-        
+        private ConcurrentDictionary<uint256, CTransaction> mapUnconfirmedTx = new ConcurrentDictionary<uint256, CTransaction>();
+
         /// <summary>
         /// Map of the proof-of-stake hashes. This is necessary for stake duplication checks.
         /// </summary>
@@ -759,11 +744,6 @@ namespace Novacoin
 
         private ConcurrentDictionary<COutPoint, uint> mapStakeSeen = new ConcurrentDictionary<COutPoint, uint>();
         private ConcurrentDictionary<COutPoint, uint> mapStakeSeenOrphan = new ConcurrentDictionary<COutPoint, uint>();
-
-        /// <summary>
-        /// Unconfirmed transactions.
-        /// </summary>
-        private ConcurrentDictionary<uint256, CTransaction> mapUnconfirmedTx = new ConcurrentDictionary<uint256, CTransaction>();
 
         /// <summary>
         /// Trust score for the longest chain.
@@ -818,7 +798,8 @@ namespace Novacoin
                 {
                     // Create tables
                     dbConn.CreateTable<CBlockStoreItem>(CreateFlags.AutoIncPK);
-                    dbConn.CreateTable<CTransactionStoreItem>(CreateFlags.ImplicitPK);
+                    dbConn.CreateTable<CMerkleNode>(CreateFlags.AutoIncPK);
+                    dbConn.CreateTable<TxOutItem>(CreateFlags.ImplicitPK);
 
                     var genesisBlock = new CBlock(
                         Interop.HexToArray(
@@ -876,19 +857,61 @@ namespace Novacoin
             }
         }
 
-        public bool GetTransaction(uint256 TxID, ref CTransaction tx)
+        public bool GetTxOutCursor(COutPoint outpoint, ref TxOutItem txOutCursor)
         {
-            var reader = new BinaryReader(fStreamReadWrite).BaseStream;
-            var QueryTx = dbConn.Query<CTransactionStoreItem>("select * from [TransactionStorage] where [TransactionHash] = ?", (byte[])TxID);
+            var queryResults = dbConn.Query<TxOutItem>("select o.* from [Outputs] o left join [MerkleNodes] m on (m.nMerkleNodeID = o.nMerkleNodeID) where m.[TransactionHash] = ?", (byte[])outpoint.hash);
 
-            if (QueryTx.Count == 1)
+            if (queryResults.Count == 1)
             {
-                return QueryTx[0].ReadFromFile(ref reader, out tx);
+                txOutCursor = queryResults[0];
+
+                return true;
             }
 
             // Tx not found
 
             return false;
+        }
+
+        public bool FetchInputs(ref CTransaction tx, ref Dictionary<uint256, TxOutItem> queued, out TxOutItem[] inputs, bool IsBlock, out bool Invalid)
+        {
+            Invalid = true;
+            inputs = null;
+
+            StringBuilder queryBuilder = new StringBuilder();
+            
+            queryBuilder.Append("select o.* from [Outputs] o left join [MerkleNodes] m on (m.[nMerkleNodeID] = o.[nMerkleNodeID]) where ");
+
+            for (var i = 0; i < tx.vin.Length; i++)
+            {
+                queryBuilder.AppendFormat(" {0} (m.[TransactionHash] = x'{1}' and o.[OutputNumber] = x'{2}')", 
+                    (i > 0 ? "or" : string.Empty), Interop.ToHex(tx.vin[i].prevout.hash), 
+                    Interop.ToHex(VarInt.EncodeVarInt(tx.vin[i].prevout.n)
+                ));
+            }
+
+            var queryResults = dbConn.Query<TxOutItem>(queryBuilder.ToString());
+
+            if (queryResults.Count < tx.vin.Length)
+            {
+                // It seems than some transactions are being spent in the same block.
+
+                if (IsBlock)
+                {
+                    
+                }
+                else
+                {
+                    // TODO: use mapUnconfirmed
+
+                    return false;
+                }
+            }
+
+            inputs = queryResults.ToArray();
+            Invalid = false;
+
+            return true;
         }
 
         private bool AddItemToIndex(ref CBlockStoreItem itemTemplate, ref CBlock block)
@@ -965,40 +988,6 @@ namespace Novacoin
                     return false; // SetBestChain failed.
                 }
                 */
-            }
-
-            // We have no SetBestChain and ConnectBlock/Disconnect block yet, so adding these transactions manually.
-            for (int i = 0; i < block.vtx.Length; i++)
-            {
-                // Handle trasactions using our temporary stub algo
-
-                if (!block.vtx[i].VerifyScripts())
-                {
-                    return false;
-                }
-
-                var nTxOffset = itemTemplate.nBlockPos + block.GetTxOffset(i);
-                TxType txnType = TxType.TX_USER;
-
-                if (block.vtx[i].IsCoinBase)
-                {
-                    txnType = TxType.TX_COINBASE;
-                }
-                else if (block.vtx[i].IsCoinStake)
-                {
-                    txnType = TxType.TX_COINSTAKE;
-                }
-
-                var NewTxItem = new CTransactionStoreItem()
-                {
-                    TransactionHash = block.vtx[i].Hash,
-                    BlockHash = blockHash,
-                    nTxPos = nTxOffset,
-                    nTxSize = block.vtx[i].Size,
-                    txType = txnType
-                };
-
-                dbConn.Insert(NewTxItem);
             }
 
             return true;
@@ -1198,14 +1187,40 @@ namespace Novacoin
             return false;
         }
 
+
+        /// <summary>
+        /// Interface for join
+        /// </summary>
+        interface IBlockJoinMerkle : IBlockStorageItem, IMerkleNode
+        {
+        }
+
+        /// <summary>
+        /// Get block and transaction by transaction hash.
+        /// </summary>
+        /// <param name="TxID">Transaction hash</param>
+        /// <param name="block">Block reference</param>
+        /// <param name="tx">Transaction reference</param>
+        /// <param name="nBlockPos">Block position reference</param>
+        /// <param name="nTxPos">Transaction position reference</param>
+        /// <returns>Result of operation</returns>
         public bool GetBlockByTransactionID(uint256 TxID, ref CBlock block, ref CTransaction tx, ref long nBlockPos, ref long nTxPos)
         {
-            var QueryTx = dbConn.Query<CTransactionStoreItem>("select * from [TransactionStorage] where [TransactionHash] = ?", (byte[])TxID);
+            var queryResult = dbConn.Query<IBlockJoinMerkle>("select *,  from [BlockStorage] b left join [MerkleNodes] m on (b.[ItemID] = m.[nParentBlockID]) where m.[TransactionHash] = ?", (byte[])TxID);
 
-            if (QueryTx.Count == 1)
+            if (queryResult.Count == 1)
             {
-                nTxPos = QueryTx[0].nTxPos;
-                return GetBlock(QueryTx[0].BlockHash, ref block, ref nBlockPos);
+                CBlockStoreItem blockCursor = (CBlockStoreItem) queryResult[0];
+                CMerkleNode txCursor = (CMerkleNode)queryResult[0];
+
+                var reader = new BinaryReader(fStreamReadWrite).BaseStream;
+
+                if (!txCursor.ReadFromFile(ref reader, blockCursor.nBlockPos, out tx))
+                {
+                    return false; // Unable to read transaction
+                }
+
+                return blockCursor.ReadFromFile(ref reader, out block);
             }
 
             // Tx not found
