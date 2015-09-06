@@ -179,5 +179,4 @@ namespace Novacoin
         /// </summary>
         bool IsSpent { get; set; }
     }
-
 }

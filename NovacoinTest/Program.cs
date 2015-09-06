@@ -319,6 +319,8 @@ namespace NovacoinTest
             Console.WriteLine("Reading the block file...");
             var bs = new CBlockStore();
             bs.ParseBlockFile();
+            
+            Console.ReadLine();
         }
     }
 }

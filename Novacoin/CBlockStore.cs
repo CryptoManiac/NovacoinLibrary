@@ -289,8 +289,9 @@ namespace Novacoin
         /// Previous block cursor
         /// </summary>
         [Ignore]
-        public CBlockStoreItem prev {
-            get { return CBlockStore.Instance.GetCursor(prevHash); }
+        public CBlockStoreItem prev
+        {
+            get { return CBlockStore.Instance.GetMapCursor(prevHash); }
         }
 
         /// <summary>
@@ -306,14 +307,13 @@ namespace Novacoin
                     return null;
                 }
 
-                return CBlockStore.Instance.GetCursor(nextHash);
+                return CBlockStore.Instance.GetMapCursor(nextHash);
             }
             set
             {
-                CBlockStoreItem newCursor = this;
-                newCursor.nextHash = value.Hash;
+                nextHash = value.Hash;
 
-                CBlockStore.Instance.UpdateCursor(this, ref newCursor);
+                CBlockStore.Instance.UpdateMapCursor(this);
             }
         }
 
@@ -404,7 +404,7 @@ namespace Novacoin
                 nTarget.Compact = nBits;
 
                 /* Old protocol */
-                if (nTime < NetUtils.nChainChecksSwitchTime)
+                if (nTime < NetInfo.nChainChecksSwitchTime)
                 {
                     return IsProofOfStake ? (new uint256(1) << 256) / (nTarget + 1) : 1;
                 }
@@ -412,7 +412,7 @@ namespace Novacoin
                 /* New protocol */
 
                 // Calculate work amount for block
-                var nPoWTrust = NetUtils.nPoWBase / (nTarget + 1);
+                var nPoWTrust = NetInfo.nPoWBase / (nTarget + 1);
 
                 // Set nPowTrust to 1 if we are checking PoS block or PoW difficulty is too low
                 nPoWTrust = (IsProofOfStake || !nPoWTrust) ? 1 : nPoWTrust;
@@ -509,6 +509,9 @@ namespace Novacoin
             get { return Interop.AppendWithZeros(ChainTrust); }
             set { ChainTrust = Interop.TrimArray(value); }
         }
+
+        public long nMint { get; internal set; }
+        public long nMoneySupply { get; internal set; }
     }
 
     /// <summary>
@@ -625,6 +628,7 @@ namespace Novacoin
         public long nTxOffset
         {
             get { return (long) VarInt.DecodeVarInt(TxOffset); }
+            private set { TxOffset = VarInt.EncodeVarInt(value); }
         }
 
         /// <summary>
@@ -634,6 +638,51 @@ namespace Novacoin
         public int nTxSize
         {
             get { return (int)VarInt.DecodeVarInt(TxSize); }
+            private set { TxSize = VarInt.EncodeVarInt(value); }
+        }
+
+        public CMerkleNode(CTransaction tx)
+        {
+            nTxOffset = -1;
+            nParentBlockID = -1;
+
+            nTxSize = tx.Size;
+            TransactionHash = tx.Hash;
+
+            if (tx.IsCoinBase)
+            {
+                TransactionFlags |= TxFlags.TX_COINBASE;
+            }
+            else if (tx.IsCoinStake)
+            {
+                TransactionFlags |= TxFlags.TX_COINSTAKE;
+            }
+            else
+            {
+                TransactionFlags |= TxFlags.TX_USER;
+            }
+        }
+
+        public CMerkleNode(long nBlockId, long nOffset, CTransaction tx)
+        {
+            nParentBlockID = nBlockId;
+
+            nTxOffset = nOffset;
+            nTxSize = tx.Size;
+            TransactionHash = tx.Hash;
+
+            if (tx.IsCoinBase)
+            {
+                TransactionFlags |= TxFlags.TX_COINBASE;
+            }
+            else if (tx.IsCoinStake)
+            {
+                TransactionFlags |= TxFlags.TX_COINSTAKE;
+            }
+            else
+            {
+                TransactionFlags |= TxFlags.TX_USER;
+            }
         }
 
     }
@@ -670,26 +719,38 @@ namespace Novacoin
         /// <summary>
         /// Getter for output number.
         /// </summary>
+        [Ignore]
         public uint nOut
         {
             get { return (uint)VarInt.DecodeVarInt(OutputNumber); }
+            private set { OutputNumber = VarInt.EncodeVarInt(value); }
         }
 
         /// <summary>
         /// Getter for output value.
         /// </summary>
+        [Ignore]
         public ulong nValue
         {
             get { return VarInt.DecodeVarInt(OutputValue); }
+            private set { OutputValue = VarInt.EncodeVarInt(value); }
         }
 
         /// <summary>
         /// Getter ans setter for IsSpent flag.
         /// </summary>
+        [Ignore]
         public bool IsSpent
         {
             get { return (outputFlags & OutputFlags.SPENT) != 0; }
             set { outputFlags |= value ? OutputFlags.SPENT : OutputFlags.AVAILABLE; }
+        }
+
+        public TxOutItem(CTxOut o, uint nOut)
+        {
+            nValue = o.nValue;
+            scriptPubKey = o.scriptPubKey;
+            this.nOut = nOut;
         }
     }
 
@@ -886,7 +947,7 @@ namespace Novacoin
             byte[] TransactionHash { get; set; }
         }
 
-        public bool FetchInputs(ref CTransaction tx, ref Dictionary<COutPoint, CTxOut> queued, ref Dictionary<COutPoint, CTxOut> inputs, bool IsBlock, out bool Invalid)
+        public bool FetchInputs(CTransaction tx, ref Dictionary<COutPoint, TxOutItem> queued, ref Dictionary<COutPoint, TxOutItem> inputs, bool IsBlock, out bool Invalid)
         {
             Invalid = false;
 
@@ -919,8 +980,10 @@ namespace Novacoin
 
                 var inputsKey =  new COutPoint(item.TransactionHash, item.nOut);
 
+                item.IsSpent = true;
+
                 // Add output data to dictionary
-                inputs[inputsKey] = new CTxOut(item.nValue, item.scriptPubKey);
+                inputs.Add(inputsKey, (TxOutItem) item);
             }
 
             if (queryResults.Count < tx.vin.Length)
@@ -939,10 +1002,10 @@ namespace Novacoin
                         }
 
                         // Add output data to dictionary
-                        inputs[outPoint] = queued[outPoint];
+                        inputs.Add(outPoint, queued[outPoint]);
 
-                        // And remove it from queued data
-                        queued.Remove(outPoint);
+                        // Mark output as spent
+                        queued[outPoint].IsSpent = true;                        
                     }
                 }
                 else
@@ -965,8 +1028,10 @@ namespace Novacoin
 
                             return false; // nOut is out of range
                         }
+                        
+                        // TODO: return inputs from map 
+                        throw new NotImplementedException();
 
-                        inputs[outPoint] = txPrev.vout[outPoint.n];
                     }
 
                     return false;
@@ -1063,7 +1128,7 @@ namespace Novacoin
         {
             uint256 hashBlock = cursor.Hash;
 
-            if (genesisBlockCursor == null && hashBlock == NetUtils.nHashGenesisBlock)
+            if (genesisBlockCursor == null && hashBlock == NetInfo.nHashGenesisBlock)
             {
                 genesisBlockCursor = cursor;
             }
@@ -1288,8 +1353,183 @@ namespace Novacoin
                 return false; // Invalid block found.
             }
 
+            bool fScriptChecks = cursor.nHeight >= Checkpoints.TotalBlocksEstimate;
+            var scriptFlags = scriptflag.SCRIPT_VERIFY_NOCACHE | scriptflag.SCRIPT_VERIFY_P2SH;
+
+            ulong nFees = 0;
+            ulong nValueIn = 0;
+            ulong nValueOut = 0;
+            uint nSigOps = 0;
+
+            var queuedMerkleNodes = new Dictionary<uint256, CMerkleNode>();
+            var queued = new Dictionary<COutPoint, TxOutItem>();
+
+            for (var nTx = 0; nTx < block.vtx.Length; nTx++)
+            {
+                var tx = block.vtx[nTx];
+                var hashTx = tx.Hash;
+                var nTxPos = cursor.nBlockPos + block.GetTxOffset(nTx);
+
+                Dictionary<COutPoint, TxOutItem> txouts;
+                if (GetOutputs(hashTx, out txouts))
+                {
+                    // Do not allow blocks that contain transactions which 'overwrite' older transactions,
+                    // unless those are already completely spent.
+                    return false;
+                }
+
+                nSigOps += tx.LegacySigOpCount;
+                if (nSigOps > CBlock.nMaxSigOps)
+                {
+                    return false; // too many sigops
+                }
+
+                var inputs = new Dictionary<COutPoint, TxOutItem>();
+
+                if (tx.IsCoinBase)
+                {
+                    nValueOut += tx.nValueOut;
+                }
+                else
+                {
+                    bool Invalid;
+                    if (!FetchInputs(tx, ref queued, ref inputs, true, out Invalid))
+                    {
+                        return false; // Unable to fetch some inputs.
+                    }
+
+                    // Add in sigops done by pay-to-script-hash inputs;
+                    // this is to prevent a "rogue miner" from creating
+                    // an incredibly-expensive-to-validate block.
+                    nSigOps += tx.GetP2SHSigOpCount(inputs);
+                    if (nSigOps > CBlock.nMaxSigOps)
+                    {
+                        return false; // too many sigops
+                    }
+
+                    ulong nTxValueIn = tx.GetValueIn(inputs);
+                    ulong nTxValueOut = tx.nValueOut;
+
+                    nValueIn += nTxValueIn;
+                    nValueOut += nTxValueOut;
+
+                    if (!tx.IsCoinStake)
+                    {
+                        nFees += nTxValueIn - nTxValueOut;
+                    }
+
+                    if (!ConnectInputs(tx, inputs, queued, cursor, fScriptChecks, scriptFlags))
+                    {
+                        return false;
+                    }
+                }
+
+                for (var i = 0u; i < tx.vout.Length; i++)
+                {
+                    var mNode = new CMerkleNode(cursor.ItemID, nTxPos, tx);
+                    queuedMerkleNodes.Add(hashTx, mNode);
+
+                    var outKey = new COutPoint(hashTx, i);
+                    var outData = new TxOutItem(tx.vout[i], i);
+
+                    outData.IsSpent = false;
+
+                    queued.Add(outKey, outData);
+                }
+            }
+
+            if (!block.IsProofOfStake)
+            {
+                ulong nBlockReward = CBlock.GetProofOfWorkReward(cursor.nBits, nFees);
+
+                // Check coinbase reward
+                if (block.vtx[0].nValueOut > nBlockReward)
+                {
+                    return false; // coinbase reward exceeded
+                }
+            }
+
+            cursor.nMint = (long) (nValueOut - nValueIn + nFees);
+            cursor.nMoneySupply = (cursor.prev != null ? cursor.prev.nMoneySupply : 0) + (long)nValueOut - (long)nValueIn;
+
+            if (!UpdateDBCursor(ref cursor))
+            {
+                return false; // Unable to commit changes
+            }
+
+            if (fJustCheck)
+            {
+                return true;
+            }
+
+            // Write queued transaction changes
+            var actualMerkleNodes = new Dictionary<uint256, CMerkleNode>();
+            var queuedOutpointItems = new List<TxOutItem>();
+            foreach(KeyValuePair<COutPoint, TxOutItem> outPair in queued)
+            {
+                uint256 txID = outPair.Key.hash;
+                CMerkleNode merkleNode;
+
+                if (actualMerkleNodes.ContainsKey(txID))
+                {
+                    merkleNode = actualMerkleNodes[txID];
+                }
+                else
+                {
+                    merkleNode = queuedMerkleNodes[txID];
+                    if (!SaveMerkleNode(ref merkleNode))
+                    {
+                        // Unable to save merkle tree cursor.
+                        return false;
+                    }
+                    actualMerkleNodes.Add(txID, merkleNode);
+                }
+
+                var outItem = outPair.Value;
+                outItem.nMerkleNodeID = merkleNode.nMerkleNodeID;
+
+                queuedOutpointItems.Add(outItem);
+            }
+
+            if (!SaveOutpoints(ref queuedOutpointItems))
+            {
+                return false; // Unable to save outpoints
+            }
+
             // TODO: the remaining stuff lol :D
 
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Insert set of outpoints
+        /// </summary>
+        /// <param name="queuedOutpointItems">List of TxOutItem objects.</param>
+        /// <returns>Result</returns>
+        private bool SaveOutpoints(ref List<TxOutItem> queuedOutpointItems)
+        {
+            return dbConn.InsertAll(queuedOutpointItems, false) != 0;
+        }
+
+        /// <summary>
+        /// Insert merkle node into db and set actual record id value.
+        /// </summary>
+        /// <param name="merkleNode">Merkle node object reference.</param>
+        /// <returns>Result</returns>
+        private bool SaveMerkleNode(ref CMerkleNode merkleNode)
+        {
+            if (dbConn.Insert(merkleNode) == 0)
+            {
+                return false;
+            }
+
+            merkleNode.nMerkleNodeID = dbPlatform.SQLiteApi.LastInsertRowid(dbConn.Handle);
+
+            return true;
+        }
+
+        private bool ConnectInputs(CTransaction tx, Dictionary<COutPoint, TxOutItem> inputs, Dictionary<COutPoint, TxOutItem> queued, CBlockStoreItem cursor, bool fScriptChecks, scriptflag scriptFlags)
+        {
             throw new NotImplementedException();
         }
 
@@ -1332,7 +1572,7 @@ namespace Novacoin
             uint nHeight = prevBlockCursor.nHeight + 1;
 
             // Check timestamp against prev
-            if (NetUtils.FutureDrift(block.header.nTime) < prevBlockHeader.nTime)
+            if (NetInfo.FutureDrift(block.header.nTime) < prevBlockHeader.nTime)
             {
                 // block's timestamp is too early
                 return false;
@@ -1365,21 +1605,25 @@ namespace Novacoin
             return true;
         }
 
+        /// <summary>
+        /// GEt block by hash.
+        /// </summary>
+        /// <param name="blockHash">Block hash</param>
+        /// <param name="block">Block object reference</param>
+        /// <param name="nBlockPos">Block position reference</param>
+        /// <returns>Result</returns>
         public bool GetBlock(uint256 blockHash, ref CBlock block, ref long nBlockPos)
         {
-            var reader = new BinaryReader(fStreamReadWrite).BaseStream;
+            CBlockStoreItem cursor;
 
-            var QueryBlock = dbConn.Query<CBlockStoreItem>("select * from [BlockStorage] where [Hash] = ?", (byte[])blockHash);
-
-            if (QueryBlock.Count == 1)
+            if (!blockMap.TryGetValue(blockHash, out cursor))
             {
-                nBlockPos = QueryBlock[0].nBlockPos;
-                return QueryBlock[0].ReadFromFile(ref reader, out block);
+                return false; // Unable to fetch block cursor
             }
 
-            // Block not found
+            nBlockPos = cursor.nBlockPos;
 
-            return false;
+            return cursor.ReadFromFile(ref fStreamReadWrite, out block);
         }
 
 
@@ -1401,7 +1645,7 @@ namespace Novacoin
         /// <returns>Result of operation</returns>
         public bool GetBlockByTransactionID(uint256 TxID, ref CBlock block, ref CTransaction tx, ref long nBlockPos, ref long nTxPos)
         {
-            var queryResult = dbConn.Query<IBlockJoinMerkle>("select *,  from [BlockStorage] b left join [MerkleNodes] m on (b.[ItemID] = m.[nParentBlockID]) where m.[TransactionHash] = ?", (byte[])TxID);
+            var queryResult = dbConn.Query<IBlockJoinMerkle>("select *  from [BlockStorage] b left join [MerkleNodes] m on (b.[ItemID] = m.[nParentBlockID]) where m.[TransactionHash] = ?", (byte[])TxID);
 
             if (queryResult.Count == 1)
             {
@@ -1423,12 +1667,46 @@ namespace Novacoin
             return false;
         }
 
+        public bool GetOutputs(uint256 transactionHash, out Dictionary<COutPoint, TxOutItem> txouts, bool fUnspentOnly=true)
+        {
+            txouts = null;
+
+            var queryParams = new object[] { (byte[])transactionHash, fUnspentOnly ? OutputFlags.AVAILABLE : (OutputFlags.AVAILABLE | OutputFlags.SPENT) };
+            var queryResult = dbConn.Query<TxOutItem>("select o.* from [Outputs] o left join [MerkleNodes] m on m.[nMerkleNodeID] = o.[nMerkleNodeID] where m.[TransactionHash] = ? and outputFlags = ?", queryParams);
+
+            if (queryResult.Count != 0)
+            {
+                txouts = new Dictionary<COutPoint, TxOutItem>();
+
+                foreach (var o in queryResult)
+                {
+                    var outpointKey = new COutPoint(transactionHash, o.nOut);
+                    var outpointData = o;
+
+                    txouts.Add(outpointKey, outpointData);
+                }
+
+                // There are some unspent inputs.
+                return true;
+            }
+
+            // This transaction has been spent completely.
+            return false;
+        }
+
+        public bool WriteNodes(ref CMerkleNode[] merkleNodes)
+        {
+            
+
+            return true;
+        }
+
         /// <summary>
         /// Get block cursor from map.
         /// </summary>
         /// <param name="blockHash">block hash</param>
         /// <returns>Cursor or null</returns>
-        public CBlockStoreItem GetCursor(uint256 blockHash)
+        public CBlockStoreItem GetMapCursor(uint256 blockHash)
         {
             if (blockHash == 0)
             {
@@ -1436,20 +1714,24 @@ namespace Novacoin
                 return null;
             }
 
-            // First, check our block map.
-            CBlockStoreItem item = null;
-            if (blockMap.TryGetValue(blockHash, out item))
-            {
-                return item;
-            }
+            CBlockStoreItem cursor = null;
+            blockMap.TryGetValue(blockHash, out cursor);
 
+            return cursor;
+        }
+
+        /// <summary>
+        /// Load cursor from database.
+        /// </summary>
+        /// <param name="blockHash">Block hash</param>
+        /// <returns>Block cursor object</returns>
+        public CBlockStoreItem GetDBCursor(uint256 blockHash)
+        {
             // Trying to get cursor from the database.
             var QueryBlockCursor = dbConn.Query<CBlockStoreItem>("select * from [BlockStorage] where [Hash] = ?", (byte[])blockHash);
 
             if (QueryBlockCursor.Count == 1)
             {
-                blockMap.TryAdd(blockHash, QueryBlockCursor[0]);
-
                 return QueryBlockCursor[0];
             }
 
@@ -1460,17 +1742,22 @@ namespace Novacoin
         /// <summary>
         /// Update cursor in memory and on disk.
         /// </summary>
-        /// <param name="originalItem">Original cursor</param>
-        /// <param name="newItem">New cursor</param>
-        /// <returns></returns>
-        public bool UpdateCursor(CBlockStoreItem originalItem, ref CBlockStoreItem newItem)
+        /// <param name="cursor">Block cursor</param>
+        /// <returns>Result</returns>
+        public bool UpdateMapCursor(CBlockStoreItem cursor)
         {
-            if (blockMap.TryUpdate(originalItem.Hash, newItem, originalItem))
-            {
-                return dbConn.Update(newItem) != 0;
-            }
+            var original = blockMap[cursor.Hash];
+            return blockMap.TryUpdate(cursor.Hash, cursor, original);
+        }
 
-            return false;
+        /// <summary>
+        /// Update cursor record in database.
+        /// </summary>
+        /// <param name="cursor">Block cursor object</param>
+        /// <returns>Result</returns>
+        public bool UpdateDBCursor(ref CBlockStoreItem cursor)
+        {
+            return dbConn.Update(cursor) != 0;
         }
 
         public bool ProcessBlock(ref CBlock block)

@@ -109,7 +109,7 @@
     <Compile Include="AddressTools.cs" />
     <Compile Include="base_uint.cs" />
     <Compile Include="BignumHelper.cs" />
-    <Compile Include="Checkpoint.cs" />
+    <Compile Include="Checkpoints.cs" />
     <Compile Include="DatabaseInterfaces.cs" />
     <Compile Include="Entropy.cs" />
     <Compile Include="InstructionQueue.cs" />

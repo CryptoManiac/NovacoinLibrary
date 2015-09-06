@@ -21,6 +21,7 @@ using System.Text;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
+using System.Numerics;
 
 namespace Novacoin
 {
@@ -199,13 +200,13 @@ namespace Novacoin
                 }
 
                 // Check timestamp
-                if (header.nTime > NetUtils.FutureDrift(NetUtils.GetAdjustedTime()))
+                if (header.nTime > NetInfo.FutureDrift(NetInfo.GetAdjustedTime()))
                 {
                     return false;
                 }
 
                 // Check coinbase timestamp
-                if (header.nTime < NetUtils.PastDrift(vtx[0].nTime))
+                if (header.nTime < NetInfo.PastDrift(vtx[0].nTime))
                 {
                     return false;
                 }
@@ -275,7 +276,7 @@ namespace Novacoin
             nTarget.Compact = nBits;
 
             // Check range
-            if (nTarget > NetUtils.nProofOfWorkLimit)
+            if (nTarget > NetInfo.nProofOfWorkLimit)
             {
                 // nBits below minimum work
                 return false; 
@@ -470,6 +471,51 @@ namespace Novacoin
             
             return sb.ToString();
         }
-	}
+
+        /// <summary>
+        /// Calculate proof-of-work reward.
+        /// </summary>
+        /// <param name="nBits">Packed difficulty representation.</param>
+        /// <param name="nFees">Amount of fees.</param>
+        /// <returns>Reward value.</returns>
+        public static ulong GetProofOfWorkReward(uint nBits, ulong nFees)
+        {
+            // NovaCoin: subsidy is cut in half every 64x multiply of PoW difficulty
+            // A reasonably continuous curve is used to avoid shock to market
+            // (nSubsidyLimit / nSubsidy) ** 6 == bnProofOfWorkLimit / bnTarget
+            //
+            // Human readable form:
+            //
+            // nSubsidy = 100 / (diff ^ 1/6)
+            //
+            // Please note that we're using bisection to find an approximate solutuion
+
+            BigInteger bnSubsidyLimit = NetInfo.nMaxMintProofOfWork;
+
+            uint256 nTarget = 0;
+            nTarget.Compact = nBits;
+
+            BigInteger bnTarget = new BigInteger(nTarget);
+            BigInteger bnTargetLimit = new BigInteger(NetInfo.nProofOfWorkLimit);
+
+            BigInteger bnLowerBound = CTransaction.nCent;
+            BigInteger bnUpperBound = bnSubsidyLimit;
+
+            while (bnLowerBound + CTransaction.nCent <= bnUpperBound)
+            {
+                BigInteger bnMidValue = (bnLowerBound + bnUpperBound) / 2;
+                if (bnMidValue * bnMidValue * bnMidValue * bnMidValue * bnMidValue * bnMidValue * bnTargetLimit > bnSubsidyLimit * bnSubsidyLimit * bnSubsidyLimit * bnSubsidyLimit * bnSubsidyLimit * bnSubsidyLimit * bnTarget)
+                    bnUpperBound = bnMidValue;
+                else
+                    bnLowerBound = bnMidValue;
+            }
+
+            ulong nSubsidy = (ulong)bnUpperBound;
+            nSubsidy = (nSubsidy / CTransaction.nCent) * CTransaction.nCent;
+
+
+            return Math.Min(nSubsidy, NetInfo.nMaxMintProofOfWork) + nFees;
+        }
+    }
 }
 

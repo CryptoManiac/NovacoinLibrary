@@ -144,7 +144,7 @@ namespace Novacoin
             selectedCursor = null;
             foreach (var item in sortedByTimestamp)
             {
-                CBlockStoreItem cursor = CBlockStore.Instance.GetCursor(item.Item2);
+                CBlockStoreItem cursor = CBlockStore.Instance.GetMapCursor(item.Item2);
 
                 if (cursor == null)
                 {
@@ -298,7 +298,7 @@ namespace Novacoin
         static bool GetKernelStakeModifier(uint256 hashBlockFrom, ref long nStakeModifier, ref uint nStakeModifierHeight, ref uint nStakeModifierTime)
         {
             nStakeModifier = 0;
-            var cursorFrom = CBlockStore.Instance.GetCursor(hashBlockFrom);
+            var cursorFrom = CBlockStore.Instance.GetMapCursor(hashBlockFrom);
             if (cursorFrom == null)
             {
                 return false; // Block not indexed
@@ -401,7 +401,7 @@ namespace Novacoin
 
         internal static uint GetStakeModifierChecksum(CBlockStoreItem itemTemplate)
         {
-            Contract.Assert(itemTemplate.prev != null || (uint256)itemTemplate.Hash == NetUtils.nHashGenesisBlock);
+            Contract.Assert(itemTemplate.prev != null || (uint256)itemTemplate.Hash == NetInfo.nHashGenesisBlock);
 
             // Hash previous checksum with flags, hashProofOfStake and nStakeModifier
             MemoryStream ss = new MemoryStream();

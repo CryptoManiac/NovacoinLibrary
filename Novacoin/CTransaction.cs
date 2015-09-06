@@ -21,6 +21,7 @@ using System.Text;
 using System.Collections.Generic;
 using System.IO;
 using System.Diagnostics.Contracts;
+using System.Numerics;
 
 namespace Novacoin
 {
@@ -47,6 +48,11 @@ namespace Novacoin
     /// </summary>
     public class CTransaction
     {
+        /// <summary>
+        /// One cent = 10000 satoshis.
+        /// </summary>
+        public const ulong nCent = 10000;
+
         /// <summary>
         /// One coin = 1000000 satoshis.
         /// </summary>
@@ -251,9 +257,9 @@ namespace Novacoin
             }
             if (nBlockTime == 0)
             {
-                nBlockTime = NetUtils.GetAdjustedTime();
+                nBlockTime = NetInfo.GetAdjustedTime();
             }
-            if (nLockTime < (nLockTime < NetUtils.nLockTimeThreshold ? nBlockHeight : nBlockTime))
+            if (nLockTime < (nLockTime < NetInfo.nLockTimeThreshold ? nBlockHeight : nBlockTime))
             {
                 return true;
             }
@@ -407,7 +413,7 @@ namespace Novacoin
         /// <summary>
         /// Amount of novacoins spent by this transaction.
         /// </summary>
-        public ulong ValueOut
+        public ulong nValueOut
         {
             get
             {
@@ -474,5 +480,15 @@ namespace Novacoin
         }
 
         public static bool MoneyRange(ulong nValue) { return (nValue <= nMaxMoney); }
+
+        internal uint GetP2SHSigOpCount(Dictionary<COutPoint, TxOutItem> inputs)
+        {
+            throw new NotImplementedException();
+        }
+
+        internal ulong GetValueIn(Dictionary<COutPoint, TxOutItem> inputs)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
