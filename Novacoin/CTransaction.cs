@@ -557,9 +557,57 @@ namespace Novacoin
             return new CTxOut(outItem.nValue, outItem.scriptPubKey);
         }
 
-        internal bool GetCoinAge(ref Dictionary<COutPoint, TxOutItem> inputs, out ulong nCoinAge)
+        /// <summary>
+        /// Calculate coin*age. 
+        /// 
+        /// Note, only those coins meeting minimum age requirement counts.
+        /// </summary>
+        /// <param name="inputs">Inputs set.</param>
+        /// <param name="nCoinAge">Coin age calculation result.</param>
+        /// <returns>Result</returns>
+        public bool GetCoinAge(ref Dictionary<COutPoint, TxOutItem> inputs, out ulong nCoinAge)
         {
-            throw new NotImplementedException();
+            BigInteger bnCentSecond = 0;  // coin age in the unit of cent-seconds
+            nCoinAge = 0;
+
+            if (IsCoinBase)
+            {
+                // Nothing spent by coinbase, coinage is always zero.
+                return true;
+            }
+
+            for( var i = 0; i<vin.Length; i++)
+            {
+                var prevout = vin[i].prevout;
+                Contract.Assert(inputs.ContainsKey(prevout));
+                var input = inputs[prevout];
+
+                CBlockStoreItem parentBlockCursor;
+                var merkleItem = CBlockStore.Instance.GetMerkleCursor(input, out parentBlockCursor);
+
+                if (merkleItem == null)
+                {
+                    return false; // Unable to find merkle node
+                }
+
+                if (nTime < merkleItem.nTime)
+                {
+                    return false;  // Transaction timestamp violation
+                }
+
+                if (parentBlockCursor.nTime + StakeModifier.nStakeMinAge > nTime)
+                {
+                    continue; // only count coins meeting min age requirement
+                }
+
+                ulong nValueIn = input.nValue;
+                bnCentSecond += new BigInteger(nValueIn) * (nTime - merkleItem.nTime) / nCent;
+            }
+
+            BigInteger bnCoinDay = bnCentSecond * nCent / nCoin / (24 * 60 * 60);
+            nCoinAge = (ulong)bnCoinDay;
+
+            return true;
         }
 
         public ulong GetMinFee(uint nBlockSize, bool fAllowFree, MinFeeMode mode)
