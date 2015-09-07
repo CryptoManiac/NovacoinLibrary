@@ -665,6 +665,10 @@ namespace Novacoin
             get { return TransactionFlags == TxFlags.TX_COINSTAKE; }
         }
 
+        public CMerkleNode()
+        {
+        }
+
         public CMerkleNode(CTransaction tx)
         {
             nTime = tx.nTime;

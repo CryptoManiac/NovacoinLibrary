@@ -1134,6 +1134,8 @@ namespace Novacoin
                 var results = blockMap.Where(x => x.Value.ItemID == merkleNode.nParentBlockID).Select(x => x.Value).ToArray();
 
                 blockCursor = results[0];
+
+                return merkleNode;
             }
 
             // Nothing found.
