@@ -272,7 +272,7 @@ namespace Novacoin
             }
             return true;
         }
-        
+
         /// <summary>
         /// Parse byte sequence and initialize new instance of CTransaction
         /// </summary>
@@ -481,14 +481,69 @@ namespace Novacoin
 
         public static bool MoneyRange(ulong nValue) { return (nValue <= nMaxMoney); }
 
-        internal uint GetP2SHSigOpCount(Dictionary<COutPoint, TxOutItem> inputs)
+        /// <summary>
+        /// Get total sigops.
+        /// </summary>
+        /// <param name="inputs">Inputs map.</param>
+        /// <returns>Amount of sigops.</returns>
+        public uint GetP2SHSigOpCount(ref Dictionary<COutPoint, TxOutItem> inputs)
         {
-            throw new NotImplementedException();
+            if (IsCoinBase)
+            {
+                return 0;
+            }
+
+            uint nSigOps = 0;
+            for (var i = 0; i < vin.Length; i++)
+            {
+                var prevout = GetOutputFor(vin[i], ref inputs);
+                if (prevout.scriptPubKey.IsPayToScriptHash)
+                {
+                    nSigOps += prevout.scriptPubKey.GetSigOpCount(vin[i].scriptSig);
+                }
+            }
+
+            return nSigOps;
         }
 
-        internal ulong GetValueIn(Dictionary<COutPoint, TxOutItem> inputs)
+        /// <summary>
+        /// Get sum of inputs spent by this transaction.
+        /// </summary>
+        /// <param name="inputs">Reference to innputs map.</param>
+        /// <returns>Sum of inputs.</returns>
+        public ulong GetValueIn(ref Dictionary<COutPoint, TxOutItem> inputs)
         {
-            throw new NotImplementedException();
+            if (IsCoinBase)
+            {
+                return 0;
+            }
+
+            ulong nResult = 0;
+            for (int i = 0; i < vin.Length; i++)
+            {
+                nResult += GetOutputFor(vin[i], ref inputs).nValue;
+            }
+
+            return nResult;
         }
+
+        /// <summary>
+        /// Helper method to find output in the map.
+        /// </summary>
+        /// <param name="input">Transaction input.</param>
+        /// <param name="inputs">eference to inuts map.</param>
+        /// <returns>Parent output.</returns>
+        private CTxOut GetOutputFor(CTxIn input, ref Dictionary<COutPoint, TxOutItem> inputs)
+        {
+            if (!inputs.ContainsKey(input.prevout))
+            {
+                throw new Exception("No such input");
+            }
+
+            var outItem = inputs[input.prevout];
+
+            return new CTxOut(outItem.nValue, outItem.scriptPubKey);
+        }
+
     }
 }

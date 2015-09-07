@@ -25,7 +25,7 @@ using System.Text;
 
 namespace Novacoin
 {
-    public class COutPoint : IComparable<COutPoint>, IEquatable<COutPoint>
+    public class COutPoint : IComparable<COutPoint>, IEquatable<COutPoint>, IEqualityComparer<COutPoint>
     {
         /// <summary>
         /// Hash of parent transaction.
@@ -134,6 +134,27 @@ namespace Novacoin
             }
 
             return (o.n == n) && (o.hash == hash);
+        }
+
+        /// <summary>
+        /// Equality comparer for outpoints.
+        /// </summary>
+        /// <param name="x">First outpoint.</param>
+        /// <param name="y">Second outpoint.</param>
+        /// <returns>Result of comparison.</returns>
+        public bool Equals(COutPoint x, COutPoint y)
+        {
+            return (x.n == y.n) && (x.hash == y.hash);
+        }
+
+        public override int GetHashCode()
+        {
+            return n.GetHashCode() ^ hash.GetHashCode();
+        }
+
+        public int GetHashCode(COutPoint obj)
+        {
+            return obj.GetHashCode();
         }
     }
 

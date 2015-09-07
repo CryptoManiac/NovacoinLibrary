@@ -677,13 +677,13 @@ namespace Novacoin
                     // Add in sigops done by pay-to-script-hash inputs;
                     // this is to prevent a "rogue miner" from creating
                     // an incredibly-expensive-to-validate block.
-                    nSigOps += tx.GetP2SHSigOpCount(inputs);
+                    nSigOps += tx.GetP2SHSigOpCount(ref inputs);
                     if (nSigOps > CBlock.nMaxSigOps)
                     {
                         return false; // too many sigops
                     }
 
-                    ulong nTxValueIn = tx.GetValueIn(inputs);
+                    ulong nTxValueIn = tx.GetValueIn(ref inputs);
                     ulong nTxValueOut = tx.nValueOut;
 
                     nValueIn += nTxValueIn;
