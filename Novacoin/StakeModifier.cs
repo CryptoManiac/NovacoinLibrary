@@ -443,14 +443,32 @@ namespace Novacoin
             CTxIn txin = tx.vin[0];
 
             // Read block header
-            
+
+            long nBlockPos = 0;
             CBlock block = null;
-            CTransaction txPrev = null;
-            long nBlockPos = 0, nTxPos = 0;
-            
-            if (!CBlockStore.Instance.GetBlockByTransactionID(txin.prevout.hash, ref block, ref txPrev, ref nBlockPos, ref nTxPos))
+            if (!CBlockStore.Instance.GetBlockByTransactionID(txin.prevout.hash, ref block, ref nBlockPos))
             {
                 return false; // unable to read block of previous transaction
+            }
+
+            long nTxPos = 0;
+            CTransaction txPrev = null;
+
+            // Iterate through vtx array
+            for (var i = 0; i < block.vtx.Length; i++)
+            {
+                if (block.vtx[i].Hash == txin.prevout.hash)
+                {
+                    txPrev = block.vtx[i];
+                    nTxPos = nBlockPos + block.GetTxOffset(i);
+
+                    break;
+                }
+            }
+
+            if (txPrev == null)
+            {
+                return false; // No such transaction found in the block
             }
 
             if (!ScriptCode.VerifyScript(txin.scriptSig, txPrev.vout[txin.prevout.n].scriptPubKey, tx, 0, (int)scriptflag.SCRIPT_VERIFY_P2SH, 0))
