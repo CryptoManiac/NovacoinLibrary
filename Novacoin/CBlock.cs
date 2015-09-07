@@ -516,6 +516,11 @@ namespace Novacoin
 
             return Math.Min(nSubsidy, NetInfo.nMaxMintProofOfWork) + nFees;
         }
+
+        internal static ulong GetProofOfStakeReward(ulong nCoinAge, uint nBits, uint nTime)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
 

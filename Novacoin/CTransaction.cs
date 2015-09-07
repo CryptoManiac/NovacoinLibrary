@@ -67,6 +67,13 @@ namespace Novacoin
         /// </summary>
         public const uint nMaxTxSize = 250000;
 
+        public enum MinFeeMode
+        {
+            GMF_BLOCK,
+            GMF_RELAY,
+            GMF_SEND,
+        }
+
         /// <summary>
         /// Version of transaction schema.
         /// </summary>
@@ -545,5 +552,14 @@ namespace Novacoin
             return new CTxOut(outItem.nValue, outItem.scriptPubKey);
         }
 
+        internal bool GetCoinAge(ref Dictionary<COutPoint, TxOutItem> inputs, out ulong nCoinAge)
+        {
+            throw new NotImplementedException();
+        }
+
+        internal static ulong GetMinFee(int v1, bool v2, MinFeeMode gMF_BLOCK, int nTxSize)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

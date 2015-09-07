@@ -566,6 +566,12 @@ namespace Novacoin
         public long nParentBlockID { get; set; }
 
         /// <summary>
+        /// Transaction timestamp
+        /// </summary>
+        [Column("nTime")]
+        public uint nTime { get; set; }
+
+        /// <summary>
         /// Transaction type flag
         /// </summary>
         [Column("TransactionFlags")]
@@ -647,8 +653,22 @@ namespace Novacoin
             private set { TxSize = VarInt.EncodeVarInt(value); }
         }
 
+        [Ignore]
+        public bool IsCoinBase
+        {
+            get { return TransactionFlags == TxFlags.TX_COINBASE; }
+        }
+
+        [Ignore]
+        public bool IsCoinStake
+        {
+            get { return TransactionFlags == TxFlags.TX_COINSTAKE; }
+        }
+
         public CMerkleNode(CTransaction tx)
         {
+            nTime = tx.nTime;
+
             nTxOffset = -1;
             nParentBlockID = -1;
 
@@ -657,20 +677,22 @@ namespace Novacoin
 
             if (tx.IsCoinBase)
             {
-                TransactionFlags |= TxFlags.TX_COINBASE;
+                TransactionFlags = TxFlags.TX_COINBASE;
             }
             else if (tx.IsCoinStake)
             {
-                TransactionFlags |= TxFlags.TX_COINSTAKE;
+                TransactionFlags = TxFlags.TX_COINSTAKE;
             }
             else
             {
-                TransactionFlags |= TxFlags.TX_USER;
+                TransactionFlags = TxFlags.TX_USER;
             }
         }
 
         public CMerkleNode(long nBlockId, long nOffset, CTransaction tx)
         {
+            nTime = tx.nTime;
+
             nParentBlockID = nBlockId;
 
             nTxOffset = nOffset;

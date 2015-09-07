@@ -8,6 +8,11 @@ namespace Novacoin
     internal class NetInfo
     {
         /// <summary>
+        /// Minimal depth for spending coinbase and coinstake transactions.
+        /// </summary>
+        public const int nGeneratedMaturity = 500;
+
+        /// <summary>
         /// "standard" scrypt target limit for proof of work, results with 0,000244140625 proof-of-work difficulty
         /// </summary>
         public static uint256 nProofOfWorkLimit = ~(new uint256(0)) >> 20;
@@ -35,19 +40,24 @@ namespace Novacoin
         /// <summary>
         /// Fri, 20 Sep 2013 00:00:00 GMT
         /// </summary>
-        public static uint nChainChecksSwitchTime = 1379635200;
+        public const uint nChainChecksSwitchTime = 1379635200;
+
+        /// <summary>
+        /// Wed, 20 Aug 2014 00:00:00 GMT
+        /// </summary>
+        public const uint nStakeValidationSwitchTime = 1408492800;
 
         /// <summary>
         /// Hash of block #0
         /// </summary>
         public static uint256 nHashGenesisBlock = new uint256("00000a060336cbb72fe969666d337b87198b1add2abaa59cca226820b32933a4");
 
-        public static readonly uint nLockTimeThreshold = 500000000;
+        public const uint nLockTimeThreshold = 500000000;
 
         /// <summary>
         /// Allowed clock drift.
         /// </summary>
-        private static readonly uint nDrift = 7200;
+        private const uint nDrift = 7200;
 
         /// <summary>
         /// Maximum possible proof-of-work reward.

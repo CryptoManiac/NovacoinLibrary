@@ -26,6 +26,8 @@ using SQLite.Net.Interop;
 using SQLite.Net.Platform.Generic;
 using System.Collections.Generic;
 using System.Text;
+using System.Diagnostics.Contracts;
+using System.Linq;
 
 namespace Novacoin
 {
@@ -224,8 +226,7 @@ namespace Novacoin
 
             return false;
         }
-
-
+        
         public bool FetchInputs(CTransaction tx, ref Dictionary<COutPoint, TxOutItem> queued, ref Dictionary<COutPoint, TxOutItem> inputs, bool IsBlock, out bool Invalid)
         {
             Invalid = false;
@@ -233,17 +234,17 @@ namespace Novacoin
             if (tx.IsCoinBase)
             {
                 // Coinbase transactions have no inputs to fetch.
-                return true; 
+                return true;
             }
 
             StringBuilder queryBuilder = new StringBuilder();
-            
+
             queryBuilder.Append("select o.*, m.[TransactionHash] from [Outputs] o left join [MerkleNodes] m on (m.[nMerkleNodeID] = o.[nMerkleNodeID]) where ");
 
             for (var i = 0; i < tx.vin.Length; i++)
             {
-                queryBuilder.AppendFormat(" {0} (m.[TransactionHash] = x'{1}' and o.[OutputNumber] = x'{2}')", 
-                    (i > 0 ? "or" : string.Empty), Interop.ToHex(tx.vin[i].prevout.hash), 
+                queryBuilder.AppendFormat(" {0} (m.[TransactionHash] = x'{1}' and o.[OutputNumber] = x'{2}')",
+                    (i > 0 ? "or" : string.Empty), Interop.ToHex(tx.vin[i].prevout.hash),
                     Interop.ToHex(VarInt.EncodeVarInt(tx.vin[i].prevout.n)
                 ));
             }
@@ -257,12 +258,12 @@ namespace Novacoin
                     return false; // Already spent
                 }
 
-                var inputsKey =  new COutPoint(item.TransactionHash, item.nOut);
+                var inputsKey = new COutPoint(item.TransactionHash, item.nOut);
 
                 item.IsSpent = true;
 
                 // Add output data to dictionary
-                inputs.Add(inputsKey, (TxOutItem) item);
+                inputs.Add(inputsKey, (TxOutItem)item);
             }
 
             if (queryResults.Count < tx.vin.Length)
@@ -284,7 +285,7 @@ namespace Novacoin
                         inputs.Add(outPoint, queued[outPoint]);
 
                         // Mark output as spent
-                        queued[outPoint].IsSpent = true;                        
+                        queued[outPoint].IsSpent = true;
                     }
                 }
                 else
@@ -307,7 +308,7 @@ namespace Novacoin
 
                             return false; // nOut is out of range
                         }
-                        
+
                         // TODO: return inputs from map 
                         throw new NotImplementedException();
 
@@ -386,7 +387,7 @@ namespace Novacoin
 
             // Get last RowID.
             itemTemplate.ItemID = dbPlatform.SQLiteApi.LastInsertRowid(dbConn.Handle);
-            
+
             if (!blockMap.TryAdd(blockHash, itemTemplate))
             {
                 return false; // blockMap add failed
@@ -621,7 +622,7 @@ namespace Novacoin
             return true;
         }
 
-        private bool ConnectBlock(CBlockStoreItem cursor, ref CBlock block, bool fJustCheck=false)
+        private bool ConnectBlock(CBlockStoreItem cursor, ref CBlock block, bool fJustCheck = false)
         {
             // Check it again in case a previous version let a bad block in, but skip BlockSig checking
             if (!block.CheckBlock(!fJustCheck, !fJustCheck, false))
@@ -694,7 +695,7 @@ namespace Novacoin
                         nFees += nTxValueIn - nTxValueOut;
                     }
 
-                    if (!ConnectInputs(tx, ref inputs, ref queued, ref cursor, fScriptChecks, scriptFlags))
+                    if (!ConnectInputs(tx, ref inputs, ref queued, ref cursor, true, fScriptChecks, scriptFlags))
                     {
                         return false;
                     }
@@ -730,7 +731,7 @@ namespace Novacoin
                 }
             }
 
-            cursor.nMint = (long) (nValueOut - nValueIn + nFees);
+            cursor.nMint = (long)(nValueOut - nValueIn + nFees);
             cursor.nMoneySupply = (cursor.prev != null ? cursor.prev.nMoneySupply : 0) + (long)nValueOut - (long)nValueIn;
 
             if (!UpdateDBCursor(ref cursor))
@@ -746,7 +747,7 @@ namespace Novacoin
             // Write queued transaction changes
             var actualMerkleNodes = new Dictionary<uint256, CMerkleNode>();
             var queuedOutpointItems = new List<TxOutItem>();
-            foreach(KeyValuePair<COutPoint, TxOutItem> outPair in queued)
+            foreach (KeyValuePair<COutPoint, TxOutItem> outPair in queued)
             {
                 uint256 txID = outPair.Key.hash;
                 CMerkleNode merkleNode;
@@ -807,10 +808,139 @@ namespace Novacoin
             return true;
         }
 
-        private bool ConnectInputs(CTransaction tx, ref Dictionary<COutPoint, TxOutItem> inputs, ref Dictionary<COutPoint, TxOutItem> queued, ref CBlockStoreItem cursor, bool fScriptChecks, scriptflag scriptFlags)
+        private bool ConnectInputs(CTransaction tx, ref Dictionary<COutPoint, TxOutItem> inputs, ref Dictionary<COutPoint, TxOutItem> queued, ref CBlockStoreItem cursorBlock, bool fBlock, bool fScriptChecks, scriptflag scriptFlags)
         {
-            throw new NotImplementedException();
+            // Take over previous transactions' spent pointers
+            // fBlock is true when this is called from AcceptBlock when a new best-block is added to the blockchain
+            // fMiner is true when called from the internal bitcoin miner
+            // ... both are false when called from CTransaction::AcceptToMemoryPool
+
+            if (!tx.IsCoinBase)
+            {
+                ulong nValueIn = 0;
+                ulong nFees = 0;
+                for (uint i = 0; i < tx.vin.Length; i++)
+                {
+                    var prevout = tx.vin[i].prevout;
+                    Contract.Assert(inputs.ContainsKey(prevout));
+                    var input = inputs[prevout];
+
+                    CBlockStoreItem parentBlockCursor;
+                    var merkleItem = GetMerkleCursor(input, out parentBlockCursor);
+
+                    if (merkleItem == null)
+                    {
+                        return false; // Unable to find merkle node
+                    }
+
+                    // If prev is coinbase or coinstake, check that it's matured
+                    if (merkleItem.IsCoinBase || merkleItem.IsCoinStake)
+                    {
+                        if (cursorBlock.nHeight - parentBlockCursor.nHeight < NetInfo.nGeneratedMaturity)
+                        {
+                            return false; // tried to spend non-matured generation input.
+                        }
+                    }
+
+                    // check transaction timestamp
+                    if (merkleItem.nTime > tx.nTime)
+                    {
+                        return false; // transaction timestamp earlier than input transaction
+                    }
+
+                    // Check for negative or overflow input values
+                    nValueIn += input.nValue;
+                    if (!CTransaction.MoneyRange(input.nValue) || !CTransaction.MoneyRange(nValueIn))
+                    {
+                        return false; // txin values out of range
+                    }
+
+                }
+
+                // The first loop above does all the inexpensive checks.
+                // Only if ALL inputs pass do we perform expensive ECDSA signature checks.
+                // Helps prevent CPU exhaustion attacks.
+                for (int i = 0; i < tx.vin.Length; i++)
+                {
+                    var prevout = tx.vin[i].prevout;
+                    Contract.Assert(inputs.ContainsKey(prevout));
+                    var input = inputs[prevout];
+
+                    // Check for conflicts (double-spend)
+                    if (input.IsSpent)
+                    {
+                        return false;
+                    }
+
+                    // Skip ECDSA signature verification when connecting blocks (fBlock=true)
+                    // before the last blockchain checkpoint. This is safe because block merkle hashes are
+                    // still computed and checked, and any change will be caught at the next checkpoint.
+                    if (fScriptChecks)
+                    {
+                        // Verify signature
+                        if (!ScriptCode.VerifyScript(tx.vin[i].scriptSig, input.scriptPubKey, tx, i, (int)scriptflag.SCRIPT_VERIFY_P2SH, 0))
+                        {
+                            return false; // VerifyScript failed.
+                        }
+                    }
+
+                    // Mark outpoint as spent
+                    input.IsSpent = true;
+                    inputs[prevout] = input;
+
+                    // Write back
+                    if (fBlock)
+                    {
+                        queued.Add(prevout, input);
+                    }
+                }
+
+                if (tx.IsCoinStake)
+                {
+                    // ppcoin: coin stake tx earns reward instead of paying fee
+                    ulong nCoinAge;
+                    if (!tx.GetCoinAge(ref inputs, out nCoinAge))
+                    {
+                        return false; // unable to get coin age for coinstake
+                    }
+
+                    int nTxSize = (tx.nTime > NetInfo.nStakeValidationSwitchTime) ? tx.Size : 0;
+                    ulong nReward = tx.nValueOut - nValueIn;
+
+                    ulong nCalculatedReward = CBlock.GetProofOfStakeReward(nCoinAge, cursorBlock.nBits, tx.nTime) - CTransaction.GetMinFee(1, false, CTransaction.MinFeeMode.GMF_BLOCK, nTxSize) + CTransaction.nCent;
+
+                    if (nReward > nCalculatedReward)
+                    {
+                        return false; // coinstake pays too much
+                    }
+                }
+                else
+                {
+                    if (nValueIn < tx.nValueOut)
+                    {
+                        return false; // value in < value out
+                    }
+
+                    // Tally transaction fees
+                    ulong nTxFee = nValueIn - tx.nValueOut;
+                    if (nTxFee < 0)
+                    {
+                        return false; // nTxFee < 0
+                    }
+
+                    nFees += nTxFee;
+
+                    if (!CTransaction.MoneyRange(nFees))
+                    {
+                        return false; // nFees out of range
+                    }
+                }
+                
+            }
+
+            return true;
         }
+
 
         /// <summary>
         /// Set new top node or current best chain.
@@ -966,13 +1096,6 @@ namespace Novacoin
             return false;
         }
 
-        public bool WriteNodes(ref CMerkleNode[] merkleNodes)
-        {
-            
-
-            return true;
-        }
-
         /// <summary>
         /// Get block cursor from map.
         /// </summary>
@@ -990,6 +1113,32 @@ namespace Novacoin
             blockMap.TryGetValue(blockHash, out cursor);
 
             return cursor;
+        }
+
+        /// <summary>
+        /// Get merkle node cursor by output metadata.
+        /// </summary>
+        /// <param name="item">Output metadata object</param>
+        /// <returns>Merkle node cursor or null</returns>
+        public CMerkleNode GetMerkleCursor(TxOutItem item, out CBlockStoreItem blockCursor)
+        {
+            blockCursor = null;
+
+            // Trying to get cursor from the database.
+            var QueryMerkleCursor = dbConn.Query<CMerkleNode>("select * from [MerkleNodes] where [nMerkleNodeID] = ?", item.nMerkleNodeID);
+
+            if (QueryMerkleCursor.Count == 1)
+            {
+                var merkleNode = QueryMerkleCursor[0];
+
+                // Search for block
+                var results = blockMap.Where(x => x.Value.ItemID == merkleNode.nParentBlockID).Select(x => x.Value).ToArray();
+
+                blockCursor = results[0];
+            }
+
+            // Nothing found.
+            return null;
         }
 
         /// <summary>
