@@ -260,7 +260,7 @@ namespace Novacoin
 
                 var inputsKey = new COutPoint(item.TransactionHash, item.nOut);
 
-                item.IsSpent = true;
+//                item.IsSpent = true;
 
                 // Add output data to dictionary
                 inputs.Add(inputsKey, (TxOutItem)item);
@@ -703,8 +703,11 @@ namespace Novacoin
 
                 for (var i = 0u; i < tx.vout.Length; i++)
                 {
-                    var mNode = new CMerkleNode(cursor.ItemID, nTxPos, tx);
-                    queuedMerkleNodes.Add(hashTx, mNode);
+                    if (!queuedMerkleNodes.ContainsKey(hashTx))
+                    {
+                        var mNode = new CMerkleNode(cursor.ItemID, nTxPos, tx);
+                        queuedMerkleNodes.Add(hashTx, mNode);
+                    }
 
                     var outKey = new COutPoint(hashTx, i);
                     var outData = new TxOutItem();
@@ -712,7 +715,6 @@ namespace Novacoin
                     outData.nValue = tx.vout[i].nValue;
                     outData.scriptPubKey = tx.vout[i].scriptPubKey;
                     outData.nOut = i;
-
 
                     outData.IsSpent = false;
 
@@ -758,6 +760,9 @@ namespace Novacoin
                 }
                 else
                 {
+                    // TODO: Bug here, we shouldn't mix new and already existent outpoints in the same dictionary.
+
+
                     merkleNode = queuedMerkleNodes[txID];
                     if (!SaveMerkleNode(ref merkleNode))
                     {
