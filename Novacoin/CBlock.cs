@@ -517,9 +517,84 @@ namespace Novacoin
             return Math.Min(nSubsidy, NetInfo.nMaxMintProofOfWork) + nFees;
         }
 
-        internal static ulong GetProofOfStakeReward(ulong nCoinAge, uint nBits, uint nTime)
+        public static ulong GetProofOfStakeReward(ulong nCoinAge, uint nBits, uint nTime)
         {
-            throw new NotImplementedException();
+            ulong nRewardCoinYear, nSubsidy, nSubsidyLimit = 10 * CTransaction.nCoin;
+
+            if (nTime > NetInfo.nDynamicStakeRewardTime)
+            {
+                // Stage 2 of emission process is PoS-based. It will be active on mainNet since 20 Jun 2013.
+
+                BigInteger bnRewardCoinYearLimit = NetInfo.nMaxMintProofOfStake; // Base stake mint rate, 100% year interest
+
+                uint256 nTarget = 0;
+                nTarget.Compact = nBits;
+
+                BigInteger bnTarget = new BigInteger(nTarget);
+                BigInteger bnTargetLimit = new BigInteger(NetInfo.GetProofOfStakeLimit(0, nTime));
+
+                // NovaCoin: A reasonably continuous curve is used to avoid shock to market
+
+                BigInteger bnLowerBound = CTransaction.nCent, // Lower interest bound is 1% per year
+                    bnUpperBound = bnRewardCoinYearLimit, // Upper interest bound is 100% per year
+                    bnMidPart, bnRewardPart;
+
+                while (bnLowerBound + CTransaction.nCent <= bnUpperBound)
+                {
+                    BigInteger bnMidValue = (bnLowerBound + bnUpperBound) / 2;
+                    if (nTime < NetInfo.nStakeCurveSwitchTime)
+                    {
+                        //
+                        // Until 20 Oct 2013: reward for coin-year is cut in half every 64x multiply of PoS difficulty
+                        //
+                        // (nRewardCoinYearLimit / nRewardCoinYear) ** 6 == bnProofOfStakeLimit / bnTarget
+                        //
+                        // Human readable form: nRewardCoinYear = 1 / (posdiff ^ 1/6)
+                        //
+
+                        bnMidPart = bnMidValue * bnMidValue * bnMidValue * bnMidValue * bnMidValue * bnMidValue;
+                        bnRewardPart = bnRewardCoinYearLimit * bnRewardCoinYearLimit * bnRewardCoinYearLimit * bnRewardCoinYearLimit * bnRewardCoinYearLimit * bnRewardCoinYearLimit;
+                    }
+                    else
+                    {
+                        //
+                        // Since 20 Oct 2013: reward for coin-year is cut in half every 8x multiply of PoS difficulty
+                        //
+                        // (nRewardCoinYearLimit / nRewardCoinYear) ** 3 == bnProofOfStakeLimit / bnTarget
+                        //
+                        // Human readable form: nRewardCoinYear = 1 / (posdiff ^ 1/3)
+                        //
+
+                        bnMidPart = bnMidValue * bnMidValue * bnMidValue;
+                        bnRewardPart = bnRewardCoinYearLimit * bnRewardCoinYearLimit * bnRewardCoinYearLimit;
+                    }
+
+                    if (bnMidPart * bnTargetLimit > bnRewardPart * bnTarget)
+                        bnUpperBound = bnMidValue;
+                    else
+                        bnLowerBound = bnMidValue;
+                }
+
+                nRewardCoinYear = (ulong)bnUpperBound;
+                nRewardCoinYear = Math.Min((nRewardCoinYear / CTransaction.nCent) * CTransaction.nCent, NetInfo.nMaxMintProofOfStake);
+            }
+            else
+            {
+                // Old creation amount per coin-year, 5% fixed stake mint rate
+                nRewardCoinYear = 5 * CTransaction.nCent;
+            }
+
+            nSubsidy = nCoinAge * nRewardCoinYear * 33 / (365 * 33 + 8);
+
+            // Set reasonable reward limit for large inputs since 20 Oct 2013
+            //
+            // This will stimulate large holders to use smaller inputs, that's good for the network protection
+            if (NetInfo.nStakeCurveSwitchTime < nTime)
+            {
+                nSubsidy = Math.Min(nSubsidy, nSubsidyLimit);
+            }
+
+            return nSubsidy;
         }
     }
 }

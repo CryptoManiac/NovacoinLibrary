@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Novacoin
+﻿namespace Novacoin
 {
     /// <summary>
     /// Basic network params.
@@ -43,9 +41,24 @@ namespace Novacoin
         public const uint nChainChecksSwitchTime = 1379635200;
 
         /// <summary>
+        /// Sat, 20 Jul 2013 00:00:00 GMT
+        /// </summary>
+        public const uint nTargetsSwitchTime = 1374278400;
+
+        /// <summary>
         /// Wed, 20 Aug 2014 00:00:00 GMT
         /// </summary>
         public const uint nStakeValidationSwitchTime = 1408492800;
+
+        /// <summary>
+        /// Thu, 20 Jun 2013 00:00:00 GMT
+        /// </summary>
+        public const uint nDynamicStakeRewardTime = 1371686400;
+
+        /// <summary>
+        /// Sun, 20 Oct 2013 00:00:00 GMT
+        /// </summary>
+        public const uint nStakeCurveSwitchTime = 1382227200;
 
         /// <summary>
         /// Hash of block #0
@@ -64,6 +77,11 @@ namespace Novacoin
         /// </summary>
         public const ulong nMaxMintProofOfWork = CTransaction.nCoin * 100;
 
+        /// <summary>
+        /// Maximum possible proof-of-stake reward per coin*year.
+        /// </summary>
+        public const ulong nMaxMintProofOfStake = CTransaction.nCoin * 100;
+
         public static uint GetAdjustedTime()
         {
             return Interop.GetTime();
@@ -77,6 +95,18 @@ namespace Novacoin
         public static uint PastDrift(uint nTime)
         {
             return nTime - nDrift; // up to 2 hours from the past
+        }
+
+        internal static uint256 GetProofOfStakeLimit(uint nHeight, uint nTime)
+        {
+            if (nTime > nTargetsSwitchTime) // 27 bits since 20 July 2013
+                return nProofOfStakeLimit;
+            if (nHeight + 1 > 15000) // 24 bits since block 15000
+                return nProofOfStakeLegacyLimit;
+            if (nHeight + 1 > 14060) // 31 bits since block 14060 until 15000
+                return nProofOfStakeHardLimit;
+
+            return nProofOfWorkLimit; // return bnProofOfWorkLimit of none matched
         }
     }
 }
