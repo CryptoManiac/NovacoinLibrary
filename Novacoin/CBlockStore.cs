@@ -322,7 +322,6 @@ namespace Novacoin
 
         private bool AddItemToIndex(ref CBlockStoreItem itemTemplate, ref CBlock block)
         {
-            var writer = new BinaryWriter(fStreamReadWrite).BaseStream;
             uint256 blockHash = itemTemplate.Hash;
 
             if (blockMap.ContainsKey(blockHash))
@@ -330,6 +329,9 @@ namespace Novacoin
                 // Already have this block.
                 return false;
             }
+
+            // Begin transaction
+            dbConn.BeginTransaction();
 
             // Compute chain trust score
             itemTemplate.nChainTrust = (itemTemplate.prev != null ? itemTemplate.prev.nChainTrust : 0) + itemTemplate.nBlockTrust;
@@ -372,7 +374,7 @@ namespace Novacoin
                 itemTemplate.nStakeTime = block.vtx[1].nTime;
             }
 
-            if (!itemTemplate.WriteToFile(ref writer, ref block))
+            if (!itemTemplate.WriteToFile(ref fStreamReadWrite, ref block))
             {
                 return false;
             }
@@ -399,6 +401,9 @@ namespace Novacoin
                     return false; // SetBestChain failed.
                 }
             }
+
+            // Commit transaction
+            dbConn.Commit();
 
             return true;
         }
@@ -566,9 +571,6 @@ namespace Novacoin
                 return false; // UpdateTopChain failed
             }
 
-            // Make sure it's successfully written to disk 
-            dbConn.Commit();
-
             // Resurrect memory transactions that were in the disconnected branch
             foreach (var tx in txResurrect)
             {
@@ -608,8 +610,6 @@ namespace Novacoin
 
             // Add to current best branch
             cursor.prev.next = cursor;
-
-            dbConn.Commit();
 
             // Delete redundant memory transactions
             foreach (var tx in block.vtx)
@@ -694,7 +694,7 @@ namespace Novacoin
                         nFees += nTxValueIn - nTxValueOut;
                     }
 
-                    if (!ConnectInputs(tx, inputs, queued, cursor, fScriptChecks, scriptFlags))
+                    if (!ConnectInputs(tx, ref inputs, ref queued, ref cursor, fScriptChecks, scriptFlags))
                     {
                         return false;
                     }
@@ -807,7 +807,7 @@ namespace Novacoin
             return true;
         }
 
-        private bool ConnectInputs(CTransaction tx, Dictionary<COutPoint, TxOutItem> inputs, Dictionary<COutPoint, TxOutItem> queued, CBlockStoreItem cursor, bool fScriptChecks, scriptflag scriptFlags)
+        private bool ConnectInputs(CTransaction tx, ref Dictionary<COutPoint, TxOutItem> inputs, ref Dictionary<COutPoint, TxOutItem> queued, ref CBlockStoreItem cursor, bool fScriptChecks, scriptflag scriptFlags)
         {
             throw new NotImplementedException();
         }
@@ -887,6 +887,8 @@ namespace Novacoin
 
             if (!AddItemToIndex(ref itemTemplate, ref block))
             {
+                dbConn.Rollback();
+
                 return false;
             }
 
@@ -1142,11 +1144,10 @@ namespace Novacoin
             var intBuffer = new byte[4];
 
             var fStream2 = File.OpenRead(BlockFile);
-            var readerForBlocks = new BinaryReader(fStream2).BaseStream;
 
-            readerForBlocks.Seek(nOffset, SeekOrigin.Begin); // Seek to previous offset + previous block length
+            fStream2.Seek(nOffset, SeekOrigin.Begin); // Seek to previous offset + previous block length
 
-            while (readerForBlocks.Read(buffer, 0, 4) == 4) // Read magic number
+            while (fStream2.Read(buffer, 0, 4) == 4) // Read magic number
             {
                 var nMagic = BitConverter.ToUInt32(buffer, 0);
                 if (nMagic != 0xe5e9e8e4)
@@ -1154,7 +1155,7 @@ namespace Novacoin
                     throw new Exception("Incorrect magic number.");
                 }
 
-                var nBytesRead = readerForBlocks.Read(buffer, 0, 4);
+                var nBytesRead = fStream2.Read(buffer, 0, 4);
                 if (nBytesRead != 4)
                 {
                     throw new Exception("BLKSZ EOF");
@@ -1162,9 +1163,9 @@ namespace Novacoin
 
                 var nBlockSize = BitConverter.ToInt32(buffer, 0);
 
-                nOffset = readerForBlocks.Position;
+                nOffset = fStream2.Position;
 
-                nBytesRead = readerForBlocks.Read(buffer, 0, nBlockSize);
+                nBytesRead = fStream2.Read(buffer, 0, nBlockSize);
 
                 if (nBytesRead == 0 || nBytesRead != nBlockSize)
                 {
@@ -1195,8 +1196,6 @@ namespace Novacoin
                     dbConn.BeginTransaction();
                 }*/
             }
-
-            dbConn.Commit();
 
             return true;
         }
