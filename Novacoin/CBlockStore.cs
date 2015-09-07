@@ -33,6 +33,39 @@ using System.Text;
 
 namespace Novacoin
 {
+    [Table("ChainState")]
+    public class ChainState
+    {
+        [PrimaryKey, AutoIncrement]
+        public long itemId { get; set; }
+
+        /// <summary>
+        /// Hash of top block in the best chain
+        /// </summary>
+        public byte[]  HashBestChain { get; set; }
+
+        /// <summary>
+        /// Total trust score of best chain
+        /// </summary>
+        public byte[] BestChainTrust { get; set; }
+
+        public uint nBestHeight { get; set;}
+
+        [Ignore]
+        public uint256 nBestChainTrust
+        {
+            get { return BestChainTrust; }
+            set { BestChainTrust = value; }
+        }
+
+        [Ignore]
+        public uint256 nHashBestChain
+        {
+            get { return HashBestChain; }
+            set { HashBestChain = value; }
+        }
+    }
+
     [Table("BlockStorage")]
     public class CBlockStoreItem : IBlockStorageItem
     {
@@ -810,15 +843,11 @@ namespace Novacoin
         private ConcurrentDictionary<COutPoint, uint> mapStakeSeen = new ConcurrentDictionary<COutPoint, uint>();
         private ConcurrentDictionary<COutPoint, uint> mapStakeSeenOrphan = new ConcurrentDictionary<COutPoint, uint>();
 
-        /// <summary>
-        /// Trust score for the longest chain.
-        /// </summary>
-        private uint256 nBestChainTrust = 0;
 
         /// <summary>
-        /// Top block of the best chain.
+        /// Copy of chain state object.
         /// </summary>
-        private uint256 nHashBestChain = 0;
+        private ChainState ChainParams;
 
         /// <summary>
         /// Cursor which is pointing us to the end of best chain.
@@ -839,7 +868,6 @@ namespace Novacoin
         /// Block file stream with read/write access
         /// </summary>
         private Stream fStreamReadWrite;
-        private uint nBestHeight;
         private uint nTimeBestReceived;
         private int nTransactionsUpdated;
 
@@ -869,6 +897,16 @@ namespace Novacoin
                     dbConn.CreateTable<CBlockStoreItem>(CreateFlags.AutoIncPK);
                     dbConn.CreateTable<CMerkleNode>(CreateFlags.AutoIncPK);
                     dbConn.CreateTable<TxOutItem>(CreateFlags.ImplicitPK);
+                    dbConn.CreateTable<ChainState>(CreateFlags.AutoIncPK);
+
+                    ChainParams = new ChainState()
+                    {
+                        nBestChainTrust = 0,
+                        nBestHeight = 0,
+                        nHashBestChain = 0
+                    };
+
+                    dbConn.Insert(ChainParams);
 
                     var genesisBlock = new CBlock(
                         Interop.HexToArray(
@@ -923,6 +961,9 @@ namespace Novacoin
                         mapStakeSeen.TryAdd(item.prevoutStake, item.nStakeTime);
                     }
                 }
+
+                // Load data about the top node.
+                ChainParams = dbConn.Table<ChainState>().First();
             }
         }
 
@@ -1111,7 +1152,7 @@ namespace Novacoin
                 return false; // blockMap add failed
             }
 
-            if (itemTemplate.nChainTrust > nBestChainTrust)
+            if (itemTemplate.nChainTrust > ChainParams.nBestChainTrust)
             {
                 // New best chain
 
@@ -1132,7 +1173,7 @@ namespace Novacoin
             {
                 genesisBlockCursor = cursor;
             }
-            else if (nHashBestChain == (uint256)cursor.prevHash)
+            else if (ChainParams.nHashBestChain == (uint256)cursor.prevHash)
             {
                 if (!SetBestChainInner(cursor))
                 {
@@ -1180,10 +1221,7 @@ namespace Novacoin
                 }
             }
 
-            nHashBestChain = cursor.Hash;
             bestBlockCursor = cursor;
-            nBestHeight = cursor.nHeight;
-            nBestChainTrust = cursor.nChainTrust;
             nTimeBestReceived = Interop.GetTime();
             nTransactionsUpdated++;
 
@@ -1285,9 +1323,9 @@ namespace Novacoin
                 }
             }
 
-            if (!WriteHashBestChain(cursorIntermediate.Hash))
+            if (!UpdateTopChain(cursorIntermediate))
             {
-                return false; // WriteHashBestChain failed
+                return false; // UpdateTopChain failed
             }
 
             // Make sure it's successfully written to disk 
@@ -1324,7 +1362,7 @@ namespace Novacoin
             }
 
             // Adding to current best branch
-            if (!ConnectBlock(cursor, ref block) || !WriteHashBestChain(hash))
+            if (!ConnectBlock(cursor, ref block) || !UpdateTopChain(cursor))
             {
                 InvalidChainFound(cursor);
                 return false;
@@ -1496,9 +1534,7 @@ namespace Novacoin
                 return false; // Unable to save outpoints
             }
 
-            // TODO: the remaining stuff lol :D
-
-            throw new NotImplementedException();
+            return true;
         }
 
         /// <summary>
@@ -1533,9 +1569,18 @@ namespace Novacoin
             throw new NotImplementedException();
         }
 
-        private bool WriteHashBestChain(uint256 hash)
+        /// <summary>
+        /// Set new top node or current best chain.
+        /// </summary>
+        /// <param name="cursor"></param>
+        /// <returns></returns>
+        private bool UpdateTopChain(CBlockStoreItem cursor)
         {
-            throw new NotImplementedException();
+            ChainParams.HashBestChain = cursor.Hash;
+            ChainParams.nBestChainTrust = cursor.nChainTrust;
+            ChainParams.nBestHeight = cursor.nHeight;
+
+            return dbConn.Update(ChainParams) != 0;
         }
 
         /// <summary>
