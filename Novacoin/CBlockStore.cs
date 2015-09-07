@@ -904,10 +904,9 @@ namespace Novacoin
                         return false; // unable to get coin age for coinstake
                     }
 
-                    int nTxSize = (tx.nTime > NetInfo.nStakeValidationSwitchTime) ? tx.Size : 0;
                     ulong nReward = tx.nValueOut - nValueIn;
 
-                    ulong nCalculatedReward = CBlock.GetProofOfStakeReward(nCoinAge, cursorBlock.nBits, tx.nTime) - CTransaction.GetMinFee(1, false, CTransaction.MinFeeMode.GMF_BLOCK, nTxSize) + CTransaction.nCent;
+                    ulong nCalculatedReward = CBlock.GetProofOfStakeReward(nCoinAge, cursorBlock.nBits, tx.nTime) - tx.GetMinFee(1, false, CTransaction.MinFeeMode.GMF_BLOCK) + CTransaction.nCent;
 
                     if (nReward > nCalculatedReward)
                     {

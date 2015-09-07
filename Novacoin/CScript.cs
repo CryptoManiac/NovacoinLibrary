@@ -402,7 +402,7 @@ namespace Novacoin
             // get the last item that the scriptSig
             // pushes onto the stack:
             InstructionQueue wScriptSig = scriptSig.GetInstructionQueue();
-            int nScriptSigSize = scriptSig.Size;
+            uint nScriptSigSize = scriptSig.Size;
 
             instruction opcode; // Current instruction
             byte[] pushArgs = new byte[0]; // OP_PUSHDATAn argument
@@ -512,9 +512,9 @@ namespace Novacoin
         /// <summary>
         /// Script size
         /// </summary>
-        public int Size
+        public uint Size
         {
-            get { return codeBytes.Count; }
+            get { return (uint) codeBytes.Count; }
         }
 
         public CScriptID ScriptID

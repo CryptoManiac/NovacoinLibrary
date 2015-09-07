@@ -382,18 +382,18 @@ namespace Novacoin
         /// <summary>
         /// Serialized size
         /// </summary>
-        public int Size
+        public uint Size
         {
             get
             {
-                int nSize = 80 + VarInt.GetEncodedSize(vtx.Length); // CBlockHeader + NumTx
+                uint nSize = 80 + VarInt.GetEncodedSize(vtx.Length); // CBlockHeader + NumTx
 
                 foreach (var tx in vtx)
                 {
                     nSize += tx.Size;
                 }
 
-                nSize += VarInt.GetEncodedSize(signature.Length) + signature.Length;
+                nSize += VarInt.GetEncodedSize(signature.Length) + (uint)signature.Length;
 
                 return nSize;
             }
@@ -404,11 +404,11 @@ namespace Novacoin
         /// </summary>
         /// <param name="nTx">Transaction index.</param>
         /// <returns>Offset in bytes from the beginning of block header.</returns>
-        public int GetTxOffset(int nTx)
+        public uint GetTxOffset(int nTx)
         {
             Contract.Requires<ArgumentException>(nTx >= 0 && nTx < vtx.Length, "Transaction index you've specified is incorrect.");
 
-            int nOffset = 80 + VarInt.GetEncodedSize(vtx.Length); // CBlockHeader + NumTx
+            uint nOffset = 80 + VarInt.GetEncodedSize(vtx.Length); // CBlockHeader + NumTx
 
             for (int i = 0; i < nTx; i++)
             {

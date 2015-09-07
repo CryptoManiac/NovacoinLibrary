@@ -57,10 +57,15 @@ namespace Novacoin
         /// One coin = 1000000 satoshis.
         /// </summary>
         public const ulong nCoin = 1000000;
+        
         /// <summary>
         /// Sanity checking threshold.
         /// </summary>
         public const ulong nMaxMoney = 2000000000 * nCoin;
+
+        public const ulong nMinTxFee = nCent / 10;
+        public const ulong nMinRelayTxFee = nCent / 50;
+        public const ulong nMinTxoutAmount = nCent / 100;        
 
         /// <summary>
         /// Maximum transaction size is 250Kb
@@ -334,11 +339,11 @@ namespace Novacoin
         /// <summary>
         /// Serialized size
         /// </summary>
-        public int Size
+        public uint Size
         {
             get
             {
-                int nSize = 12; // nVersion, nTime, nLockLime
+                uint nSize = 12; // nVersion, nTime, nLockLime
 
                 nSize += VarInt.GetEncodedSize(vin.Length);
                 nSize += VarInt.GetEncodedSize(vout.Length);
@@ -557,9 +562,78 @@ namespace Novacoin
             throw new NotImplementedException();
         }
 
-        internal static ulong GetMinFee(int v1, bool v2, MinFeeMode gMF_BLOCK, int nTxSize)
+        public ulong GetMinFee(uint nBlockSize, bool fAllowFree, MinFeeMode mode)
         {
-            throw new NotImplementedException();
+            ulong nMinTxFee = CTransaction.nMinTxFee, nMinRelayTxFee = CTransaction.nMinRelayTxFee;
+            uint nBytes = Size;
+
+            if (IsCoinStake)
+            {
+                // Enforce 0.01 as minimum fee for old approach or coinstake
+                nMinTxFee = nCent;
+                nMinRelayTxFee = nCent;
+
+                if (nTime < NetInfo.nStakeValidationSwitchTime)
+                {
+                    // Enforce zero size for compatibility with old blocks.
+                    nBytes = 0;
+                }
+            }
+
+            // Base fee is either nMinTxFee or nMinRelayTxFee
+            ulong nBaseFee = (mode == MinFeeMode.GMF_RELAY) ? nMinRelayTxFee : nMinTxFee;
+
+            uint nNewBlockSize = nBlockSize + nBytes;
+            ulong nMinFee = (1 + (ulong)nBytes / 1000) * nBaseFee;
+
+            if (fAllowFree)
+            {
+                if (nBlockSize == 1)
+                {
+                    // Transactions under 1K are free
+                    if (nBytes < 1000)
+                        nMinFee = 0;
+                }
+                else
+                {
+                    // Free transaction area
+                    if (nNewBlockSize < 27000)
+                        nMinFee = 0;
+                }
+            }
+
+            // To limit dust spam, require additional MIN_TX_FEE/MIN_RELAY_TX_FEE for
+            //    each non empty output which is less than 0.01
+            //
+            // It's safe to ignore empty outputs here, because these inputs are allowed
+            //     only for coinbase and coinstake transactions.
+            foreach (var txout in vout)
+            {
+                if (txout.nValue < nCent && !txout.IsEmpty)
+                {
+                    nMinFee += nBaseFee;
+                }
+            }
+
+            var nMaxBlockSizeGen = CBlock.nMaxBlockSize / 2;
+
+            // Raise the price as the block approaches full
+            if (nBlockSize != 1 && nNewBlockSize >= nMaxBlockSizeGen / 2)
+            {
+                if (nNewBlockSize >= nMaxBlockSizeGen)
+                {
+                    return nMaxMoney;
+                }
+
+                nMinFee *= nMaxBlockSizeGen / (nMaxBlockSizeGen - nNewBlockSize);
+            }
+
+            if (!MoneyRange(nMinFee))
+            {
+                nMinFee = nMaxMoney;
+            }
+
+            return nMinFee;
         }
     }
 }

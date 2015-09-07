@@ -612,7 +612,7 @@ namespace Novacoin
             {
                 reader.Seek(nBlockPos + nTxOffset, SeekOrigin.Begin); // Seek to transaction offset
 
-                if (nTxSize != reader.Read(buffer, 0, nTxSize))
+                if (nTxSize != reader.Read(buffer, 0, (int)nTxSize))
                 {
                     return false;
                 }
@@ -647,9 +647,9 @@ namespace Novacoin
         /// Transaction size accessor
         /// </summary>
         [Ignore]
-        public int nTxSize
+        public uint nTxSize
         {
-            get { return (int)VarInt.DecodeVarInt(TxSize); }
+            get { return (uint)VarInt.DecodeVarInt(TxSize); }
             private set { TxSize = VarInt.EncodeVarInt(value); }
         }
 

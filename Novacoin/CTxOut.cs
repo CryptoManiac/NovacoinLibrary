@@ -183,7 +183,7 @@ namespace Novacoin
         /// <summary>
         /// Serialized size
         /// </summary>
-        public int Size
+        public uint Size
         {
             get
             {

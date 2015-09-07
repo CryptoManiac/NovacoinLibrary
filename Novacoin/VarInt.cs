@@ -83,7 +83,7 @@ namespace Novacoin
             return EncodeVarInt((ulong)n);
         }
 
-        public static int GetEncodedSize(long n)
+        public static uint GetEncodedSize(long n)
         {
             if (n <= 0xfc)
             {
