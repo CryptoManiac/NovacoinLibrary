@@ -21,7 +21,7 @@ using System.Text;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
-using System.Numerics;
+using System.Numerics; // TODO: implement wrapper for BouncyCastle implementation of BigInteger and use it instead. This is necessary due to incompatibility of System.Numerics.BigInteger with OpenSSL.
 
 namespace Novacoin
 {
