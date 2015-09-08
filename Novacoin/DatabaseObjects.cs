@@ -723,6 +723,12 @@ namespace Novacoin
     public class TxOutItem
     {
         /// <summary>
+        /// Outpoint identifier.
+        /// </summary>
+        [PrimaryKey, AutoIncrement]
+        public long nOutpointID { get; set; }
+
+        /// <summary>
         /// Reference to transaction item.
         /// </summary>
         [ForeignKey(typeof(CMerkleNode), Name = "nMerkleNodeID")]
@@ -786,6 +792,23 @@ namespace Novacoin
     public class InputsJoin : TxOutItem
     {
         public byte[] TransactionHash { get; set; }
+
+        /// <summary>
+        /// To avoid awkwardness of sqlite wrapper.
+        /// </summary>
+        /// <returns></returns>
+        public TxOutItem getTxOutItem()
+        {
+            return new TxOutItem()
+            {
+                nOutpointID = nOutpointID,
+                nMerkleNodeID = nMerkleNodeID,
+                outputFlags = outputFlags,
+                OutputNumber = OutputNumber,
+                OutputValue = OutputValue,
+                scriptPubKey = scriptPubKey
+            };
+        }
     }
 
 

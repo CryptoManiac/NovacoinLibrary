@@ -260,10 +260,8 @@ namespace Novacoin
 
                 var inputsKey = new COutPoint(item.TransactionHash, item.nOut);
 
-//                item.IsSpent = true;
-
                 // Add output data to dictionary
-                inputs.Add(inputsKey, (TxOutItem)item);
+                inputs.Add(inputsKey, item.getTxOutItem());
             }
 
             if (queryResults.Count < tx.vin.Length)
@@ -285,7 +283,7 @@ namespace Novacoin
                         inputs.Add(outPoint, queued[outPoint]);
 
                         // Mark output as spent
-                        queued[outPoint].IsSpent = true;
+                        // queued[outPoint].IsSpent = true;
                     }
                 }
                 else
@@ -639,13 +637,20 @@ namespace Novacoin
             uint nSigOps = 0;
 
             var queuedMerkleNodes = new Dictionary<uint256, CMerkleNode>();
-            var queued = new Dictionary<COutPoint, TxOutItem>();
+            var queuedOutputs = new Dictionary<COutPoint, TxOutItem>();
 
             for (var nTx = 0; nTx < block.vtx.Length; nTx++)
             {
                 var tx = block.vtx[nTx];
                 var hashTx = tx.Hash;
-                var nTxPos = cursor.nBlockPos + block.GetTxOffset(nTx);
+
+                if (!queuedMerkleNodes.ContainsKey(hashTx))
+                {
+                    var nTxPos = cursor.nBlockPos + block.GetTxOffset(nTx);
+                    var mNode = new CMerkleNode(cursor.ItemID, nTxPos, tx);
+
+                    queuedMerkleNodes.Add(hashTx, mNode);
+                }
 
                 Dictionary<COutPoint, TxOutItem> txouts;
                 if (GetOutputs(hashTx, out txouts))
@@ -670,7 +675,7 @@ namespace Novacoin
                 else
                 {
                     bool Invalid;
-                    if (!FetchInputs(tx, ref queued, ref inputs, true, out Invalid))
+                    if (!FetchInputs(tx, ref queuedOutputs, ref inputs, true, out Invalid))
                     {
                         return false; // Unable to fetch some inputs.
                     }
@@ -695,7 +700,7 @@ namespace Novacoin
                         nFees += nTxValueIn - nTxValueOut;
                     }
 
-                    if (!ConnectInputs(tx, ref inputs, ref queued, ref cursor, true, fScriptChecks, scriptFlags))
+                    if (!ConnectInputs(tx, ref inputs, ref queuedOutputs, ref cursor, true, fScriptChecks, scriptFlags))
                     {
                         return false;
                     }
@@ -703,22 +708,17 @@ namespace Novacoin
 
                 for (var i = 0u; i < tx.vout.Length; i++)
                 {
-                    if (!queuedMerkleNodes.ContainsKey(hashTx))
-                    {
-                        var mNode = new CMerkleNode(cursor.ItemID, nTxPos, tx);
-                        queuedMerkleNodes.Add(hashTx, mNode);
-                    }
-
                     var outKey = new COutPoint(hashTx, i);
-                    var outData = new TxOutItem();
+                    var outData = new TxOutItem()
+                    {
+                        nMerkleNodeID = -1,
+                        nValue = tx.vout[i].nValue,
+                        scriptPubKey = tx.vout[i].scriptPubKey,
+                        IsSpent = false,
+                        nOut = i
+                    };
 
-                    outData.nValue = tx.vout[i].nValue;
-                    outData.scriptPubKey = tx.vout[i].scriptPubKey;
-                    outData.nOut = i;
-
-                    outData.IsSpent = false;
-
-                    queued.Add(outKey, outData);
+                    queuedOutputs.Add(outKey, outData);
                 }
             }
 
@@ -746,54 +746,75 @@ namespace Novacoin
                 return true;
             }
 
-            // Write queued transaction changes
-            var actualMerkleNodes = new Dictionary<uint256, CMerkleNode>();
-            var queuedOutpointItems = new List<TxOutItem>();
-            foreach (KeyValuePair<COutPoint, TxOutItem> outPair in queued)
+            // Flush merkle nodes.
+            var savedMerkleNodes = new Dictionary<uint256, CMerkleNode>();
+            foreach (var merklePair in queuedMerkleNodes)
             {
-                uint256 txID = outPair.Key.hash;
-                CMerkleNode merkleNode;
+                var merkleNode = merklePair.Value;
 
-                if (actualMerkleNodes.ContainsKey(txID))
+                if (!SaveMerkleNode(ref merkleNode))
                 {
-                    merkleNode = actualMerkleNodes[txID];
+                    // Unable to save merkle tree cursor.
+                    return false;
+                }
+
+                savedMerkleNodes.Add(merklePair.Key, merkleNode);
+            }
+
+            // Write queued transaction changes
+            var newOutpointItems = new List<TxOutItem>();
+            var updatedOutpointItems = new List<TxOutItem>();
+            foreach (var outPair in queuedOutputs)
+            {
+                var outItem = outPair.Value;
+
+                if (outItem.nMerkleNodeID == -1)
+                {
+                    // This outpoint doesn't exist yet, adding to insert list.
+
+                    outItem.nMerkleNodeID = savedMerkleNodes[outPair.Key.hash].nMerkleNodeID;
+                    newOutpointItems.Add(outItem);
                 }
                 else
                 {
-                    // TODO: Bug here, we shouldn't mix new and already existent outpoints in the same dictionary.
+                    // This outpount already exists, adding to update list.
 
-
-                    merkleNode = queuedMerkleNodes[txID];
-                    if (!SaveMerkleNode(ref merkleNode))
-                    {
-                        // Unable to save merkle tree cursor.
-                        return false;
-                    }
-                    actualMerkleNodes.Add(txID, merkleNode);
+                    updatedOutpointItems.Add(outItem);
                 }
-
-                var outItem = outPair.Value;
-                outItem.nMerkleNodeID = merkleNode.nMerkleNodeID;
-
-                queuedOutpointItems.Add(outItem);
             }
 
-            if (!SaveOutpoints(ref queuedOutpointItems))
+            if (updatedOutpointItems.Count != 0 && !UpdateOutpoints(ref updatedOutpointItems))
             {
-                return false; // Unable to save outpoints
+                return false; // Unable to update outpoints
+            }
+
+            if (newOutpointItems.Count != 0 && !InsertOutpoints(ref newOutpointItems))
+            {
+                return false; // Unable to insert outpoints
             }
 
             return true;
         }
 
         /// <summary>
-        /// Insert set of outpoints
+        /// Insert set of new outpoints
+        /// </summary>
+        /// <param name="newOutpointItems">List of TxOutItem objects.</param>
+        /// <returns>Result</returns>
+        private bool InsertOutpoints(ref List<TxOutItem> newOutpointItems)
+        {
+            return (dbConn.InsertAll(newOutpointItems, false) != 0);
+        }
+
+
+        /// <summary>
+        /// Update set of outpoints
         /// </summary>
         /// <param name="queuedOutpointItems">List of TxOutItem objects.</param>
         /// <returns>Result</returns>
-        private bool SaveOutpoints(ref List<TxOutItem> queuedOutpointItems)
+        private bool UpdateOutpoints(ref List<TxOutItem> updatedOutpointItems)
         {
-            return dbConn.InsertAll(queuedOutpointItems, false) != 0;
+            return (dbConn.UpdateAll(updatedOutpointItems, false) != 0);
         }
 
         /// <summary>
