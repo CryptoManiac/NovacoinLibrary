@@ -1108,13 +1108,18 @@ namespace Novacoin
         /// <param name="block">Block reference</param>
         /// <param name="nBlockPos">Block position reference</param>
         /// <returns>Result of operation</returns>
-        public bool GetBlockByTransactionID(uint256 TxID, ref CBlock block, ref long nBlockPos)
+        public bool GetBlockByTransactionID(uint256 TxID, out CBlock block, out long nBlockPos)
         {
+            block = null;
+            nBlockPos = -1;
+
             var queryResult = dbConn.Query<CBlockStoreItem>("select b.* from [BlockStorage] b left join [MerkleNodes] m on (b.[ItemID] = m.[nParentBlockID]) where m.[TransactionHash] = ?", (byte[])TxID);
 
             if (queryResult.Count == 1)
             {
                 CBlockStoreItem blockCursor = queryResult[0];
+
+                nBlockPos = blockCursor.nBlockPos;
 
                 return blockCursor.ReadFromFile(ref fStreamReadWrite, out block);
             }
@@ -1273,7 +1278,7 @@ namespace Novacoin
                 // TODO: proof-of-stake validation
 
                 uint256 hashProofOfStake = 0, targetProofOfStake = 0;
-                if (!StakeModifier.CheckProofOfStake(block.vtx[1], block.header.nBits, ref hashProofOfStake, ref targetProofOfStake))
+                if (!StakeModifier.CheckProofOfStake(block.vtx[1], block.header.nBits, out hashProofOfStake, out targetProofOfStake))
                 {
                     return false; // do not error here as we expect this during initial block download
                 }

@@ -338,8 +338,10 @@ namespace Novacoin
             return GetKernelStakeModifier(hashBlockFrom, ref nStakeModifier, ref nStakeModifierHeight, ref nStakeModifierTime);
         }
 
-        public static bool CheckStakeKernelHash(uint nBits, uint256 hashBlockFrom, uint nTimeBlockFrom, uint nTxPrevOffset, CTransaction txPrev, COutPoint prevout, uint nTimeTx, ref uint256 hashProofOfStake, ref uint256 targetProofOfStake)
+        public static bool CheckStakeKernelHash(uint nBits, uint256 hashBlockFrom, uint nTimeBlockFrom, uint nTxPrevOffset, CTransaction txPrev, COutPoint prevout, uint nTimeTx, out uint256 hashProofOfStake, out uint256 targetProofOfStake)
         {
+            hashProofOfStake = targetProofOfStake = 0;
+
             if (nTimeTx < txPrev.nTime)
             {
                 return false; // Transaction timestamp violation
@@ -432,8 +434,10 @@ namespace Novacoin
             return (uint)hashChecksum.Low64;
         }
 
-        internal static bool CheckProofOfStake(CTransaction tx, uint nBits, ref uint256 hashProofOfStake, ref uint256 targetProofOfStake)
+        public static bool CheckProofOfStake(CTransaction tx, uint nBits, out uint256 hashProofOfStake, out uint256 targetProofOfStake)
         {
+            hashProofOfStake = targetProofOfStake = 0;
+
             if (!tx.IsCoinStake)
             {
                 return false; // called on non-coinstake
@@ -444,9 +448,9 @@ namespace Novacoin
 
             // Read block header
 
-            long nBlockPos = 0;
-            CBlock block = null;
-            if (!CBlockStore.Instance.GetBlockByTransactionID(txin.prevout.hash, ref block, ref nBlockPos))
+            long nBlockPos;
+            CBlock block;
+            if (!CBlockStore.Instance.GetBlockByTransactionID(txin.prevout.hash, out block, out nBlockPos))
             {
                 return false; // unable to read block of previous transaction
             }
@@ -476,7 +480,7 @@ namespace Novacoin
                 return false; // vin[0] signature check failed
             }
 
-            if (!CheckStakeKernelHash(nBits, block.header.Hash, block.header.nTime, (uint)(nTxPos - nBlockPos), txPrev, txin.prevout, tx.nTime, ref hashProofOfStake, ref targetProofOfStake))
+            if (!CheckStakeKernelHash(nBits, block.header.Hash, block.header.nTime, (uint)(nTxPos - nBlockPos), txPrev, txin.prevout, tx.nTime, out hashProofOfStake, out targetProofOfStake))
             {
                 return false; // check kernel failed on coinstake 
             }
