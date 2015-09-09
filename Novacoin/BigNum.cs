@@ -11,7 +11,7 @@ namespace Novacoin
     /// <summary>
     /// Wrapper for bouncycastle's Biginteger class.
     /// </summary>
-    public class BigNum
+    public class BigNum : IComparable<BigNum>, IEquatable<BigNum>
     {
         /// <summary>
         /// Internal coby of Biginteger object.
@@ -110,6 +110,38 @@ namespace Novacoin
         }
         #endregion
 
+        #region Comparison operations
+        public static bool operator <(BigNum a, BigNum b)
+        {
+            return a.bn.CompareTo(b.bn) < 0;
+        }
+        public static bool operator <=(BigNum a, BigNum b)
+        {
+            return a.bn.CompareTo(b.bn) <= 0;
+        }
+
+        public static bool operator >(BigNum a, BigNum b)
+        {
+            return a.bn.CompareTo(b.bn) > 0;
+        }
+
+        public static bool operator >=(BigNum a, BigNum b)
+        {
+            return a.bn.CompareTo(b.bn) >= 0;
+        }
+
+        public static bool operator ==(BigNum a, BigNum b)
+        {
+            return a.bn.CompareTo(b.bn) == 0;
+        }
+
+        public static bool operator !=(BigNum a, BigNum b)
+        {
+            return a.bn.CompareTo(b.bn) != 0;
+        }
+
+        #endregion
+
         #region Cast operators
         public static implicit operator BigNum(BigInteger bnValue)
         {
@@ -130,6 +162,37 @@ namespace Novacoin
         {
             return (ulong)a.bn.LongValue;
         }
+
+        public int CompareTo(BigNum other)
+        {
+            return bn.CompareTo(other.bn);
+        }
+
+        public bool Equals(BigNum other)
+        {
+            if (object.ReferenceEquals(other, null))
+            {
+                return false;
+            }
+
+            return this == other;
+        }
+
+        public override int GetHashCode()
+        {
+            return bn.GetHashCode();
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (object.ReferenceEquals(obj, null))
+            {
+                return false;
+            }
+
+            return this == (obj as BigNum);
+        }
+
         #endregion
     }
 }
