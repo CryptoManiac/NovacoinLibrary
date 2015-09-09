@@ -274,6 +274,11 @@ namespace Novacoin
                     {
                         var outPoint = txin.prevout;
 
+                        if (inputs.ContainsKey(outPoint))
+                        {
+                            continue; // We have already seen this input.
+                        }
+
                         if (!queued.ContainsKey(outPoint))
                         {
                             return false; // No such transaction
