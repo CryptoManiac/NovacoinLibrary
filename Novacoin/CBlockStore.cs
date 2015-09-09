@@ -208,6 +208,9 @@ namespace Novacoin
 
                 // Load data about the top node.
                 ChainParams = dbConn.Table<ChainState>().First();
+
+                genesisBlockCursor = dbConn.Query<CBlockStoreItem>("select * from [BlockStorage] where [Hash] = ?", (byte[])NetInfo.nHashGenesisBlock).First();
+                bestBlockCursor = dbConn.Query<CBlockStoreItem>("select * from [BlockStorage] where [Hash] = ?", ChainParams.HashBestChain).First();
             }
         }
 
@@ -472,6 +475,11 @@ namespace Novacoin
             nTimeBestReceived = Interop.GetTime();
             nTransactionsUpdated++;
 
+            if (!UpdateTopChain(cursor))
+            {
+                return false; // unable to set top chain node.
+            }
+
             return true;
         }
 
@@ -613,7 +621,13 @@ namespace Novacoin
             }
 
             // Add to current best branch
-            cursor.prev.next = cursor;
+            var prevCursor = cursor.prev;
+            prevCursor.next = cursor;
+
+            if (!UpdateDBCursor(ref prevCursor))
+            {
+                return false; // unable to update
+            }
 
             // Delete redundant memory transactions
             foreach (var tx in block.vtx)
