@@ -255,7 +255,7 @@ namespace Novacoin
                     return b;
                 }
 
-                return a * b.pn[0];
+                return b * a.pn[0];
             }
 
             int m = a.bits / 32 + (a.bits % 32 != 0 ? 1 : 0);
