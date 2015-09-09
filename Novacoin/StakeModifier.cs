@@ -295,9 +295,12 @@ namespace Novacoin
         /// The stake modifier used to hash for a stake kernel is chosen as the stake
         /// modifier about a selection interval later than the coin generating the kernel
         /// </summary>
-        static bool GetKernelStakeModifier(uint256 hashBlockFrom, ref long nStakeModifier, ref uint nStakeModifierHeight, ref uint nStakeModifierTime)
+        static bool GetKernelStakeModifier(uint256 hashBlockFrom, out long nStakeModifier, out uint nStakeModifierHeight, out uint nStakeModifierTime)
         {
             nStakeModifier = 0;
+            nStakeModifierTime = 0;
+            nStakeModifierHeight = 0;
+
             var cursorFrom = CBlockStore.Instance.GetMapCursor(hashBlockFrom);
             if (cursorFrom == null)
             {
@@ -330,12 +333,12 @@ namespace Novacoin
             return true;
         }
 
-        public static bool GetKernelStakeModifier(uint256 hashBlockFrom, ref long nStakeModifier)
+        public static bool GetKernelStakeModifier(uint256 hashBlockFrom, out long nStakeModifier)
         {
             uint nStakeModifierHeight = 0;
             uint nStakeModifierTime = 0;
 
-            return GetKernelStakeModifier(hashBlockFrom, ref nStakeModifier, ref nStakeModifierHeight, ref nStakeModifierTime);
+            return GetKernelStakeModifier(hashBlockFrom, out nStakeModifier, out nStakeModifierHeight, out nStakeModifierTime);
         }
 
         public static bool CheckStakeKernelHash(uint nBits, uint256 hashBlockFrom, uint nTimeBlockFrom, uint nTxPrevOffset, CTransaction txPrev, COutPoint prevout, uint nTimeTx, out uint256 hashProofOfStake, out uint256 targetProofOfStake)
@@ -361,10 +364,10 @@ namespace Novacoin
             targetProofOfStake = nCoinDayWeight * nTargetPerCoinDay;
 
             // Calculate hash
-            long nStakeModifier = 0;
-            uint nStakeModifierHeight = 0;
-            uint nStakeModifierTime = 0;
-            if (!GetKernelStakeModifier(hashBlockFrom, ref nStakeModifier, ref nStakeModifierHeight, ref nStakeModifierTime))
+            long nStakeModifier;
+            uint nStakeModifierTime;
+            uint nStakeModifierHeight;
+            if (!GetKernelStakeModifier(hashBlockFrom, out nStakeModifier, out nStakeModifierHeight, out nStakeModifierTime))
             {
                 return false;
             }
