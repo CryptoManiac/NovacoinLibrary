@@ -108,6 +108,7 @@
   <ItemGroup>
     <Compile Include="AddressTools.cs" />
     <Compile Include="base_uint.cs" />
+    <Compile Include="BigNum.cs" />
     <Compile Include="BignumHelper.cs" />
     <Compile Include="Checkpoints.cs" />
     <Compile Include="DatabaseObjects.cs" />
