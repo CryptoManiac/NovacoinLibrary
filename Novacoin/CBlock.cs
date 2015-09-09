@@ -21,7 +21,6 @@ using System.Text;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
-using System.Numerics; // TODO: implement wrapper for BouncyCastle implementation of BigInteger and use it instead. This is necessary due to incompatibility of System.Numerics.BigInteger with OpenSSL.
 
 namespace Novacoin
 {
@@ -490,29 +489,28 @@ namespace Novacoin
             //
             // Please note that we're using bisection to find an approximate solutuion
 
-            BigInteger bnSubsidyLimit = NetInfo.nMaxMintProofOfWork;
 
             uint256 nTarget = 0;
             nTarget.Compact = nBits;
 
-            BigInteger bnTarget = new BigInteger(nTarget);
-            BigInteger bnTargetLimit = new BigInteger(NetInfo.nProofOfWorkLimit);
+            BigNum bnTarget = nTarget;
+            BigNum bnTargetLimit = NetInfo.nProofOfWorkLimit;
 
-            BigInteger bnLowerBound = CTransaction.nCent;
-            BigInteger bnUpperBound = bnSubsidyLimit;
+            BigNum bnSubsidyLimit = NetInfo.nMaxMintProofOfWork;
+            BigNum bnLowerBound = CTransaction.nCent;
+            BigNum bnUpperBound = bnSubsidyLimit;
 
             while (bnLowerBound + CTransaction.nCent <= bnUpperBound)
             {
-                BigInteger bnMidValue = (bnLowerBound + bnUpperBound) / 2;
+                BigNum bnMidValue = (bnLowerBound + bnUpperBound) / 2;
                 if (bnMidValue * bnMidValue * bnMidValue * bnMidValue * bnMidValue * bnMidValue * bnTargetLimit > bnSubsidyLimit * bnSubsidyLimit * bnSubsidyLimit * bnSubsidyLimit * bnSubsidyLimit * bnSubsidyLimit * bnTarget)
                     bnUpperBound = bnMidValue;
                 else
                     bnLowerBound = bnMidValue;
             }
 
-            ulong nSubsidy = (ulong)bnUpperBound;
+            ulong nSubsidy = bnUpperBound;
             nSubsidy = (nSubsidy / CTransaction.nCent) * CTransaction.nCent;
-
 
             return Math.Min(nSubsidy, NetInfo.nMaxMintProofOfWork) + nFees;
         }
@@ -525,23 +523,23 @@ namespace Novacoin
             {
                 // Stage 2 of emission process is PoS-based. It will be active on mainNet since 20 Jun 2013.
 
-                BigInteger bnRewardCoinYearLimit = NetInfo.nMaxMintProofOfStake; // Base stake mint rate, 100% year interest
+                BigNum bnRewardCoinYearLimit = NetInfo.nMaxMintProofOfStake; // Base stake mint rate, 100% year interest
 
                 uint256 nTarget = 0;
                 nTarget.Compact = nBits;
 
-                BigInteger bnTarget = new BigInteger(nTarget);
-                BigInteger bnTargetLimit = new BigInteger(NetInfo.GetProofOfStakeLimit(0, nTime));
+                BigNum bnTarget = nTarget;
+                BigNum bnTargetLimit = NetInfo.GetProofOfStakeLimit(0, nTime);
 
                 // NovaCoin: A reasonably continuous curve is used to avoid shock to market
 
-                BigInteger bnLowerBound = CTransaction.nCent, // Lower interest bound is 1% per year
+                BigNum bnLowerBound = CTransaction.nCent, // Lower interest bound is 1% per year
                     bnUpperBound = bnRewardCoinYearLimit, // Upper interest bound is 100% per year
                     bnMidPart, bnRewardPart;
 
                 while (bnLowerBound + CTransaction.nCent <= bnUpperBound)
                 {
-                    BigInteger bnMidValue = (bnLowerBound + bnUpperBound) / 2;
+                    BigNum bnMidValue = (bnLowerBound + bnUpperBound) / 2;
                     if (nTime < NetInfo.nStakeCurveSwitchTime)
                     {
                         //
@@ -575,7 +573,7 @@ namespace Novacoin
                         bnLowerBound = bnMidValue;
                 }
 
-                nRewardCoinYear = (ulong)bnUpperBound;
+                nRewardCoinYear = bnUpperBound;
                 nRewardCoinYear = Math.Min((nRewardCoinYear / CTransaction.nCent) * CTransaction.nCent, NetInfo.nMaxMintProofOfStake);
             }
             else
