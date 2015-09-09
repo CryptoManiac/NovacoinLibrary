@@ -836,10 +836,8 @@ namespace Novacoin
 
         private bool ConnectInputs(CTransaction tx, ref Dictionary<COutPoint, TxOutItem> inputs, ref Dictionary<COutPoint, TxOutItem> queued, ref CBlockStoreItem cursorBlock, bool fBlock, bool fScriptChecks, scriptflag scriptFlags)
         {
-            // Take over previous transactions' spent pointers
+            // Take over previous transactions' spent items
             // fBlock is true when this is called from AcceptBlock when a new best-block is added to the blockchain
-            // fMiner is true when called from the internal bitcoin miner
-            // ... both are false when called from CTransaction::AcceptToMemoryPool
 
             if (!tx.IsCoinBase)
             {
@@ -852,26 +850,44 @@ namespace Novacoin
                     var input = inputs[prevout];
 
                     CBlockStoreItem parentBlockCursor;
-                    var merkleItem = GetMerkleCursor(input, out parentBlockCursor);
 
-                    if (merkleItem == null)
+                    if (input.nMerkleNodeID == -1)
                     {
-                        return false; // Unable to find merkle node
-                    }
+                        // This input seems as is confirmed by the same block.
 
-                    // If prev is coinbase or coinstake, check that it's matured
-                    if (merkleItem.IsCoinBase || merkleItem.IsCoinStake)
-                    {
-                        if (cursorBlock.nHeight - parentBlockCursor.nHeight < NetInfo.nGeneratedMaturity)
+                        if (!queued.ContainsKey(prevout))
                         {
-                            return false; // tried to spend non-matured generation input.
+                            return false; // No such output has been queued by this block.
                         }
-                    }
 
-                    // check transaction timestamp
-                    if (merkleItem.nTime > tx.nTime)
+                        // TODO: Ensure that neither coinbase nor coinstake outputs are 
+                        //    available for spending in the generation block.
+                    }
+                    else
                     {
-                        return false; // transaction timestamp earlier than input transaction
+                        // This input has been confirmed by one of the earlier accepted blocks.
+
+                        var merkleItem = GetMerkleCursor(input, out parentBlockCursor);
+
+                        if (merkleItem == null)
+                        {
+                            return false; // Unable to find merkle node
+                        }
+
+                        // If prev is coinbase or coinstake, check that it's matured
+                        if (merkleItem.IsCoinBase || merkleItem.IsCoinStake)
+                        {
+                            if (cursorBlock.nHeight - parentBlockCursor.nHeight < NetInfo.nGeneratedMaturity)
+                            {
+                                return false; // tried to spend non-matured generation input.
+                            }
+                        }
+
+                        // check transaction timestamp
+                        if (merkleItem.nTime > tx.nTime)
+                        {
+                            return false; // transaction timestamp earlier than input transaction
+                        }
                     }
 
                     // Check for negative or overflow input values
@@ -917,7 +933,16 @@ namespace Novacoin
                     // Write back
                     if (fBlock)
                     {
-                        queued.Add(prevout, input);
+                        if (input.nMerkleNodeID != -1)
+                        {
+                            // Input has been confirmed earlier.
+                            queued.Add(prevout, input);
+                        }
+                        else
+                        {
+                            // Input has been confirmed by current block.
+                            queued[prevout] = input;
+                        }
                     }
                 }
 
