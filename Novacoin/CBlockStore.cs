@@ -379,6 +379,7 @@ namespace Novacoin
 
                 itemTemplate.prevoutStake = block.vtx[1].vin[0].prevout;
                 itemTemplate.nStakeTime = block.vtx[1].nTime;
+                itemTemplate.hashProofOfStake = mapProofOfStake[blockHash];
             }
 
             if (!itemTemplate.WriteToFile(ref fStreamReadWrite, ref block))
