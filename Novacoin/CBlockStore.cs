@@ -1392,7 +1392,7 @@ namespace Novacoin
                 }
 
                 int nCount = blockMap.Count;
-                Console.WriteLine("nCount={0}, Hash={1}, Time={2}", nCount, block.header.Hash, DateTime.Now); // Commit on each 100th block
+                Console.WriteLine("nCount={0}, Hash={1}, NumTx={2}, Time={3}", nCount, block.header.Hash, block.vtx.Length, DateTime.Now); // Commit on each 100th block
 
                 /*
                 if (nCount % 100 == 0 && nCount != 0)
