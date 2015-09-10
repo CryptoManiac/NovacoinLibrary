@@ -164,7 +164,7 @@ namespace Novacoin
                     return false;
                 }
 
-                // Coinbase output should be empty if proof-of-stake block
+                // Coinbase output must be empty if proof-of-stake block
                 if (vtx[0].vout.Length != 1 || !vtx[0].vout[0].IsEmpty)
                 {
                     return false;
@@ -179,7 +179,7 @@ namespace Novacoin
                 // Check proof-of-stake block signature
                 if (fCheckSig && !SignatureOK)
                 {
-                    return false;
+                    return false; // Proof-of-Stake signature checking failure.
                 }
 
                 if (!vtx[1].CheckTransaction())

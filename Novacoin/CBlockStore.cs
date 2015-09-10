@@ -1281,12 +1281,6 @@ namespace Novacoin
 
             if (block.IsProofOfStake)
             {
-                if (!block.SignatureOK)
-                {
-                    // Proof-of-Stake signature validation failure.
-                    return false;
-                }
-
                 // TODO: proof-of-stake validation
 
                 uint256 hashProofOfStake = 0, targetProofOfStake = 0;
