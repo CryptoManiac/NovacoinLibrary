@@ -156,12 +156,12 @@ namespace Novacoin
                 return true;
             }
 
-            TxOutItem txOutCursor = null;
             for (int i = 0; i < vin.Length; i++)
             {
                 var outpoint = vin[i].prevout;
 
-                if (!CBlockStore.Instance.GetTxOutCursor(outpoint, ref txOutCursor))
+                TxOutItem txOutCursor;
+                if (!CBlockStore.Instance.GetTxOutCursor(outpoint, out txOutCursor))
                     return false;
 
                 if (!ScriptCode.VerifyScript(vin[i].scriptSig, txOutCursor.scriptPubKey, this, i, (int)scriptflag.SCRIPT_VERIFY_P2SH, 0))

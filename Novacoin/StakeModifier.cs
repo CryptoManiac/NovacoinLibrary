@@ -404,7 +404,7 @@ namespace Novacoin
             return Math.Min(nIntervalEnd - nIntervalBeginning - nStakeMinAge, nStakeMaxAge);
         }
 
-        internal static uint GetStakeModifierChecksum(CBlockStoreItem itemTemplate)
+        internal static uint GetStakeModifierChecksum(ref CBlockStoreItem itemTemplate)
         {
             Contract.Assert(itemTemplate.prev != null || (uint256)itemTemplate.Hash == NetInfo.nHashGenesisBlock);
 

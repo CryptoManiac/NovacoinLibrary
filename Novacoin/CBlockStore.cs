@@ -214,7 +214,7 @@ namespace Novacoin
             }
         }
 
-        public bool GetTxOutCursor(COutPoint outpoint, ref TxOutItem txOutCursor)
+        public bool GetTxOutCursor(COutPoint outpoint, out TxOutItem txOutCursor)
         {
             var queryResults = dbConn.Query<TxOutItem>("select o.* from [Outputs] o left join [MerkleNodes] m on (m.nMerkleNodeID = o.nMerkleNodeID) where m.[TransactionHash] = ?", (byte[])outpoint.hash);
 
@@ -227,10 +227,12 @@ namespace Novacoin
 
             // Tx not found
 
+            txOutCursor = null;
+
             return false;
         }
         
-        public bool FetchInputs(CTransaction tx, ref Dictionary<COutPoint, TxOutItem> queued, ref Dictionary<COutPoint, TxOutItem> inputs, bool IsBlock, out bool Invalid)
+        public bool FetchInputs(ref CTransaction tx, ref Dictionary<COutPoint, TxOutItem> queued, ref Dictionary<COutPoint, TxOutItem> inputs, bool IsBlock, out bool Invalid)
         {
             Invalid = false;
 
@@ -348,17 +350,6 @@ namespace Novacoin
                 return false; // SetStakeEntropyBit() failed
             }
 
-            // Save proof-of-stake hash value
-            if (itemTemplate.IsProofOfStake)
-            {
-                uint256 hashProofOfStake;
-                if (!GetProofOfStakeHash(blockHash, out hashProofOfStake))
-                {
-                    return false;  // hashProofOfStake not found 
-                }
-                itemTemplate.hashProofOfStake = hashProofOfStake;
-            }
-
             // compute stake modifier
             long nStakeModifier = 0;
             bool fGeneratedStakeModifier = false;
@@ -368,7 +359,7 @@ namespace Novacoin
             }
 
             itemTemplate.SetStakeModifier(nStakeModifier, fGeneratedStakeModifier);
-            itemTemplate.nStakeModifierChecksum = StakeModifier.GetStakeModifierChecksum(itemTemplate);
+            itemTemplate.nStakeModifierChecksum = StakeModifier.GetStakeModifierChecksum(ref itemTemplate);
 
             // TODO: verify stake modifier checkpoints
 
@@ -379,7 +370,14 @@ namespace Novacoin
 
                 itemTemplate.prevoutStake = block.vtx[1].vin[0].prevout;
                 itemTemplate.nStakeTime = block.vtx[1].nTime;
-                itemTemplate.hashProofOfStake = mapProofOfStake[blockHash];
+
+                // Save proof-of-stake hash value
+                uint256 hashProofOfStake;
+                if (!GetProofOfStakeHash(ref blockHash, out hashProofOfStake))
+                {
+                    return false;  // hashProofOfStake not found 
+                }
+                itemTemplate.hashProofOfStake = hashProofOfStake;
             }
 
             if (!itemTemplate.WriteToFile(ref fStreamReadWrite, ref block))
@@ -555,7 +553,6 @@ namespace Novacoin
                 }
             }
 
-
             // Connect longer branch
             var txDelete = new List<CTransaction>();
             foreach (var cursor in connect)
@@ -695,7 +692,7 @@ namespace Novacoin
                 else
                 {
                     bool Invalid;
-                    if (!FetchInputs(tx, ref queuedOutputs, ref inputs, true, out Invalid))
+                    if (!FetchInputs(ref tx, ref queuedOutputs, ref inputs, true, out Invalid))
                     {
                         return false; // Unable to fetch some inputs.
                     }
@@ -720,7 +717,7 @@ namespace Novacoin
                         nFees += nTxValueIn - nTxValueOut;
                     }
 
-                    if (!ConnectInputs(tx, ref inputs, ref queuedOutputs, ref cursor, true, fScriptChecks, scriptFlags))
+                    if (!ConnectInputs(ref tx, ref inputs, ref queuedOutputs, ref cursor, true, fScriptChecks, scriptFlags))
                     {
                         return false;
                     }
@@ -854,7 +851,7 @@ namespace Novacoin
             return true;
         }
 
-        private bool ConnectInputs(CTransaction tx, ref Dictionary<COutPoint, TxOutItem> inputs, ref Dictionary<COutPoint, TxOutItem> queued, ref CBlockStoreItem cursorBlock, bool fBlock, bool fScriptChecks, scriptflag scriptFlags)
+        private bool ConnectInputs(ref CTransaction tx, ref Dictionary<COutPoint, TxOutItem> inputs, ref Dictionary<COutPoint, TxOutItem> queued, ref CBlockStoreItem cursorBlock, bool fBlock, bool fScriptChecks, scriptflag scriptFlags)
         {
             // Take over previous transactions' spent items
             // fBlock is true when this is called from AcceptBlock when a new best-block is added to the blockchain
@@ -1032,7 +1029,7 @@ namespace Novacoin
         /// <param name="blockHash">Block hash</param>
         /// <param name="hashProofOfStake">Proof-of-stake hash</param>
         /// <returns>Proof-of-Stake hash value</returns>
-        private bool GetProofOfStakeHash(uint256 blockHash, out uint256 hashProofOfStake)
+        private bool GetProofOfStakeHash(ref uint256 blockHash, out uint256 hashProofOfStake)
         {
             return mapProofOfStake.TryGetValue(blockHash, out hashProofOfStake);
         }
@@ -1047,7 +1044,7 @@ namespace Novacoin
                 return false;
             }
 
-            CBlockStoreItem prevBlockCursor = null;
+            CBlockStoreItem prevBlockCursor;
             if (!blockMap.TryGetValue(block.header.prevHash, out prevBlockCursor))
             {
                 // Unable to get the cursor.
