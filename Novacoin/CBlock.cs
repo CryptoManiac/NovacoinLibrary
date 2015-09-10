@@ -269,7 +269,7 @@ namespace Novacoin
             return true;
         }
 
-        private bool CheckProofOfWork(uint256 hash, uint nBits)
+        private static bool CheckProofOfWork(uint256 hash, uint nBits)
         {
             uint256 nTarget = new uint256();
             nTarget.Compact = nBits;
