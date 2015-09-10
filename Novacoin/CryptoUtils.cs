@@ -127,17 +127,17 @@ namespace Novacoin
             var keyBytes1 = PBKDF2_Sha256(128, inputBytes, inputBytes, 1);
             var X = Interop.ToUInt32Array(keyBytes1);
 
-            for (var i = 0; i < 1024; i++)
+            for (ushort i = 0; i < 1024; i++)
             {
                 Array.Copy(X, 0, V, i * 32, 32);
 
                 xor_salsa8(ref X, 0, ref X, 16);
                 xor_salsa8(ref X, 16, ref X, 0);
             }
-            for (var i = 0; i < 1024; i++)
+            for (ushort i = 0; i < 1024; i++)
             {
                 var j = 32 * (X[16] & 1023);
-                for (var k = 0; k < 32; k++)
+                for (byte k = 0; k < 32; k++)
                 {
                     X[k] ^= V[j + k];
                 }
@@ -257,7 +257,7 @@ namespace Novacoin
             x14 = (B[indexB + 14] ^= Bx[indexBx + 14]);
             x15 = (B[indexB + 15] ^= Bx[indexBx + 15]);
 
-            Func<uint, int, uint> R = (a, b) => (((a) << (b)) | ((a) >> (32 - (b))));
+            Func<uint, int, uint> R = (a, b) => (a << b | a >> (32 - b));
 
             for (i = 0; i < 8; i += 2)
             {
