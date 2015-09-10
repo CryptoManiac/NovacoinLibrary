@@ -594,6 +594,12 @@ namespace Novacoin
 
             return nSubsidy;
         }
-    }
+
+        public Tuple<COutPoint, uint> ProofOfStake
+        {
+            get { return IsProofOfStake ? new Tuple<COutPoint, uint>(vtx[1].vin[0].prevout, vtx[1].nTime) : new Tuple<COutPoint, uint>(new COutPoint(), 0); }
+        }
+
+}
 }
 

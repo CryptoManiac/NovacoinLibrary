@@ -85,7 +85,7 @@ namespace Novacoin
 
 
         private ConcurrentDictionary<COutPoint, uint> mapStakeSeen = new ConcurrentDictionary<COutPoint, uint>();
-        private ConcurrentDictionary<COutPoint, uint> mapStakeSeenOrphan = new ConcurrentDictionary<COutPoint, uint>();
+        private ConcurrentDictionary<Tuple<COutPoint, uint>, uint256> mapStakeSeenOrphan = new ConcurrentDictionary<Tuple<COutPoint, uint>, uint256>();
 
 
         /// <summary>
@@ -1303,12 +1303,22 @@ namespace Novacoin
             {
                 if (block.IsProofOfStake)
                 {
-                    // TODO: limit duplicity on stake
+                    var proof = block.ProofOfStake;
+
+                    // Limited duplicity on stake: prevents block flood attack
+                    // Duplicate stake allowed only when there is orphan child block
+                    if (mapStakeSeenOrphan.ContainsKey(proof) && !orphanMapByPrev.ContainsKey(blockHash))
+                    {
+                        return false; // duplicate proof-of-stake
+                    }
+                    else
+                    {
+                        mapStakeSeenOrphan.TryAdd(proof, blockHash);
+                    }
                 }
 
-                var block2 = new CBlock(block);
-                orphanMap.TryAdd(blockHash, block2);
-                orphanMapByPrev.TryAdd(blockHash, block2);
+                orphanMap.TryAdd(blockHash, block);
+                orphanMapByPrev.TryAdd(blockHash, block);
 
                 return true;
             }
@@ -1320,32 +1330,39 @@ namespace Novacoin
                 return false;
             }
 
-            // Recursively process any orphan blocks that depended on this one
-            var orphansQueue = new List<uint256>();
-            orphansQueue.Add(blockHash);
-
-            for (int i = 0; i < orphansQueue.Count; i++)
+            if (orphanMapByPrev.Count > 0)
             {
-                var hashPrev = orphansQueue[i];
+                // Recursively process any orphan blocks that depended on this one
 
-                foreach (var pair in orphanMap)
+                var orphansQueue = new List<uint256>();
+                orphansQueue.Add(blockHash);
+
+                for (int i = 0; i < orphansQueue.Count; i++)
                 {
-                    var orphanBlock = pair.Value;
+                    var hashPrev = orphansQueue[i];
 
-                    if (orphanBlock.header.prevHash == blockHash)
+                    foreach (var pair in orphanMapByPrev)
                     {
-                        if (AcceptBlock(ref orphanBlock))
+                        var orphanBlock = pair.Value;
+
+                        if (orphanBlock.header.prevHash == blockHash)
                         {
-                            orphansQueue.Add(pair.Key);
+                            if (AcceptBlock(ref orphanBlock))
+                            {
+                                orphansQueue.Add(pair.Key);
+                            }
+
+                            CBlock dummy1;
+                            orphanMap.TryRemove(pair.Key, out dummy1);
+
+                            uint256 dummyHash;
+                            mapStakeSeenOrphan.TryRemove(orphanBlock.ProofOfStake, out dummyHash);
                         }
-
-                        CBlock dummy1;
-                        orphanMap.TryRemove(pair.Key, out dummy1);
                     }
-                }
 
-                CBlock dummy2;
-                orphanMap.TryRemove(hashPrev, out dummy2);
+                    CBlock dummy2;
+                    orphanMapByPrev.TryRemove(hashPrev, out dummy2);
+                }
             }
 
             return true;
