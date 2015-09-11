@@ -34,6 +34,11 @@ namespace Novacoin
             bn = new BigInteger(BitConverter.GetBytes(ulongValue));
         }
 
+        public BigNum(long longValue)
+        {
+            bn = new BigInteger(Math.Sign(longValue), BitConverter.GetBytes(longValue));
+        }
+
         public BigNum(uint256 uint256Value)
         {
             bn = new BigInteger(uint256Value);
@@ -47,7 +52,18 @@ namespace Novacoin
             return new BigNum(a.bn.Add(bnValueToAdd));
         }
 
+        public static BigNum operator +(BigNum a, long b)
+        {
+            var bnValueToAdd = new BigInteger(BitConverter.GetBytes(b));
+            return new BigNum(a.bn.Add(bnValueToAdd));
+        }
+
         public static BigNum operator -(BigNum a, ulong b)
+        {
+            var bnValueToSubstract = new BigInteger(BitConverter.GetBytes(b));
+            return new BigNum(a.bn.Subtract(bnValueToSubstract));
+        }
+        public static BigNum operator -(BigNum a, long b)
         {
             var bnValueToSubstract = new BigInteger(BitConverter.GetBytes(b));
             return new BigNum(a.bn.Subtract(bnValueToSubstract));
@@ -81,6 +97,12 @@ namespace Novacoin
             return new BigNum(a.bn.Divide(bnDivider));
         }
 
+        public static BigNum operator /(BigNum a, long b)
+        {
+            var bnDivider = new BigInteger(BitConverter.GetBytes(b));
+            return new BigNum(a.bn.Divide(bnDivider));
+        }
+
         public static BigNum operator /(BigNum a, uint256 b)
         {
             var bnDivider = new BigInteger(b);
@@ -93,6 +115,12 @@ namespace Novacoin
         }
 
         public static BigNum operator *(BigNum a, ulong b)
+        {
+            var bnMultiplier = new BigInteger(BitConverter.GetBytes(b));
+            return new BigNum(a.bn.Multiply(bnMultiplier));
+        }
+
+        public static BigNum operator *(BigNum a, long b)
         {
             var bnMultiplier = new BigInteger(BitConverter.GetBytes(b));
             return new BigNum(a.bn.Multiply(bnMultiplier));
@@ -153,6 +181,11 @@ namespace Novacoin
             return new BigNum(ulongValue);
         }
 
+        public static implicit operator BigNum(long ulongValue)
+        {
+            return new BigNum(ulongValue);
+        }
+
         public static implicit operator BigNum(uint256 uint256Value)
         {
             return new BigNum(uint256Value);
@@ -161,6 +194,11 @@ namespace Novacoin
         public static implicit operator ulong (BigNum a)
         {
             return (ulong)a.bn.LongValue;
+        }
+
+        public static implicit operator long (BigNum a)
+        {
+            return a.bn.LongValue;
         }
 
         public int CompareTo(BigNum other)

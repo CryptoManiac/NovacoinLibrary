@@ -477,7 +477,7 @@ namespace Novacoin
         /// <param name="nBits">Packed difficulty representation.</param>
         /// <param name="nFees">Amount of fees.</param>
         /// <returns>Reward value.</returns>
-        public static ulong GetProofOfWorkReward(uint nBits, ulong nFees)
+        public static long GetProofOfWorkReward(uint nBits, long nFees)
         {
             // NovaCoin: subsidy is cut in half every 64x multiply of PoW difficulty
             // A reasonably continuous curve is used to avoid shock to market
@@ -509,15 +509,15 @@ namespace Novacoin
                     bnLowerBound = bnMidValue;
             }
 
-            ulong nSubsidy = bnUpperBound;
+            long nSubsidy = (long)bnUpperBound;
             nSubsidy = (nSubsidy / CTransaction.nCent) * CTransaction.nCent;
 
             return Math.Min(nSubsidy, NetInfo.nMaxMintProofOfWork) + nFees;
         }
 
-        public static ulong GetProofOfStakeReward(ulong nCoinAge, uint nBits, uint nTime)
+        public static long GetProofOfStakeReward(long nCoinAge, uint nBits, uint nTime)
         {
-            ulong nRewardCoinYear, nSubsidy, nSubsidyLimit = 10 * CTransaction.nCoin;
+            long nRewardCoinYear, nSubsidy, nSubsidyLimit = 10 * CTransaction.nCoin;
 
             if (nTime > NetInfo.nDynamicStakeRewardTime)
             {

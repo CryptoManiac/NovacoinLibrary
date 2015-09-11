@@ -59,7 +59,7 @@ namespace Novacoin
                 }
                 else
                 {
-                    // ulong flag
+                    // long flag
                     prefix = 0xff;
                     valueBytes = BitConverter.GetBytes(n);
                 }
@@ -110,7 +110,7 @@ namespace Novacoin
         /// </summary>
         /// <param name="bytes">Byte sequence</param>
         /// <returns>Integer value</returns>
-        public static ulong DecodeVarInt(byte[] bytes)
+        public static long DecodeVarInt(byte[] bytes)
         {
             var prefix = bytes[0];
 
@@ -125,15 +125,15 @@ namespace Novacoin
                         return BitConverter.ToUInt16(bytesArray, 0);
                     case 0xfe: // uint flag
                         return BitConverter.ToUInt32(bytesArray, 0);
-                    case 0xff: // ulong flag
-                        return BitConverter.ToUInt64(bytesArray, 0);
+                    case 0xff: // long flag
+                        return BitConverter.ToInt64(bytesArray, 0);
                 }
             }
             
             return prefix; // Values lower than 0xfd are stored directly
         }
 
-        public static ulong ReadVarInt(ref BinaryReader reader)
+        public static long ReadVarInt(ref BinaryReader reader)
         {
             byte prefix = reader.ReadByte();
 
@@ -143,8 +143,8 @@ namespace Novacoin
                     return reader.ReadUInt16();
                 case 0xfe: // uint
                     return reader.ReadUInt32();
-                case 0xff: // ulong
-                    return reader.ReadUInt64();
+                case 0xff: // long
+                    return reader.ReadInt64();
                 default:
                     return prefix;
             }

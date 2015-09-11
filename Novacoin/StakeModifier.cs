@@ -358,8 +358,8 @@ namespace Novacoin
             uint256 nTargetPerCoinDay = 0;
             nTargetPerCoinDay.Compact = nBits;
 
-            ulong nValueIn = txPrev.vout[prevout.n].nValue;
-            uint256 nCoinDayWeight = new uint256(nValueIn) * GetWeight(txPrev.nTime, nTimeTx) / CTransaction.nCoin / (24 * 60 * 60);
+            long nValueIn = txPrev.vout[prevout.n].nValue;
+            uint256 nCoinDayWeight = new uint256((ulong)nValueIn) * GetWeight(txPrev.nTime, nTimeTx) / CTransaction.nCoin / (24 * 60 * 60);
 
             targetProofOfStake = nCoinDayWeight * nTargetPerCoinDay;
 

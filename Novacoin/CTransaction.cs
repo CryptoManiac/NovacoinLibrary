@@ -51,21 +51,21 @@ namespace Novacoin
         /// <summary>
         /// One cent = 10000 satoshis.
         /// </summary>
-        public const ulong nCent = 10000;
+        public const long nCent = 10000;
 
         /// <summary>
         /// One coin = 1000000 satoshis.
         /// </summary>
-        public const ulong nCoin = 1000000;
+        public const long nCoin = 1000000;
         
         /// <summary>
         /// Sanity checking threshold.
         /// </summary>
-        public const ulong nMaxMoney = 2000000000 * nCoin;
+        public const long nMaxMoney = 2000000000 * nCoin;
 
-        public const ulong nMinTxFee = nCent / 10;
-        public const ulong nMinRelayTxFee = nCent / 50;
-        public const ulong nMinTxoutAmount = nCent / 100;        
+        public const long nMinTxFee = nCent / 10;
+        public const long nMinRelayTxFee = nCent / 50;
+        public const long nMinTxoutAmount = nCent / 100;        
 
         /// <summary>
         /// Maximum transaction size is 250Kb
@@ -204,7 +204,7 @@ namespace Novacoin
             }
 
             // Check for empty or overflow output values
-            ulong nValueOut = 0;
+            long nValueOut = 0;
             for (int i = 0; i < vout.Length; i++)
             {
                 CTxOut txout = vout[i];
@@ -322,7 +322,7 @@ namespace Novacoin
                 {
                     // Fill outputs array
                     vout[nCurrentOutput] = new CTxOut();
-                    vout[nCurrentOutput].nValue = reader.ReadUInt64();
+                    vout[nCurrentOutput].nValue = reader.ReadInt64();
 
                     int nScriptPKLen = (int)VarInt.ReadVarInt(ref reader);
                     vout[nCurrentOutput].scriptPubKey = new CScript(reader.ReadBytes(nScriptPKLen));
@@ -425,11 +425,11 @@ namespace Novacoin
         /// <summary>
         /// Amount of novacoins spent by this transaction.
         /// </summary>
-        public ulong nValueOut
+        public long nValueOut
         {
             get
             {
-                ulong nValueOut = 0;
+                long nValueOut = 0;
                 foreach (var txout in vout)
                 {
                     nValueOut += txout.nValue;
@@ -491,7 +491,7 @@ namespace Novacoin
             return sb.ToString();
         }
 
-        public static bool MoneyRange(ulong nValue) { return (nValue <= nMaxMoney); }
+        public static bool MoneyRange(long nValue) { return (nValue <= nMaxMoney); }
 
         /// <summary>
         /// Get total sigops.
@@ -523,14 +523,14 @@ namespace Novacoin
         /// </summary>
         /// <param name="inputs">Reference to innputs map.</param>
         /// <returns>Sum of inputs.</returns>
-        public ulong GetValueIn(ref Dictionary<COutPoint, TxOutItem> inputs)
+        public long GetValueIn(ref Dictionary<COutPoint, TxOutItem> inputs)
         {
             if (IsCoinBase)
             {
                 return 0;
             }
 
-            ulong nResult = 0;
+            long nResult = 0;
             for (int i = 0; i < vin.Length; i++)
             {
                 nResult += GetOutputFor(vin[i], ref inputs).nValue;
@@ -565,7 +565,7 @@ namespace Novacoin
         /// <param name="inputs">Inputs set.</param>
         /// <param name="nCoinAge">Coin age calculation result.</param>
         /// <returns>Result</returns>
-        public bool GetCoinAge(ref Dictionary<COutPoint, TxOutItem> inputs, out ulong nCoinAge)
+        public bool GetCoinAge(ref Dictionary<COutPoint, TxOutItem> inputs, out long nCoinAge)
         {
             BigInteger bnCentSecond = 0;  // coin age in the unit of cent-seconds
             nCoinAge = 0;
@@ -600,19 +600,19 @@ namespace Novacoin
                     continue; // only count coins meeting min age requirement
                 }
 
-                ulong nValueIn = input.nValue;
+                long nValueIn = input.nValue;
                 bnCentSecond += new BigInteger(nValueIn) * (nTime - merkleItem.nTime) / nCent;
             }
 
             BigInteger bnCoinDay = bnCentSecond * nCent / nCoin / (24 * 60 * 60);
-            nCoinAge = (ulong)bnCoinDay;
+            nCoinAge = (long)bnCoinDay;
 
             return true;
         }
 
-        public ulong GetMinFee(uint nBlockSize, bool fAllowFree, MinFeeMode mode)
+        public long GetMinFee(uint nBlockSize, bool fAllowFree, MinFeeMode mode)
         {
-            ulong nMinTxFee = CTransaction.nMinTxFee, nMinRelayTxFee = CTransaction.nMinRelayTxFee;
+            long nMinTxFee = CTransaction.nMinTxFee, nMinRelayTxFee = CTransaction.nMinRelayTxFee;
             uint nBytes = Size;
 
             if (IsCoinStake)
@@ -629,10 +629,10 @@ namespace Novacoin
             }
 
             // Base fee is either nMinTxFee or nMinRelayTxFee
-            ulong nBaseFee = (mode == MinFeeMode.GMF_RELAY) ? nMinRelayTxFee : nMinTxFee;
+            long nBaseFee = (mode == MinFeeMode.GMF_RELAY) ? nMinRelayTxFee : nMinTxFee;
 
             uint nNewBlockSize = nBlockSize + nBytes;
-            ulong nMinFee = (1 + (ulong)nBytes / 1000) * nBaseFee;
+            long nMinFee = (1 + (long)nBytes / 1000) * nBaseFee;
 
             if (fAllowFree)
             {

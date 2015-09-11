@@ -75,12 +75,12 @@
         /// <summary>
         /// Maximum possible proof-of-work reward.
         /// </summary>
-        public const ulong nMaxMintProofOfWork = CTransaction.nCoin * 100;
+        public const long nMaxMintProofOfWork = CTransaction.nCoin * 100;
 
         /// <summary>
         /// Maximum possible proof-of-stake reward per coin*year.
         /// </summary>
-        public const ulong nMaxMintProofOfStake = CTransaction.nCoin * 100;
+        public const long nMaxMintProofOfStake = CTransaction.nCoin * 100;
 
         public static uint GetAdjustedTime()
         {

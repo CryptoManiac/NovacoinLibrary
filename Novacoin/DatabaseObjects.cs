@@ -768,7 +768,7 @@ namespace Novacoin
         /// Getter for output value.
         /// </summary>
         [Ignore]
-        public ulong nValue
+        public long nValue
         {
             get { return VarInt.DecodeVarInt(OutputValue); }
             set { OutputValue = VarInt.EncodeVarInt(value); }

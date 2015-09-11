@@ -16,22 +16,20 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-using System;
 using System.Text;
-using System.Collections.Generic;
 using System.IO;
 
 namespace Novacoin
 {
-	/// <summary>
-	/// Transaction output.
-	/// </summary>
-	public class CTxOut
+    /// <summary>
+    /// Transaction output.
+    /// </summary>
+    public class CTxOut
 	{
 		/// <summary>
 		/// Input value.
 		/// </summary>
-        public ulong nValue = ulong.MaxValue;
+        public long nValue = unchecked((long)0xffffffffffffffff);
 
 		/// <summary>
 		/// Second half of script which contains spending instructions.
@@ -43,7 +41,7 @@ namespace Novacoin
         /// </summary>
         /// <param name="nValue">Input value</param>
         /// <param name="scriptPubKey">Spending instructions.</param>
-        public CTxOut(ulong nValue, CScript scriptPubKey)
+        public CTxOut(long nValue, CScript scriptPubKey)
         {
             this.nValue = nValue;
             this.scriptPubKey = scriptPubKey;
@@ -81,7 +79,7 @@ namespace Novacoin
             {
                 // Fill outputs array
                 vout[nIndex] = new CTxOut();
-                vout[nIndex].nValue = reader.ReadUInt64();
+                vout[nIndex].nValue = reader.ReadInt64();
 
                 int nScriptPKLen = (int)VarInt.ReadVarInt(ref reader);
                 vout[nIndex].scriptPubKey = new CScript(reader.ReadBytes(nScriptPKLen));
@@ -157,7 +155,7 @@ namespace Novacoin
         /// </summary>
         public void SetNull()
         {
-            nValue = ulong.MaxValue;
+            nValue = unchecked((long)0xffffffffffffffff);
             scriptPubKey = new CScript();
         }
 
@@ -172,7 +170,7 @@ namespace Novacoin
 
         public bool IsNull
         {
-            get { return (nValue == ulong.MaxValue); }
+            get { return nValue == unchecked((long)0xffffffffffffffff); }
         }
 
         public bool IsEmpty

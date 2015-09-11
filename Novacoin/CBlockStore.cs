@@ -648,9 +648,9 @@ namespace Novacoin
             bool fScriptChecks = cursor.nHeight >= Checkpoints.TotalBlocksEstimate;
             var scriptFlags = scriptflag.SCRIPT_VERIFY_NOCACHE | scriptflag.SCRIPT_VERIFY_P2SH;
 
-            ulong nFees = 0;
-            ulong nValueIn = 0;
-            ulong nValueOut = 0;
+            long nFees = 0;
+            long nValueIn = 0;
+            long nValueOut = 0;
             uint nSigOps = 0;
 
             var queuedMerkleNodes = new Dictionary<uint256, CMerkleNode>();
@@ -706,8 +706,8 @@ namespace Novacoin
                         return false; // too many sigops
                     }
 
-                    ulong nTxValueIn = tx.GetValueIn(ref inputs);
-                    ulong nTxValueOut = tx.nValueOut;
+                    long nTxValueIn = tx.GetValueIn(ref inputs);
+                    long nTxValueOut = tx.nValueOut;
 
                     nValueIn += nTxValueIn;
                     nValueOut += nTxValueOut;
@@ -741,7 +741,7 @@ namespace Novacoin
 
             if (!block.IsProofOfStake)
             {
-                ulong nBlockReward = CBlock.GetProofOfWorkReward(cursor.nBits, nFees);
+                long nBlockReward = CBlock.GetProofOfWorkReward(cursor.nBits, nFees);
 
                 // Check coinbase reward
                 if (block.vtx[0].nValueOut > nBlockReward)
@@ -750,8 +750,8 @@ namespace Novacoin
                 }
             }
 
-            cursor.nMint = (long)(nValueOut - nValueIn + nFees);
-            cursor.nMoneySupply = (cursor.prev != null ? cursor.prev.nMoneySupply : 0) + (long)nValueOut - (long)nValueIn;
+            cursor.nMint = nValueOut - nValueIn + nFees;
+            cursor.nMoneySupply = (cursor.prev != null ? cursor.prev.nMoneySupply : 0) + nValueOut - nValueIn;
 
             if (!UpdateDBCursor(ref cursor))
             {
@@ -858,8 +858,8 @@ namespace Novacoin
 
             if (!tx.IsCoinBase)
             {
-                ulong nValueIn = 0;
-                ulong nFees = 0;
+                long nValueIn = 0;
+                long nFees = 0;
                 for (uint i = 0; i < tx.vin.Length; i++)
                 {
                     var prevout = tx.vin[i].prevout;
@@ -966,15 +966,15 @@ namespace Novacoin
                 if (tx.IsCoinStake)
                 {
                     // ppcoin: coin stake tx earns reward instead of paying fee
-                    ulong nCoinAge;
+                    long nCoinAge;
                     if (!tx.GetCoinAge(ref inputs, out nCoinAge))
                     {
                         return false; // unable to get coin age for coinstake
                     }
 
-                    ulong nReward = tx.nValueOut - nValueIn;
+                    long nReward = tx.nValueOut - nValueIn;
 
-                    ulong nCalculatedReward = CBlock.GetProofOfStakeReward(nCoinAge, cursorBlock.nBits, tx.nTime) - tx.GetMinFee(1, false, CTransaction.MinFeeMode.GMF_BLOCK) + CTransaction.nCent;
+                    long nCalculatedReward = CBlock.GetProofOfStakeReward(nCoinAge, cursorBlock.nBits, tx.nTime) - tx.GetMinFee(1, false, CTransaction.MinFeeMode.GMF_BLOCK) + CTransaction.nCent;
 
                     if (nReward > nCalculatedReward)
                     {
@@ -989,7 +989,7 @@ namespace Novacoin
                     }
 
                     // Tally transaction fees
-                    ulong nTxFee = nValueIn - tx.nValueOut;
+                    long nTxFee = nValueIn - tx.nValueOut;
                     if (nTxFee < 0)
                     {
                         return false; // nTxFee < 0
