@@ -6,7 +6,8 @@ namespace Novacoin
     {
         private static Tuple<uint, uint256, uint>[] checkpoints = new Tuple<uint, uint256, uint>[]
             {
-                new Tuple<uint, uint256, uint>(0, NetInfo.nHashGenesisBlock, 1360105017)
+                new Tuple<uint, uint256, uint>(0, NetInfo.nHashGenesisBlock, 1360105017),
+                new Tuple<uint, uint256, uint>(200000, new uint256("0000000000029f8bbf66e6ea6f3e5db55009404aae0fe395a53dd33142b2bff2"), 1441127233),
             };
 
         /// <summary>
