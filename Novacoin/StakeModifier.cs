@@ -440,7 +440,7 @@ namespace Novacoin
 
             hashChecksum >>= (256 - 32);
 
-            return (uint)hashChecksum.Low64;
+            return hashChecksum.Low32;
         }
 
         public static bool CheckProofOfStake(CTransaction tx, uint nBits, out uint256 hashProofOfStake, out uint256 targetProofOfStake)
