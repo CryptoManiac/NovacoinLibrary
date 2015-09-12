@@ -359,9 +359,12 @@ namespace Novacoin
             }
 
             itemTemplate.SetStakeModifier(nStakeModifier, fGeneratedStakeModifier);
-            itemTemplate.nStakeModifierChecksum = StakeModifier.GetStakeModifierChecksum(ref itemTemplate);
 
-            // TODO: verify stake modifier checkpoints
+            var nChecksum = StakeModifier.GetModifierChecksum(ref itemTemplate);
+            if (!ModifierCheckpoints.Verify(itemTemplate.nHeight, nChecksum))
+            {
+                return false; // Stake modifier checkpoints mismatch
+            }
 
             // Add to index
             if (block.IsProofOfStake)
@@ -645,7 +648,7 @@ namespace Novacoin
                 return false; // Invalid block found.
             }
 
-            bool fScriptChecks = cursor.nHeight >= Checkpoints.TotalBlocksEstimate;
+            bool fScriptChecks = cursor.nHeight >= HashCheckpoints.TotalBlocksEstimate;
             var scriptFlags = scriptflag.SCRIPT_VERIFY_NOCACHE | scriptflag.SCRIPT_VERIFY_P2SH;
 
             long nFees = 0;
@@ -965,7 +968,7 @@ namespace Novacoin
 
                 if (tx.IsCoinStake)
                 {
-                    // ppcoin: coin stake tx earns reward instead of paying fee
+                    // Coin stake tx earns reward instead of paying fee
                     long nCoinAge;
                     if (!tx.GetCoinAge(ref inputs, out nCoinAge))
                     {
@@ -1073,7 +1076,7 @@ namespace Novacoin
             }
 
             // Check that the block chain matches the known block chain up to a checkpoint
-            if (!Checkpoints.Verify(nHeight, nHash))
+            if (!HashCheckpoints.Verify(nHeight, nHash))
             {
                 return false;  // rejected by checkpoint lock-in
             }
@@ -1099,7 +1102,7 @@ namespace Novacoin
         }
 
         /// <summary>
-        /// GEt block by hash.
+        /// Get block by hash.
         /// </summary>
         /// <param name="blockHash">Block hash</param>
         /// <param name="block">Block object reference</param>

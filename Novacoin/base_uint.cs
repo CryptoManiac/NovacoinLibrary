@@ -57,11 +57,17 @@ namespace Novacoin
             }
         }
 
+        /// <summary>
+        /// First 64 bits as ulong value.
+        /// </summary>
         public ulong Low64
         {
             get { return pn[0] | (ulong)pn[1] << 32; }
         }
 
+        /// <summary>
+        /// First 32 bits as uint value.
+        /// </summary>
         public uint Low32
         {
             get { return pn[0]; }

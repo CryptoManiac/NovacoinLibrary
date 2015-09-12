@@ -103,11 +103,11 @@ namespace Novacoin
                 int nSize = (bits + 7) / 8;
                 uint nCompact = 0;
                 if (nSize <= 3)
-                    nCompact = ((uint)Low64) << 8 * (3 - nSize);
+                    nCompact = Low32 << 8 * (3 - nSize);
                 else
                 {
                     uint256 bn = this >> 8 * (nSize - 3);
-                    nCompact = (uint)bn.Low64;
+                    nCompact = bn.Low32;
                 }
 
                 if ((nCompact & 0x00800000) != 0)

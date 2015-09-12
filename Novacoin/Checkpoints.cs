@@ -2,7 +2,7 @@ using System;
 
 namespace Novacoin
 {
-    public class Checkpoints
+    public static class HashCheckpoints
     {
         private static Tuple<uint, uint256, uint>[] checkpoints = new Tuple<uint, uint256, uint>[]
             {
@@ -33,6 +33,37 @@ namespace Novacoin
                 if (checkpoint.Item1 == nHeight)
                 {
                     return nBlockHash == checkpoint.Item2;
+                }
+            }
+
+            return true;
+        }
+    }
+
+    public static class ModifierCheckpoints
+    {
+        /// <summary>
+        /// Stake modifier checkpoints
+        /// </summary>
+        private static Tuple<uint, uint>[] modifierCheckpoints = new Tuple<uint, uint>[]
+            {
+                new Tuple<uint, uint>( 0, 0x0e00670bu ),
+                new Tuple<uint, uint>(200000, 0x01ec1503u )
+            };
+
+        /// <summary>
+        /// Check stake modifier checkpoints.
+        /// </summary>
+        /// <param name="nHeight">Block height.</param>
+        /// <param name="nStakeModifierChecksum">Modifier checksum value.</param>
+        /// <returns>Result</returns>
+        public static bool Verify(uint nHeight, uint nStakeModifierChecksum)
+        {
+            foreach (var checkpoint in modifierCheckpoints)
+            {
+                if (checkpoint.Item1 == nHeight)
+                {
+                    return checkpoint.Item2 == nStakeModifierChecksum;
                 }
             }
 

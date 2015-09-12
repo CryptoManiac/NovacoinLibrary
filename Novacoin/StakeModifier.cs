@@ -28,7 +28,7 @@ namespace Novacoin
     /// <summary>
     /// Stake modifier calculation. Doesn't work properly, for now.
     /// </summary>
-    public class StakeModifier
+    public static class StakeModifier
     {
         /// <summary>
         /// 30 days as zero time weight
@@ -60,14 +60,14 @@ namespace Novacoin
         /// 
         /// Mon, 20 Oct 2014 00:00:00 GMT
         /// </summary>
-        internal const uint nModifierSwitchTime = 1413763200;
+        public const uint nModifierSwitchTime = 1413763200;
 
         /// <summary>
         /// Whether the given block is subject to new modifier protocol
         /// </summary>
         /// <param name="nTimeBlock">Block timestamp</param>
         /// <returns>Result</returns>
-        internal static bool IsFixedModifierInterval(uint nTimeBlock)
+        private static bool IsFixedModifierInterval(uint nTimeBlock)
         {
             return (nTimeBlock >= nModifierSwitchTime);
         }
@@ -79,7 +79,7 @@ namespace Novacoin
         /// <param name="nStakeModifier">Stake modifier (ref)</param>
         /// <param name="nModifierTime">Stake modifier generation time (ref)</param>
         /// <returns></returns>
-        internal static bool GetLastStakeModifier(CBlockStoreItem cursor, ref long nStakeModifier, ref uint nModifierTime)
+        private static bool GetLastStakeModifier(CBlockStoreItem cursor, ref long nStakeModifier, ref uint nModifierTime)
         {
             if (cursor == null)
             {
@@ -107,7 +107,7 @@ namespace Novacoin
         /// </summary>
         /// <param name="nSection"></param>
         /// <returns></returns>
-        internal static long GetStakeModifierSelectionIntervalSection(int nSection)
+        private static long GetStakeModifierSelectionIntervalSection(int nSection)
         {
             Contract.Assert(nSection >= 0 && nSection < 64);
             return (nModifierInterval * 63 / (63 + ((63 - nSection) * (nModifierIntervalRatio - 1))));
@@ -117,7 +117,7 @@ namespace Novacoin
         /// Get stake modifier selection interval (in seconds)
         /// </summary>
         /// <returns></returns>
-        internal static long GetStakeModifierSelectionInterval()
+        private static long GetStakeModifierSelectionInterval()
         {
             long nSelectionInterval = 0;
             for (int nSection = 0; nSection < 64; nSection++)
@@ -137,7 +137,7 @@ namespace Novacoin
         /// <param name="nStakeModifierPrev">Previous value of stake modifier.</param>
         /// <param name="selectedCursor">Selection result.</param>
         /// <returns></returns>
-        internal static bool SelectBlockFromCandidates(List<Tuple<uint, uint256>> sortedByTimestamp, Dictionary<uint256, CBlockStoreItem> mapSelectedBlocks, long nSelectionIntervalStop, long nStakeModifierPrev, ref CBlockStoreItem selectedCursor)
+        private static bool SelectBlockFromCandidates(List<Tuple<uint, uint256>> sortedByTimestamp, Dictionary<uint256, CBlockStoreItem> mapSelectedBlocks, long nSelectionIntervalStop, long nStakeModifierPrev, ref CBlockStoreItem selectedCursor)
         {
             bool fSelected = false;
             uint256 hashBest = 0;
@@ -169,13 +169,13 @@ namespace Novacoin
                 var hashProof = cursor.IsProofOfStake ? (uint256)cursor.hashProofOfStake : selectedBlockHash;
                 uint256 hashSelection;
 
-                var s = new MemoryStream();
-                var writer = new BinaryWriter(s);
+                var stream = new MemoryStream();
+                var bw = new BinaryWriter(stream);
 
-                writer.Write(hashProof);
-                writer.Write(nStakeModifierPrev);
-                hashSelection = CryptoUtils.ComputeHash256(s.ToArray());
-                writer.Close();
+                bw.Write(hashProof);
+                bw.Write(nStakeModifierPrev);
+                hashSelection = CryptoUtils.ComputeHash256(stream.ToArray());
+                bw.Close();
 
                 // the selection hash is divided by 2**32 so that proof-of-stake block
                 // is always favored over proof-of-work block. this is to preserve
@@ -295,7 +295,7 @@ namespace Novacoin
         /// The stake modifier used to hash for a stake kernel is chosen as the stake
         /// modifier about a selection interval later than the coin generating the kernel
         /// </summary>
-        static bool GetKernelStakeModifier(uint256 hashBlockFrom, out long nStakeModifier, out uint nStakeModifierHeight, out uint nStakeModifierTime)
+        private static bool GetKernelStakeModifier(ref uint256 hashBlockFrom, out long nStakeModifier, out uint nStakeModifierHeight, out uint nStakeModifierTime)
         {
             nStakeModifier = 0;
             nStakeModifierTime = 0;
@@ -333,12 +333,12 @@ namespace Novacoin
             return true;
         }
 
-        public static bool GetKernelStakeModifier(uint256 hashBlockFrom, out long nStakeModifier)
+        private static bool GetKernelStakeModifier(ref uint256 hashBlockFrom, out long nStakeModifier)
         {
             uint nStakeModifierHeight = 0;
             uint nStakeModifierTime = 0;
 
-            return GetKernelStakeModifier(hashBlockFrom, out nStakeModifier, out nStakeModifierHeight, out nStakeModifierTime);
+            return GetKernelStakeModifier(ref hashBlockFrom, out nStakeModifier, out nStakeModifierHeight, out nStakeModifierTime);
         }
 
         public static bool CheckStakeKernelHash(uint nBits, uint256 hashBlockFrom, uint nTimeBlockFrom, uint nTxPrevOffset, CTransaction txPrev, COutPoint prevout, uint nTimeTx, out uint256 hashProofOfStake, out uint256 targetProofOfStake)
@@ -365,31 +365,37 @@ namespace Novacoin
 
             // Calculate hash
             long nStakeModifier;
-            uint nStakeModifierTime;
-            uint nStakeModifierHeight;
-            if (!GetKernelStakeModifier(hashBlockFrom, out nStakeModifier, out nStakeModifierHeight, out nStakeModifierTime))
+            if (!GetKernelStakeModifier(ref hashBlockFrom, out nStakeModifier))
             {
                 return false;
             }
 
-            MemoryStream s = new MemoryStream();
-            BinaryWriter w = new BinaryWriter(s);
+            var stream = new MemoryStream();
+            var bw = new BinaryWriter(stream);
 
-            w.Write(nStakeModifier);
-            w.Write(nTimeBlockFrom);
-            w.Write(nTxPrevOffset);
-            w.Write(txPrev.nTime);
-            w.Write(prevout.n);
-            w.Write(nTimeTx);
+            // Coinstake kernel (input 0) must meet the formula
+            //
+            //     hash(nStakeModifier + txPrev.block.nTime + txPrev.offset + txPrev.nTime + txPrev.vout.n + nTime) < bnTarget * nCoinDayWeight
+            //
+            // This ensures that the chance of getting a coinstake is proportional to the
+            // amount of coin age one owns.
+            // 
+            // Note that "+" is not arithmetic operation here, this means concatenation of byte arrays.
+            //
+            // Check https://github.com/novacoin-project/novacoin/wiki/Kernel for additional information.
 
-            hashProofOfStake = CryptoUtils.ComputeHash256(s.ToArray());
-            w.Close();
+            bw.Write(nStakeModifier);
+            bw.Write(nTimeBlockFrom);
+            bw.Write(nTxPrevOffset);
+            bw.Write(txPrev.nTime);
+            bw.Write(prevout.n);
+            bw.Write(nTimeTx);
+
+            hashProofOfStake = CryptoUtils.ComputeHash256(stream.ToArray());
+            bw.Close();
 
             // Now check if proof-of-stake hash meets target protocol
-            if (hashProofOfStake > targetProofOfStake)
-                return false;
-
-            return true;
+            return targetProofOfStake >= hashProofOfStake;
         }
 
         // Get time weight using supplied timestamps
@@ -404,37 +410,38 @@ namespace Novacoin
             return Math.Min(nIntervalEnd - nIntervalBeginning - nStakeMinAge, nStakeMaxAge);
         }
 
-        internal static uint GetStakeModifierChecksum(ref CBlockStoreItem itemTemplate)
+        /// <summary>
+        /// Calculate stake modifier checksum.
+        /// </summary>
+        /// <param name="cursorBlock">Block cursor.</param>
+        /// <returns>Checksum value.</returns>
+        public static uint GetModifierChecksum(ref CBlockStoreItem cursorBlock)
         {
-            Contract.Assert(itemTemplate.prev != null || (uint256)itemTemplate.Hash == NetInfo.nHashGenesisBlock);
+            Contract.Assert(cursorBlock.prev != null || (uint256)cursorBlock.Hash == NetInfo.nHashGenesisBlock);
+
+            var stream = new MemoryStream();
+            var bw = new BinaryWriter(stream);
+
+            // Kernel hash for proof-of-stake or zero bytes array for proof-of-work
+            byte[] proofBytes = cursorBlock.IsProofOfStake ? cursorBlock.hashProofOfStake : new byte[32];
 
             // Hash previous checksum with flags, hashProofOfStake and nStakeModifier
-            MemoryStream ss = new MemoryStream();
-            BinaryWriter writer = new BinaryWriter(ss);
-
-            if (itemTemplate.prev != null)
+            if (cursorBlock.prev != null)
             {
-                writer.Write(itemTemplate.prev.nStakeModifierChecksum);
+                var prevCursor = cursorBlock.prev;
+                bw.Write(GetModifierChecksum(ref prevCursor));
             }
 
-            writer.Write((uint)itemTemplate.BlockTypeFlag);
+            bw.Write((uint)cursorBlock.BlockTypeFlag);
+            bw.Write(proofBytes);
+            bw.Write(cursorBlock.nStakeModifier);
 
-            if (itemTemplate.IsProofOfStake)
-            {
-                writer.Write(itemTemplate.hashProofOfStake);
-            }
-            else
-            {
-                writer.Write(new uint256(0));
-            }
-            writer.Write(itemTemplate.nStakeModifier);
-
-            uint256 hashChecksum = CryptoUtils.ComputeHash256(ss.ToArray());
-            writer.Close();
+            uint256 hashChecksum = CryptoUtils.ComputeHash256(stream.ToArray());
+            bw.Close();
 
             hashChecksum >>= (256 - 32);
 
-            return (uint)hashChecksum.Low64;
+            return hashChecksum.Low32;
         }
 
         public static bool CheckProofOfStake(CTransaction tx, uint nBits, out uint256 hashProofOfStake, out uint256 targetProofOfStake)
@@ -451,8 +458,8 @@ namespace Novacoin
 
             // Read block header
 
-            long nBlockPos;
             CBlock block;
+            long nBlockPos;
             if (!CBlockStore.Instance.GetBlockByTransactionID(txin.prevout.hash, out block, out nBlockPos))
             {
                 return false; // unable to read block of previous transaction
@@ -462,21 +469,15 @@ namespace Novacoin
             CTransaction txPrev = null;
 
             // Iterate through vtx array
-            for (var i = 0; i < block.vtx.Length; i++)
-            {
-                if (block.vtx[i].Hash == txin.prevout.hash)
-                {
-                    txPrev = block.vtx[i];
-                    nTxPos = nBlockPos + block.GetTxOffset(i);
+            var nTxPrevIndex = Array.FindIndex(block.vtx, txItem => txItem.Hash == txin.prevout.hash);
 
-                    break;
-                }
-            }
-
-            if (txPrev == null)
+            if (nTxPrevIndex == -1)
             {
                 return false; // No such transaction found in the block
             }
+
+            txPrev = block.vtx[nTxPrevIndex];
+            nTxPos = nBlockPos + block.GetTxOffset(nTxPrevIndex);
 
             if (!ScriptCode.VerifyScript(txin.scriptSig, txPrev.vout[txin.prevout.n].scriptPubKey, tx, 0, (int)scriptflag.SCRIPT_VERIFY_P2SH, 0))
             {
