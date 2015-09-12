@@ -1072,6 +1072,12 @@ namespace Novacoin
                 }
             }
 
+            // Check that the block chain matches the known block chain up to a checkpoint
+            if (!Checkpoints.Verify(nHeight, nHash))
+            {
+                return false;  // rejected by checkpoint lock-in
+            }
+
             // TODO: Enforce rule that the coinbase starts with serialized block height
 
             // Write block to file.
