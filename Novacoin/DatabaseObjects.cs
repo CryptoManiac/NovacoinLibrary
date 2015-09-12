@@ -502,6 +502,11 @@ namespace Novacoin
         }
 
         /// <summary>
+        /// Stake modifier checksum
+        /// </summary>
+        public uint nStakeModifierChecksum;
+
+        /// <summary>
         /// Chain trust score
         /// </summary>
         [Ignore]

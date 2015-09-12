@@ -197,6 +197,8 @@ namespace Novacoin
                 // Init list of block items
                 foreach (var item in blockTreeItems)
                 {
+                    item.nStakeModifierChecksum = StakeModifier.GetModifierChecksum(item);
+
                     blockMap.TryAdd(item.Hash, item);
 
                     if (item.IsProofOfStake)
@@ -359,9 +361,9 @@ namespace Novacoin
             }
 
             itemTemplate.SetStakeModifier(nStakeModifier, fGeneratedStakeModifier);
+            itemTemplate.nStakeModifierChecksum = StakeModifier.GetModifierChecksum(itemTemplate);
 
-            var nChecksum = StakeModifier.GetModifierChecksum(ref itemTemplate);
-            if (!ModifierCheckpoints.Verify(itemTemplate.nHeight, nChecksum))
+            if (!ModifierCheckpoints.Verify(itemTemplate.nHeight, itemTemplate.nStakeModifierChecksum))
             {
                 return false; // Stake modifier checkpoints mismatch
             }

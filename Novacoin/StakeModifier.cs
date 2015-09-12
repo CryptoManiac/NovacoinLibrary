@@ -415,7 +415,7 @@ namespace Novacoin
         /// </summary>
         /// <param name="cursorBlock">Block cursor.</param>
         /// <returns>Checksum value.</returns>
-        public static uint GetModifierChecksum(ref CBlockStoreItem cursorBlock)
+        public static uint GetModifierChecksum(CBlockStoreItem cursorBlock)
         {
             Contract.Assert(cursorBlock.prev != null || (uint256)cursorBlock.Hash == NetInfo.nHashGenesisBlock);
 
@@ -428,8 +428,7 @@ namespace Novacoin
             // Hash previous checksum with flags, hashProofOfStake and nStakeModifier
             if (cursorBlock.prev != null)
             {
-                var prevCursor = cursorBlock.prev;
-                bw.Write(GetModifierChecksum(ref prevCursor));
+                bw.Write(cursorBlock.prev.nStakeModifierChecksum);
             }
 
             bw.Write((uint)cursorBlock.BlockTypeFlag);
@@ -441,7 +440,7 @@ namespace Novacoin
 
             hashChecksum >>= (256 - 32);
 
-            return hashChecksum.Low32;
+            return (uint)hashChecksum.Low64;
         }
 
         public static bool CheckProofOfStake(CTransaction tx, uint nBits, out uint256 hashProofOfStake, out uint256 targetProofOfStake)
