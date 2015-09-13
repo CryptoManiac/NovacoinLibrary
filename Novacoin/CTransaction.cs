@@ -179,10 +179,17 @@ namespace Novacoin
             get
             {
                 uint nSigOps = 0;
-                foreach (var txin in vin)
+
+                if (!IsCoinBase)
                 {
-                    nSigOps += txin.scriptSig.GetSigOpCount(false);
+                    // http://lists.linuxfoundation.org/pipermail/bitcoin-dev/2012-July/001718.html
+
+                    foreach (var txin in vin)
+                    {
+                        nSigOps += txin.scriptSig.GetSigOpCount(false);
+                    }
                 }
+
                 foreach (var txout in vout)
                 {
                     nSigOps += txout.scriptPubKey.GetSigOpCount(false);
