@@ -1058,7 +1058,6 @@ namespace Novacoin
 
             var prevBlockHeader = prevBlockCursor.BlockHeader;
 
-            // TODO: proof-of-work/proof-of-stake verification
             uint nHeight = prevBlockCursor.nHeight + 1;
 
             // Check timestamp against prev
@@ -1083,7 +1082,17 @@ namespace Novacoin
                 return false;  // rejected by checkpoint lock-in
             }
 
-            // TODO: Enforce rule that the coinbase starts with serialized block height
+            // Enforce rule that the coinbase starts with serialized block height
+            var expect = new CScript();
+            expect.AddNumber((int)nHeight);
+
+            byte[] expectBytes = expect;
+            byte[] scriptSig = block.vtx[0].vin[0].scriptSig;
+
+            if (!expectBytes.SequenceEqual(scriptSig.Take(expectBytes.Length)))
+            {
+                return false; // coinbase doesn't start with serialized height.
+            }
 
             // Write block to file.
             var itemTemplate = new CBlockStoreItem()
@@ -1292,8 +1301,6 @@ namespace Novacoin
 
             if (block.IsProofOfStake)
             {
-                // TODO: proof-of-stake validation
-
                 uint256 hashProofOfStake = 0, targetProofOfStake = 0;
                 if (!StakeModifier.CheckProofOfStake(block.vtx[1], block.header.nBits, out hashProofOfStake, out targetProofOfStake))
                 {

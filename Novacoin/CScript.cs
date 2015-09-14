@@ -21,6 +21,7 @@ using System.Linq;
 using System.Text;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Numerics;
 
 namespace Novacoin
 {
@@ -58,9 +59,26 @@ namespace Novacoin
         }
 
         /// <summary>
+        /// Add serialized number to instructions list.
+        /// </summary>
+        /// <param name="n">Number to add.</param>
+        public void AddNumber(int n)
+        {
+            if (n == -1 || (n >= 1 && n <= 16))
+            {
+                codeBytes.Add((byte)ScriptCode.EncodeOP_N(n, true));
+            }
+            else
+            {
+                BigInteger bn = n;
+                PushData(bn.ToByteArray());
+            }
+        }
+
+        /// <summary>
         /// Adds specified operation to instruction list
         /// </summary>
-        /// <param name="opcode"></param>
+        /// <param name="opcode">Instruction to add.</param>
         public void AddInstruction(instruction opcode)
         {
             Contract.Requires<ArgumentException>(opcode >= instruction.OP_0 && opcode <= instruction.OP_INVALIDOPCODE, "Invalid instruction.");
