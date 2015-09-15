@@ -177,14 +177,14 @@ namespace Novacoin
                     ));
 
                     // Write block to file.
-                    var itemTemplate = new CBlockStoreItem()
+                    var rootCursor = new CBlockStoreItem()
                     {
                         nHeight = 0
                     };
 
-                    itemTemplate.FillHeader(genesisBlock.header);
+                    rootCursor.FillHeader(genesisBlock.header);
 
-                    if (!AddItemToIndex(ref itemTemplate, ref genesisBlock))
+                    if (!AddItemToIndex(ref rootCursor, ref genesisBlock))
                     {
                         throw new Exception("Unable to write genesis block");
                     }
@@ -331,9 +331,9 @@ namespace Novacoin
             return true;
         }
 
-        private bool AddItemToIndex(ref CBlockStoreItem itemTemplate, ref CBlock block)
+        private bool AddItemToIndex(ref CBlockStoreItem newCursor, ref CBlock block)
         {
-            uint256 blockHash = itemTemplate.Hash;
+            uint256 blockHash = newCursor.Hash;
 
             if (blockMap.ContainsKey(blockHash))
             {
@@ -345,9 +345,9 @@ namespace Novacoin
             dbConn.BeginTransaction();
 
             // Compute chain trust score
-            itemTemplate.nChainTrust = (itemTemplate.prev != null ? itemTemplate.prev.nChainTrust : 0) + itemTemplate.nBlockTrust;
+            newCursor.nChainTrust = (newCursor.prev != null ? newCursor.prev.nChainTrust : 0) + newCursor.nBlockTrust;
 
-            if (!itemTemplate.SetStakeEntropyBit(Entropy.GetStakeEntropyBit(itemTemplate.nHeight, blockHash)))
+            if (!newCursor.SetStakeEntropyBit(Entropy.GetStakeEntropyBit(newCursor.nHeight, blockHash)))
             {
                 return false; // SetStakeEntropyBit() failed
             }
@@ -355,15 +355,15 @@ namespace Novacoin
             // compute stake modifier
             long nStakeModifier = 0;
             bool fGeneratedStakeModifier = false;
-            if (!StakeModifier.ComputeNextStakeModifier(itemTemplate, ref nStakeModifier, ref fGeneratedStakeModifier))
+            if (!StakeModifier.ComputeNextStakeModifier(ref newCursor, ref nStakeModifier, ref fGeneratedStakeModifier))
             {
                 return false;  // ComputeNextStakeModifier() failed
             }
 
-            itemTemplate.SetStakeModifier(nStakeModifier, fGeneratedStakeModifier);
-            itemTemplate.nStakeModifierChecksum = StakeModifier.GetModifierChecksum(itemTemplate);
+            newCursor.SetStakeModifier(nStakeModifier, fGeneratedStakeModifier);
+            newCursor.nStakeModifierChecksum = StakeModifier.GetModifierChecksum(newCursor);
 
-            if (!ModifierCheckpoints.Verify(itemTemplate.nHeight, itemTemplate.nStakeModifierChecksum))
+            if (!ModifierCheckpoints.Verify(newCursor.nHeight, newCursor.nStakeModifierChecksum))
             {
                 return false; // Stake modifier checkpoints mismatch
             }
@@ -371,10 +371,10 @@ namespace Novacoin
             // Add to index
             if (block.IsProofOfStake)
             {
-                itemTemplate.SetProofOfStake();
+                newCursor.SetProofOfStake();
 
-                itemTemplate.prevoutStake = block.vtx[1].vin[0].prevout;
-                itemTemplate.nStakeTime = block.vtx[1].nTime;
+                newCursor.prevoutStake = block.vtx[1].vin[0].prevout;
+                newCursor.nStakeTime = block.vtx[1].nTime;
 
                 // Save proof-of-stake hash value
                 uint256 hashProofOfStake;
@@ -382,32 +382,32 @@ namespace Novacoin
                 {
                     return false;  // hashProofOfStake not found 
                 }
-                itemTemplate.hashProofOfStake = hashProofOfStake;
+                newCursor.hashProofOfStake = hashProofOfStake;
             }
 
-            if (!itemTemplate.WriteToFile(ref fStreamReadWrite, ref block))
+            if (!newCursor.WriteToFile(ref fStreamReadWrite, ref block))
             {
                 return false;
             }
 
-            if (dbConn.Insert(itemTemplate) == 0)
+            if (dbConn.Insert(newCursor) == 0)
             {
                 return false; // Insert failed
             }
 
             // Get last RowID.
-            itemTemplate.ItemID = dbPlatform.SQLiteApi.LastInsertRowid(dbConn.Handle);
+            newCursor.ItemID = dbPlatform.SQLiteApi.LastInsertRowid(dbConn.Handle);
 
-            if (!blockMap.TryAdd(blockHash, itemTemplate))
+            if (!blockMap.TryAdd(blockHash, newCursor))
             {
                 return false; // blockMap add failed
             }
 
-            if (itemTemplate.nChainTrust > ChainParams.nBestChainTrust)
+            if (newCursor.nChainTrust > ChainParams.nBestChainTrust)
             {
                 // New best chain
 
-                if (!SetBestChain(ref itemTemplate))
+                if (!SetBestChain(ref newCursor))
                 {
                     return false; // SetBestChain failed.
                 }
@@ -1095,14 +1095,14 @@ namespace Novacoin
             }
 
             // Write block to file.
-            var itemTemplate = new CBlockStoreItem()
+            var newCursor = new CBlockStoreItem()
             {
                 nHeight = nHeight,
             };
 
-            itemTemplate.FillHeader(block.header);
+            newCursor.FillHeader(block.header);
 
-            if (!AddItemToIndex(ref itemTemplate, ref block))
+            if (!AddItemToIndex(ref newCursor, ref block))
             {
                 dbConn.Rollback();
 

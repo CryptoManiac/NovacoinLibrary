@@ -213,7 +213,7 @@ namespace Novacoin
         /// additional bits in the stake modifier, even after generating a chain of
         /// blocks.
         /// </summary>
-        public static bool ComputeNextStakeModifier(CBlockStoreItem cursorCurrent, ref long nStakeModifier, ref bool fGeneratedStakeModifier)
+        public static bool ComputeNextStakeModifier(ref CBlockStoreItem cursorCurrent, ref long nStakeModifier, ref bool fGeneratedStakeModifier)
         {
             nStakeModifier = 0;
             fGeneratedStakeModifier = false;
