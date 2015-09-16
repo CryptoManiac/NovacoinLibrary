@@ -509,7 +509,7 @@ namespace Novacoin
                     bnLowerBound = bnMidValue;
             }
 
-            long nSubsidy = (long)bnUpperBound;
+            long nSubsidy = bnUpperBound;
             nSubsidy = (nSubsidy / CTransaction.nCent) * CTransaction.nCent;
 
             return Math.Min(nSubsidy, NetInfo.nMaxMintProofOfWork) + nFees;
@@ -517,82 +517,56 @@ namespace Novacoin
 
         public static long GetProofOfStakeReward(long nCoinAge, uint nBits, uint nTime)
         {
+            // Second stage of emission process is mostly PoS-based.
+
             long nRewardCoinYear, nSubsidy, nSubsidyLimit = 10 * CTransaction.nCoin;
+            // Base stake mint rate, 100% year interest
+            BigNum bnRewardCoinYearLimit = NetInfo.nMaxMintProofOfStake; 
 
-            if (nTime > NetInfo.nDynamicStakeRewardTime)
+            uint256 nTarget = 0;
+            nTarget.Compact = nBits;
+
+            BigNum bnTarget = nTarget;
+            BigNum bnTargetLimit = NetInfo.GetProofOfStakeLimit(0, nTime);
+
+            // A reasonably continuous curve is used to avoid shock to market
+
+            BigNum bnLowerBound = CTransaction.nCent, // Lower interest bound is 1% per year
+                bnUpperBound = bnRewardCoinYearLimit, // Upper interest bound is 100% per year
+                bnMidPart, bnRewardPart;
+
+            while (bnLowerBound + CTransaction.nCent <= bnUpperBound)
             {
-                // Stage 2 of emission process is PoS-based. It will be active on mainNet since 20 Jun 2013.
+                BigNum bnMidValue = (bnLowerBound + bnUpperBound) / 2;
 
-                BigNum bnRewardCoinYearLimit = NetInfo.nMaxMintProofOfStake; // Base stake mint rate, 100% year interest
+                // Reward for coin-year is cut in half every 8x multiply of PoS difficulty
+                //
+                // (nRewardCoinYearLimit / nRewardCoinYear) ** 3 == bnProofOfStakeLimit / bnTarget
+                //
+                // Human readable form: nRewardCoinYear = 1 / (posdiff ^ 1/3)
 
-                uint256 nTarget = 0;
-                nTarget.Compact = nBits;
+                bnMidPart = bnMidValue * bnMidValue * bnMidValue;
+                bnRewardPart = bnRewardCoinYearLimit * bnRewardCoinYearLimit * bnRewardCoinYearLimit;
 
-                BigNum bnTarget = nTarget;
-                BigNum bnTargetLimit = NetInfo.GetProofOfStakeLimit(0, nTime);
-
-                // NovaCoin: A reasonably continuous curve is used to avoid shock to market
-
-                BigNum bnLowerBound = CTransaction.nCent, // Lower interest bound is 1% per year
-                    bnUpperBound = bnRewardCoinYearLimit, // Upper interest bound is 100% per year
-                    bnMidPart, bnRewardPart;
-
-                while (bnLowerBound + CTransaction.nCent <= bnUpperBound)
+                if (bnMidPart * bnTargetLimit > bnRewardPart * bnTarget)
                 {
-                    BigNum bnMidValue = (bnLowerBound + bnUpperBound) / 2;
-                    if (nTime < NetInfo.nStakeCurveSwitchTime)
-                    {
-                        //
-                        // Until 20 Oct 2013: reward for coin-year is cut in half every 64x multiply of PoS difficulty
-                        //
-                        // (nRewardCoinYearLimit / nRewardCoinYear) ** 6 == bnProofOfStakeLimit / bnTarget
-                        //
-                        // Human readable form: nRewardCoinYear = 1 / (posdiff ^ 1/6)
-                        //
-
-                        bnMidPart = bnMidValue * bnMidValue * bnMidValue * bnMidValue * bnMidValue * bnMidValue;
-                        bnRewardPart = bnRewardCoinYearLimit * bnRewardCoinYearLimit * bnRewardCoinYearLimit * bnRewardCoinYearLimit * bnRewardCoinYearLimit * bnRewardCoinYearLimit;
-                    }
-                    else
-                    {
-                        //
-                        // Since 20 Oct 2013: reward for coin-year is cut in half every 8x multiply of PoS difficulty
-                        //
-                        // (nRewardCoinYearLimit / nRewardCoinYear) ** 3 == bnProofOfStakeLimit / bnTarget
-                        //
-                        // Human readable form: nRewardCoinYear = 1 / (posdiff ^ 1/3)
-                        //
-
-                        bnMidPart = bnMidValue * bnMidValue * bnMidValue;
-                        bnRewardPart = bnRewardCoinYearLimit * bnRewardCoinYearLimit * bnRewardCoinYearLimit;
-                    }
-
-                    if (bnMidPart * bnTargetLimit > bnRewardPart * bnTarget)
-                        bnUpperBound = bnMidValue;
-                    else
-                        bnLowerBound = bnMidValue;
+                    bnUpperBound = bnMidValue;
                 }
+                else
+                {
+                    bnLowerBound = bnMidValue;
+                }
+            }
 
-                nRewardCoinYear = bnUpperBound;
-                nRewardCoinYear = Math.Min((nRewardCoinYear / CTransaction.nCent) * CTransaction.nCent, NetInfo.nMaxMintProofOfStake);
-            }
-            else
-            {
-                // Old creation amount per coin-year, 5% fixed stake mint rate
-                nRewardCoinYear = 5 * CTransaction.nCent;
-            }
+            nRewardCoinYear = bnUpperBound;
+            nRewardCoinYear = Math.Min((nRewardCoinYear / CTransaction.nCent) * CTransaction.nCent, NetInfo.nMaxMintProofOfStake);
 
             nSubsidy = nCoinAge * nRewardCoinYear * 33 / (365 * 33 + 8);
 
-            // Set reasonable reward limit for large inputs since 20 Oct 2013
-            //
-            // This will stimulate large holders to use smaller inputs, that's good for the network protection
-            if (NetInfo.nStakeCurveSwitchTime < nTime)
-            {
-                nSubsidy = Math.Min(nSubsidy, nSubsidyLimit);
-            }
-
-            return nSubsidy;
+            // Set reasonable reward limit for large inputs
+            // This will stimulate large holders to use smaller inputs, that's good 
+            //   for the network protection
+            return Math.Min(nSubsidy, nSubsidyLimit);
         }
 
         public Tuple<COutPoint, uint> ProofOfStake

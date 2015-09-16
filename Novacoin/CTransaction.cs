@@ -627,12 +627,6 @@ namespace Novacoin
                 // Enforce 0.01 as minimum fee for old approach or coinstake
                 nMinTxFee = nCent;
                 nMinRelayTxFee = nCent;
-
-                if (nTime < NetInfo.nStakeValidationSwitchTime)
-                {
-                    // Enforce zero size for compatibility with old blocks.
-                    nBytes = 0;
-                }
             }
 
             // Base fee is either nMinTxFee or nMinRelayTxFee

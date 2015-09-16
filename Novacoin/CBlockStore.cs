@@ -970,20 +970,22 @@ namespace Novacoin
 
                 if (tx.IsCoinStake)
                 {
-                    // Coin stake tx earns reward instead of paying fee
-                    long nCoinAge;
-                    if (!tx.GetCoinAge(ref inputs, out nCoinAge))
+                    if (HashCheckpoints.LastCheckpointTime < tx.nTime)
                     {
-                        return false; // unable to get coin age for coinstake
-                    }
+                        // Coin stake tx earns reward instead of paying fee
+                        long nCoinAge;
+                        if (!tx.GetCoinAge(ref inputs, out nCoinAge))
+                        {
+                            return false; // unable to get coin age for coinstake
+                        }
 
-                    long nReward = tx.nValueOut - nValueIn;
+                        long nReward = tx.nValueOut - nValueIn;
+                        long nCalculatedReward = CBlock.GetProofOfStakeReward(nCoinAge, cursorBlock.nBits, tx.nTime) - tx.GetMinFee(1, false, CTransaction.MinFeeMode.GMF_BLOCK) + CTransaction.nCent;
 
-                    long nCalculatedReward = CBlock.GetProofOfStakeReward(nCoinAge, cursorBlock.nBits, tx.nTime) - tx.GetMinFee(1, false, CTransaction.MinFeeMode.GMF_BLOCK) + CTransaction.nCent;
-
-                    if (nReward > nCalculatedReward)
-                    {
-                        return false; // coinstake pays too much
+                        if (nReward > nCalculatedReward)
+                        {
+                            return false; // coinstake pays too much
+                        }
                     }
                 }
                 else

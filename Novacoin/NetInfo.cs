@@ -51,16 +51,6 @@
         public const uint nStakeValidationSwitchTime = 1408492800;
 
         /// <summary>
-        /// Thu, 20 Jun 2013 00:00:00 GMT
-        /// </summary>
-        public const uint nDynamicStakeRewardTime = 1371686400;
-
-        /// <summary>
-        /// Sun, 20 Oct 2013 00:00:00 GMT
-        /// </summary>
-        public const uint nStakeCurveSwitchTime = 1382227200;
-
-        /// <summary>
         /// Hash of block #0
         /// </summary>
         public static uint256 nHashGenesisBlock = new uint256("00000a060336cbb72fe969666d337b87198b1add2abaa59cca226820b32933a4");
