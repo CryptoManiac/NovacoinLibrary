@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Novacoin
@@ -90,10 +91,7 @@ namespace Novacoin
                 trimStart--;
             }
 
-            byte[] result = new byte[trimStart + 1];
-            Array.Copy(bytes, 0, result, 0, trimStart + 1);
-
-            return result;
+            return bytes.Take(trimStart + 1).ToArray();
         }
 
         public static byte[] AppendWithZeros(byte[] bytes, int nTargetLen=32)
