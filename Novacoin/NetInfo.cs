@@ -36,11 +36,6 @@
         public static uint256 nPoWBase = new uint256("00000000ffff0000000000000000000000000000000000000000000000000000");
 
         /// <summary>
-        /// Fri, 20 Sep 2013 00:00:00 GMT
-        /// </summary>
-        public const uint nChainChecksSwitchTime = 1379635200;
-
-        /// <summary>
         /// Sat, 20 Jul 2013 00:00:00 GMT
         /// </summary>
         public const uint nTargetsSwitchTime = 1374278400;

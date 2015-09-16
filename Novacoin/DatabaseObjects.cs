@@ -405,26 +405,14 @@ namespace Novacoin
         {
             get
             {
-                uint256 nTarget = 0;
-                nTarget.Compact = nBits;
-
-                /* Old protocol */
-                if (nTime < NetInfo.nChainChecksSwitchTime)
+                // Return 1 for the first 12 blocks
+                if (prev == null || prev.nHeight < 12)
                 {
-                    return IsProofOfStake ? (new uint256(1) << 256) / (nTarget + 1) : 1;
+                    return 1;
                 }
 
-                /* New protocol */
-
-                // Calculate work amount for block
-                var nPoWTrust = NetInfo.nPoWBase / (nTarget + 1);
-
-                // Set nPowTrust to 1 if we are checking PoS block or PoW difficulty is too low
-                nPoWTrust = (IsProofOfStake || !nPoWTrust) ? 1 : nPoWTrust;
-
-                // Return nPoWTrust for the first 12 blocks
-                if (prev == null || prev.nHeight < 12)
-                    return nPoWTrust;
+                uint256 nTarget = 0;
+                nTarget.Compact = nBits;
 
                 CBlockStoreItem currentIndex = prev;
 
@@ -460,6 +448,12 @@ namespace Novacoin
                 }
                 else
                 {
+                    // Calculate work amount for block
+                    var nPoWTrust = NetInfo.nPoWBase / (nTarget + 1);
+
+                    // Set nPowTrust to 1 if we are checking PoS block or PoW difficulty is too low
+                    nPoWTrust = (IsProofOfStake || !nPoWTrust) ? 1 : nPoWTrust;
+
                     var nLastBlockTrust = prev.nChainTrust - prev.prev.nChainTrust;
 
                     // Return nPoWTrust + 2/3 of previous block score if two parent blocks are not PoS blocks
